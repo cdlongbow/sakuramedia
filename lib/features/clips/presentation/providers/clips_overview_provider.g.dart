@@ -57,7 +57,7 @@ final class ClipsOverviewProvider
   ClipsOverview create() => ClipsOverview();
 }
 
-String _$clipsOverviewHash() => r'640572ebc4e6e0dc5d86bed05d838255249dc5e7';
+String _$clipsOverviewHash() => r'b4d776b905711cbc6524ea03d415c293b3717e33';
 
 /// 我的切片首页分页列表（排序筛选驱动）。
 ///

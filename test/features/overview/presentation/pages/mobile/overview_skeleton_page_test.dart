@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/discovery/presentation/providers/discovery_
 import 'package:sakuramedia/features/moments/presentation/providers/moments_provider.dart';
 import 'package:sakuramedia/features/overview/presentation/pages/mobile/overview_skeleton_page.dart';
 import 'package:sakuramedia/features/overview/presentation/providers/mobile_overview_tab_index_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../../support/pump_with_providers.dart';
@@ -17,6 +18,20 @@ import '../../../../../support/test_api_bundle.dart';
 ///    「setState() called during build」;
 /// 2. 切 tab 后 provider 值跟随;
 /// 3. 相同值不通知监听方(拖动动画每帧回调不引起壳重建)。
+Future<void> _pumpOverview(WidgetTester tester, TestApiBundle bundle) {
+  return pumpWithProviders(
+    tester,
+    home: const Material(child: MobileOverviewSkeletonPage()),
+    bundle: bundle,
+    locale: const Locale('zh'),
+    localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      ...GlobalMaterialLocalizations.delegates,
+    ],
+    supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+  );
+}
+
 void main() {
   Future<SessionStore> buildSessionStore() async {
     final sessionStore = SessionStore.inMemory();
@@ -64,11 +79,7 @@ void main() {
         },
       );
 
-      await pumpWithProviders(
-        tester,
-        home: const Material(child: MobileOverviewSkeletonPage()),
-        bundle: bundle,
-      );
+      await _pumpOverview(tester, bundle);
       // 首帧对齐走 postFrame,这里若在 build 期写 provider 会直接抛异常挂掉。
       await tester.pump();
       expect(tester.takeException(), isNull);
@@ -92,11 +103,7 @@ void main() {
     final bundle = await createTestApiBundle(sessionStore);
     addTearDown(bundle.dispose);
 
-    await pumpWithProviders(
-      tester,
-      home: const Material(child: MobileOverviewSkeletonPage()),
-      bundle: bundle,
-    );
+    await _pumpOverview(tester, bundle);
     await tester.pump();
 
     final context = tester.element(
@@ -134,11 +141,7 @@ void main() {
     final bundle = await createTestApiBundle(sessionStore);
     addTearDown(bundle.dispose);
 
-    await pumpWithProviders(
-      tester,
-      home: const Material(child: MobileOverviewSkeletonPage()),
-      bundle: bundle,
-    );
+    await _pumpOverview(tester, bundle);
     await tester.pumpAndSettle();
 
     final input = find.byKey(const Key('mobile-overview-my-search-input'));

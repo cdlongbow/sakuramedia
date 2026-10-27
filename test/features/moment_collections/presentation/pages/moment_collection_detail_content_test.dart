@@ -11,6 +11,7 @@ import 'package:sakuramedia/features/moment_collections/presentation/pages/share
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
@@ -143,7 +144,16 @@ void main() {
         moviesApiProvider.overrideWithValue(MoviesApi(apiClient: apiClient)),
       ],
       child: OKToast(
-        child: MaterialApp(theme: sakuraThemeData, home: home),
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          home: home,
+        ),
       ),
     );
   }

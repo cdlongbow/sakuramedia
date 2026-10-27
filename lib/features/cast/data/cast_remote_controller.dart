@@ -5,6 +5,8 @@ import 'package:sakuramedia/core/media/media_playback_progress_controller.dart';
 import 'package:sakuramedia/features/cast/data/cast_director.dart';
 import 'package:sakuramedia/features/cast/data/cast_session.dart';
 import 'package:sakuramedia/features/cast/data/cast_transport.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 /// 遥控页面对的电视状态。
 enum CastRemotePhase {
@@ -90,7 +92,8 @@ class CastRemoteController extends ChangeNotifier {
     this._seekDebounce = const Duration(milliseconds: 250),
     this._seekCooldown = const Duration(milliseconds: 1500),
     Duration progressReportInterval = const Duration(seconds: 5),
-  }) {
+    AppLocalizations Function()? l10n,
+  }) : _l10n = l10n {
     _state = CastRemoteState(
       duration: Duration(seconds: session.durationSeconds),
     );
@@ -112,7 +115,10 @@ class CastRemoteController extends ChangeNotifier {
   final Duration _pollInterval;
   final Duration _seekDebounce;
   final Duration _seekCooldown;
+  final AppLocalizations Function()? _l10n;
   late final MediaPlaybackProgressController _progress;
+
+  AppLocalizations get _localizations => _l10n?.call() ?? AppLocalizationsZh();
 
   late CastRemoteState _state;
 
@@ -218,7 +224,11 @@ class CastRemoteController extends ChangeNotifier {
       if (_disposed) return;
       _emit(
         _state.copyWith(
-          errorMessage: castErrorMessage(error, fallback: '重新播放失败，请重试'),
+          errorMessage: castErrorMessage(
+            error,
+            l10n: _localizations,
+            fallback: _localizations.castRestartFailed,
+          ),
         ),
       );
       unawaited(_poll());
@@ -242,7 +252,11 @@ class CastRemoteController extends ChangeNotifier {
       if (_disposed) return;
       _emit(
         _state.copyWith(
-          errorMessage: castErrorMessage(error, fallback: '操作失败，请重试'),
+          errorMessage: castErrorMessage(
+            error,
+            l10n: _localizations,
+            fallback: _localizations.castControlFailed,
+          ),
         ),
       );
       // 尽快让轮询校正乐观状态。
@@ -276,7 +290,11 @@ class CastRemoteController extends ChangeNotifier {
       _emit(
         _state.copyWith(
           isSeeking: false,
-          errorMessage: castErrorMessage(error, fallback: '跳转失败，请重试'),
+          errorMessage: castErrorMessage(
+            error,
+            l10n: _localizations,
+            fallback: _localizations.castSeekFailed,
+          ),
         ),
       );
     }

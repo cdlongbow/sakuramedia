@@ -11,6 +11,7 @@ import 'package:sakuramedia/features/media/data/media_point_list_item_dto.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/media/presentation/media_placeholders.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
@@ -23,14 +24,20 @@ import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 
 /// 时刻选择器的内容类型：后端 `kind` 支持 jav / video / all。
 enum _MomentKindOption {
-  all(label: '全部', apiValue: 'all'),
-  jav(label: 'JAV', apiValue: 'jav'),
-  video(label: '视频', apiValue: 'video');
+  all(apiValue: 'all'),
+  jav(apiValue: 'jav'),
+  video(apiValue: 'video');
 
-  const _MomentKindOption({required this.label, required this.apiValue});
+  const _MomentKindOption({required this.apiValue});
 
-  final String label;
   final String apiValue;
+
+  /// `JAV` 是内容类型代号，中英文一致，不进语言包。
+  String label(AppLocalizations l10n) => switch (this) {
+    _MomentKindOption.all => l10n.momentKindAll,
+    _MomentKindOption.jav => 'JAV',
+    _MomentKindOption.video => l10n.momentKindVideo,
+  };
 }
 
 /// 在合集详情里弹出「添加时刻」选择器：默认只看未加入，勾选即时加入 / 移出。
@@ -137,7 +144,10 @@ class _AddMomentsToCollectionDialogState
         return;
       }
       setState(() {
-        _errorMessage = apiErrorMessage(error, fallback: '时刻加载失败');
+        _errorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(context).momentErrorPointsLoadFailed,
+        );
         _isLoading = false;
       });
     }
@@ -175,7 +185,10 @@ class _AddMomentsToCollectionDialogState
     } catch (error) {
       if (mounted && seq == _requestSeq) {
         setState(() {
-          final message = apiErrorMessage(error, fallback: '时刻加载失败');
+          final message = apiErrorMessage(
+            error,
+            fallback: AppLocalizations.of(context).momentErrorPointsLoadFailed,
+          );
           if (_points.isEmpty) {
             _errorMessage = message;
           } else {
@@ -240,22 +253,23 @@ class _AddMomentsToCollectionDialogState
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final body = _buildBody(context);
     return Column(
       mainAxisSize: _isDrawer ? MainAxisSize.max : MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppPickerHeader(
-          title: '添加时刻',
+          title: l10n.momentAddMomentsAction,
           countLabel: _isLoading && _points.isEmpty
               ? null
               : _onlyUnadded
-              ? '已加入 ${_memberIds.length} · 可添加 $_total'
-              : '已加入 ${_memberIds.length} · 共 $_total',
+              ? l10n.momentPickerCountAvailable(_memberIds.length, _total)
+              : l10n.momentPickerCountTotal(_memberIds.length, _total),
           countKey: const Key('add-moments-count'),
           searchController: _searchController,
           searchFieldKey: const Key('add-moments-search-field'),
-          searchHintText: '搜番号 / 标题',
+          searchHintText: l10n.momentPickerSearchHint,
           clearSearchKey: const Key('add-moments-search-clear'),
           onSearchChanged: _onSearchChanged,
           chips: _buildFilterChips(context),
@@ -270,10 +284,11 @@ class _AddMomentsToCollectionDialogState
   }
 
   List<Widget> _buildFilterChips(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return <Widget>[
       AppTextButton(
         key: const Key('add-moments-only-unadded-chip'),
-        label: '仅看未加入',
+        label: l10n.momentPickerOnlyUnadded,
         size: AppTextButtonSize.xSmall,
         isSelected: _onlyUnadded,
         onPressed: () => _setOnlyUnadded(!_onlyUnadded),
@@ -286,7 +301,7 @@ class _AddMomentsToCollectionDialogState
       for (final kind in _MomentKindOption.values)
         AppTextButton(
           key: Key('add-moments-kind-${kind.apiValue}'),
-          label: kind.label,
+          label: kind.label(l10n),
           size: AppTextButtonSize.xSmall,
           isSelected: _kind == kind,
           onPressed: () => _selectKind(kind),
@@ -362,38 +377,39 @@ class _AddMomentsToCollectionDialogState
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (_keyword.isNotEmpty) {
-      return const AppEmptyState(
-        key: Key('add-moments-empty-search'),
+      return AppEmptyState(
+        key: const Key('add-moments-empty-search'),
         icon: Icons.search_off_rounded,
-        title: '没有匹配的时刻',
-        message: '换个番号或关键词试试',
+        title: l10n.momentEmptyNoMatchTitle,
+        message: l10n.momentEmptyNoMatchMessage,
       );
     }
     if (_kind != _MomentKindOption.all) {
       return AppEmptyState(
         key: const Key('add-moments-empty-kind'),
         icon: Icons.search_off_rounded,
-        title: '这组内容里没有时刻',
-        message: '试试其他的内容类型',
+        title: l10n.momentEmptyKindTitle,
+        message: l10n.momentEmptyKindMessage,
       );
     }
     if (_onlyUnadded) {
       return AppEmptyState(
         key: const Key('add-moments-empty-all-added'),
         icon: Icons.playlist_add_check_rounded,
-        title: '可添加的都已加入',
-        message: '这个合集已经收齐了，切到「全部」可以管理已加入的时刻',
-        retryLabel: '查看全部',
+        title: l10n.momentEmptyAllAddedTitle,
+        message: l10n.momentEmptyAllAddedMessage,
+        retryLabel: l10n.momentViewAll,
         retryKey: const Key('add-moments-show-all-button'),
         onRetry: () => _setOnlyUnadded(false),
       );
     }
-    return const AppEmptyState(
-      key: Key('add-moments-empty-library'),
+    return AppEmptyState(
+      key: const Key('add-moments-empty-library'),
       icon: Icons.bookmark_border_rounded,
-      title: '还没有时刻',
-      message: '去播放器圈选生成吧',
+      title: l10n.momentEmptyNoMomentsTitle,
+      message: l10n.momentEmptyNoMomentsMessage,
     );
   }
 
@@ -421,9 +437,13 @@ class _AddMomentsToCollectionDialogState
     final selected = _memberIds.contains(point.pointId);
     final isAnyUpdating = _updatingIds.isNotEmpty;
     final coverUrl = point.image?.origin;
+    final l10n = AppLocalizations.of(context);
+    final videoItemId = point.videoItemId;
     final title = point.movieNumber?.isNotEmpty == true
         ? point.movieNumber!
-        : (point.isVideo ? '视频 #${point.videoItemId}' : '时刻 #${point.pointId}');
+        : (videoItemId != null && videoItemId > 0
+              ? l10n.momentVideoLabel(videoItemId)
+              : l10n.momentLabel(point.pointId));
 
     return AppPickerOptionTile.cover(
       selected: selected,
@@ -442,6 +462,7 @@ class _AddMomentsToCollectionDialogState
       return;
     }
     final api = ref.read(momentCollectionsApiProvider);
+    final l10n = AppLocalizations.of(context);
     final isMember = _memberIds.contains(point.pointId);
     setState(() {
       _updatingIds.add(point.pointId);
@@ -460,7 +481,7 @@ class _AddMomentsToCollectionDialogState
         if (!mounted) {
           return;
         }
-        showToast('已移出');
+        showToast(l10n.momentMovedOutToast);
       } else {
         await api.addPoint(
           collectionId: widget.collectionId,
@@ -478,7 +499,7 @@ class _AddMomentsToCollectionDialogState
             _nextOffset = math.max(0, _nextOffset - 1);
           }
         });
-        showToast('已加入');
+        showToast(l10n.momentAddedToast);
       }
     } catch (error) {
       if (!mounted) {
@@ -492,7 +513,12 @@ class _AddMomentsToCollectionDialogState
         }
       });
       showToast(
-        apiErrorMessage(error, fallback: isMember ? '移出合集失败' : '加入合集失败'),
+        apiErrorMessage(
+          error,
+          fallback: isMember
+              ? l10n.momentErrorRemoveFromCollectionBriefFailed
+              : l10n.momentErrorAddToCollectionFailed,
+        ),
       );
     } finally {
       if (mounted) {

@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/features/cast/data/cast_device.dart';
 import 'package:sakuramedia/features/cast/data/cast_didl.dart';
 import 'package:sakuramedia/features/cast/data/multicast_lock_channel.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 import 'package:upnp_client/upnp_client.dart';
 
 /// 当前平台是否支持投屏（iOS 受系统组播限制，暂不提供设备发现）。
@@ -15,19 +17,29 @@ bool get isCastPlatformSupported => switch (defaultTargetPlatform) {
   _ => false,
 };
 
-/// 投屏流程中的业务错误，[message] 面向用户可读。
-class CastException implements Exception {
-  const CastException(this.message);
+/// 投屏过程中的业务错误类型；面向用户的文案由 [castErrorMessage] 按当前语言生成。
+enum CastErrorCode {
+  /// 设备没有 AVTransport，无法播放视频。
+  deviceCannotPlayVideo,
+}
 
-  final String message;
+/// 投屏流程中的业务错误，[code] 决定面向用户的原因。
+class CastException implements Exception {
+  const CastException(this.code);
+
+  final CastErrorCode code;
 
   @override
-  String toString() => 'CastException: $message';
+  String toString() => 'CastException: ${code.name}';
 }
 
 /// DLNA 投屏：局域网设备发现 + 播放地址推送。
 class CastDirector {
-  const CastDirector();
+  const CastDirector({AppLocalizations Function()? l10n}) : _l10n = l10n;
+
+  final AppLocalizations Function()? _l10n;
+
+  AppLocalizations get _localizations => _l10n?.call() ?? AppLocalizationsZh();
 
   final MulticastLockChannel _multicastLock = const MulticastLockChannel();
 
@@ -68,7 +80,7 @@ class CastDirector {
         final localDiscoverer = DeviceDiscoverer();
         discoverer = localDiscoverer;
         subscription = localDiscoverer.devices.listen((device) {
-          final castDevice = castDeviceFromRenderer(device);
+          final castDevice = castDeviceFromRenderer(device, l10n: _localizations);
           if (castDevice != null && seen.add(castDevice.id)) {
             if (!controller.isClosed) {
               controller.add(castDevice);
@@ -112,7 +124,7 @@ class CastDirector {
   }) async {
     final transport = device.renderer.avTransport;
     if (transport == null) {
-      throw const CastException('该设备不支持播放视频');
+      throw const CastException(CastErrorCode.deviceCannotPlayVideo);
     }
     await transport.setAVTransportURI(
       url,
@@ -128,7 +140,10 @@ class CastDirector {
 
 /// 把 upnp_client 设备映射为投屏设备；非媒体渲染器或不带 AVTransport 时返回 null。
 @visibleForTesting
-CastDevice? castDeviceFromRenderer(Device device) {
+CastDevice? castDeviceFromRenderer(
+  Device device, {
+  required AppLocalizations l10n,
+}) {
   if (device is! MediaRenderer || device.avTransport == null) {
     return null;
   }
@@ -140,30 +155,40 @@ CastDevice? castDeviceFromRenderer(Device device) {
   final host = Uri.tryParse(location)?.host ?? '';
   return CastDevice(
     id: device.description?.uuid ?? location,
-    name: friendlyName.isEmpty ? '未命名设备' : friendlyName,
+    name: friendlyName.isEmpty ? l10n.castUnnamedDevice : friendlyName,
     address: host.isEmpty ? location : host,
     renderer: device,
   );
 }
 
 /// 将投屏过程中的异常映射为用户可读文案。
-String castErrorMessage(Object error, {String fallback = '投屏失败，请重试'}) {
+///
+/// [fallback] 是调用点自己的兜底文案（如「跳转失败」）；不传时用通用的
+/// 「投屏失败，请重试」。
+String castErrorMessage(
+  Object error, {
+  required AppLocalizations l10n,
+  String? fallback,
+}) {
+  final resolvedFallback = fallback ?? l10n.castErrorFallback;
   if (error is CastException) {
-    return error.message;
+    return switch (error.code) {
+      CastErrorCode.deviceCannotPlayVideo => l10n.castDeviceCannotPlayVideo,
+    };
   }
   if (error is UPnPException) {
     return switch (error.errorCode) {
-      701 => '电视暂时无法开始播放，请稍后重试',
-      704 => '电视不支持播放该视频格式',
-      715 || 716 => '电视无法访问该视频地址',
-      _ => fallback,
+      701 => l10n.castTvCannotStartPlayback,
+      704 => l10n.castTvUnsupportedFormat,
+      715 || 716 => l10n.castTvCannotAccessUrl,
+      _ => resolvedFallback,
     };
   }
   if (error is TimeoutException) {
-    return '电视未响应，请确认设备处于开机状态';
+    return l10n.castTvNotResponding;
   }
   if (error is SocketException) {
-    return '连接电视失败，请确认设备与电视在同一网络';
+    return l10n.castTvConnectionFailed;
   }
-  return fallback;
+  return resolvedFallback;
 }

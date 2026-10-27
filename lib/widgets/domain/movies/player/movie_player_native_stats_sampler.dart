@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_playback_info.dart';
 
 /// 读取 mpv 原生属性(如 `video-bitrate`)的注入点;
@@ -68,10 +70,30 @@ class MoviePlayerNativeStatsSampler {
   MoviePlayerNativeStatsSampler({
     required MoviePlayerNativePropertyReader readNativeProperty,
     required String originalUrl,
+    AppLocalizations? l10n,
   }) : _readNativeProperty = readNativeProperty,
-       _originalUrl = originalUrl;
+       _originalUrl = originalUrl,
+       _l10n = l10n ?? AppLocalizationsZh() {
+    _playbackModeLabel = _l10n.widgetMoviePlayerModePending;
+  }
 
   final MoviePlayerNativePropertyReader _readNativeProperty;
+
+  /// 播放信息里的文案语言。未注入时按中文兜底，保持既有显示不变。
+  AppLocalizations _l10n;
+
+  /// 切换文案语言并立即重建快照（语言变化会影响解码模式等展示文案）。
+  set l10n(AppLocalizations value) {
+    if (identical(_l10n, value)) {
+      return;
+    }
+    final wasPending = _playbackModeLabel == _l10n.widgetMoviePlayerModePending;
+    _l10n = value;
+    if (wasPending) {
+      _playbackModeLabel = value.widgetMoviePlayerModePending;
+    }
+    _refreshSnapshot();
+  }
 
   String _originalUrl;
 
@@ -114,7 +136,9 @@ class MoviePlayerNativeStatsSampler {
   double? _downloadRateBytesPerSecond;
   int? _previousDemuxerForwardBytes;
   DateTime? _previousDemuxerBytesSampleAt;
-  String _playbackModeLabel = '确认中';
+
+  /// 播放模式文案；后端确认前显示当前语言的「确认中」。
+  late String _playbackModeLabel;
 
   /// 立即产出一次快照 + 一次原生轮询,并开启每秒定时轮询。
   void start() {
@@ -184,7 +208,7 @@ class MoviePlayerNativeStatsSampler {
     _downloadRateBytesPerSecond = null;
     _previousDemuxerForwardBytes = null;
     _previousDemuxerBytesSampleAt = null;
-    _playbackModeLabel = '确认中';
+    _playbackModeLabel = _l10n.widgetMoviePlayerModePending;
     _refreshSnapshot();
   }
 
@@ -294,6 +318,7 @@ class MoviePlayerNativeStatsSampler {
       decoderDropFramePerSecond: _decoderFrameDropPerSecond,
       delayedFramePerSecond: _voDelayedFramePerSecond,
       mistimedFramePerSecond: _mistimedFramePerSecond,
+      l10n: _l10n,
       originalUrl: _originalUrl,
       playbackModeLabel: _playbackModeLabel,
       fileFormat: _fileFormat,

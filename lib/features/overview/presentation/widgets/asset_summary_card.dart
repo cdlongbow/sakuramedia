@@ -4,6 +4,7 @@ import 'package:sakuramedia/features/overview/presentation/overview_system_info_
 import 'package:sakuramedia/features/overview/presentation/widgets/overview_card_states.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
 import 'package:sakuramedia/features/status/presentation/status_placeholders.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 
@@ -32,7 +33,7 @@ class AssetSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _AssetHeroSurface(
       key: const Key('overview-asset-summary-card'),
-      title: '媒体资产',
+      title: AppLocalizations.of(context).overviewMediaAssets,
       child: _buildBody(context),
     );
   }
@@ -60,7 +61,7 @@ class AssetSummaryCard extends StatelessWidget {
     final current = status;
     if (current == null) {
       return Text(
-        '暂无媒体资产数据',
+        AppLocalizations.of(context).overviewNoAssetData,
         style: resolveAppTextStyle(
           context,
           size: AppTextSize.s12,
@@ -77,37 +78,48 @@ class AssetSummaryCard extends StatelessWidget {
     StatusDto current,
     StatusInsightsDto? insights,
   ) {
+    final l10n = AppLocalizations.of(context);
     final metrics = <_AssetMetric>[
       _AssetMetric(
         id: 'movies',
-        label: '影片',
+        label: l10n.overviewMovies,
         value: formatCount(current.movies.total),
-        secondary:
-            '可播放 ${formatCount(current.movies.playable)} · 已订阅 ${formatCount(current.movies.subscribed)}',
-        narrowSecondary: '可播放 ${formatCount(current.movies.playable)}',
+        secondary: l10n.overviewMoviePlayableSubscribed(
+          formatCount(current.movies.playable),
+          formatCount(current.movies.subscribed),
+        ),
+        narrowSecondary: l10n.overviewMoviePlayable(
+          formatCount(current.movies.playable),
+        ),
       ),
       _AssetMetric(
         id: 'actors',
-        label: '女优',
+        label: l10n.overviewActresses,
         value: formatCount(current.actors.femaleTotal),
-        secondary: '已订阅 ${formatCount(current.actors.femaleSubscribed)}',
+        secondary: l10n.overviewSubscribedCount(
+          formatCount(current.actors.femaleSubscribed),
+        ),
       ),
       _AssetMetric(
         id: 'media-files',
-        label: '媒体文件',
+        label: l10n.overviewMediaFiles,
         value: formatCount(current.mediaFiles.total),
-        secondary: '${formatCount(current.mediaLibraries.total)} 个资源库',
+        secondary: l10n.overviewLibraryCount(
+          formatCount(current.mediaLibraries.total),
+        ),
       ),
       _AssetMetric(
         id: 'media-size',
-        label: '媒体总量',
+        label: l10n.overviewTotalMediaSize,
         value: formatFileSize(current.mediaFiles.totalSizeBytes),
-        secondary: '缩略图 ${formatCount(current.thumbnails.total)}',
+        secondary: l10n.overviewThumbnails(
+          formatCount(current.thumbnails.total),
+        ),
       ),
     ];
 
-    final backlog = _buildBacklogItems(current);
-    final collections = _buildCollectionItems(insights?.collections);
+    final backlog = _buildBacklogItems(current, l10n);
+    final collections = _buildCollectionItems(insights?.collections, l10n);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -149,7 +161,7 @@ class AssetSummaryCard extends StatelessWidget {
                 _FootnoteLine(
                   key: const Key('overview-footnote-collections'),
                   icon: Icons.folder_outlined,
-                  prefix: '合集：',
+                  prefix: l10n.overviewCollectionsPrefix,
                   items: collections,
                 ),
             ],
@@ -159,30 +171,51 @@ class AssetSummaryCard extends StatelessWidget {
     );
   }
 
-  List<_FootnoteItem> _buildBacklogItems(StatusDto status) {
+  List<_FootnoteItem> _buildBacklogItems(
+    StatusDto status,
+    AppLocalizations l10n,
+  ) {
     final thumbnails = status.thumbnails;
     return <_FootnoteItem>[
       if (thumbnails.pendingMedia > 0)
-        _FootnoteItem(label: '待生成缩略图', count: thumbnails.pendingMedia),
+        _FootnoteItem(
+          label: l10n.overviewPendingThumbnails,
+          count: thumbnails.pendingMedia,
+        ),
       if (pendingIndexCount > 0)
-        _FootnoteItem(label: '待索引', count: pendingIndexCount),
+        _FootnoteItem(
+          label: l10n.overviewPendingIndex,
+          count: pendingIndexCount,
+        ),
     ];
   }
 
-  List<_FootnoteItem> _buildCollectionItems(CollectionsStatsDto? collections) {
+  List<_FootnoteItem> _buildCollectionItems(
+    CollectionsStatsDto? collections,
+    AppLocalizations l10n,
+  ) {
     if (collections == null || collections.isEmpty) {
       return const <_FootnoteItem>[];
     }
     return <_FootnoteItem>[
       if (collections.playlists.count > 0)
-        _FootnoteItem(label: '播放列表', count: collections.playlists.count),
+        _FootnoteItem(
+          label: l10n.overviewPlaylists,
+          count: collections.playlists.count,
+        ),
       if (collections.videoCollections.count > 0)
-        _FootnoteItem(label: '视频合集', count: collections.videoCollections.count),
+        _FootnoteItem(
+          label: l10n.overviewVideoCollections,
+          count: collections.videoCollections.count,
+        ),
       if (collections.clipCollections.count > 0)
-        _FootnoteItem(label: '片段合集', count: collections.clipCollections.count),
+        _FootnoteItem(
+          label: l10n.overviewClipCollections,
+          count: collections.clipCollections.count,
+        ),
       if (collections.momentCollections.count > 0)
         _FootnoteItem(
-          label: '时刻合集',
+          label: l10n.overviewMomentCollections,
           count: collections.momentCollections.count,
         ),
     ];

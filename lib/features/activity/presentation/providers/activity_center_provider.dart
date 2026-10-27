@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/activity/presentation/providers/activity_ap
 import 'package:sakuramedia/features/activity/presentation/providers/activity_center_state.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 
 part 'activity_center_provider.g.dart';
 
@@ -41,7 +42,9 @@ class ActivityCenter extends _$ActivityCenter
     }
     return initial.copyWith(
       connectionState: ActivityConnectionState.polling,
-      connectionMessage: '每 3 秒同步任务进度',
+      connectionMessage: ref
+          .read(appLocalizationsProvider)
+          .activityConnectionPollingTasks,
     );
   }
 
@@ -58,7 +61,10 @@ class ActivityCenter extends _$ActivityCenter
       );
     } catch (error) {
       return ActivityCenterState.initial.copyWith(
-        initialErrorMessage: apiErrorMessage(error, fallback: '任务中心加载失败，请稍后重试'),
+        initialErrorMessage: ref.apiErrorMessage(
+          error,
+          fallback: ref.read(appLocalizationsProvider).errorActivityLoadFailed,
+        ),
         connectionState: ActivityConnectionState.connecting,
       );
     }
@@ -102,7 +108,9 @@ class ActivityCenter extends _$ActivityCenter
         taskRefreshErrorMessage: null,
         taskFilterUpdate: const FilterUpdateState.idle(),
         connectionState: ActivityConnectionState.connecting,
-        connectionMessage: '正在同步任务中心',
+        connectionMessage: ref
+            .read(appLocalizationsProvider)
+            .activityConnectionConnectingTasks,
       ),
     );
     try {
@@ -120,7 +128,9 @@ class ActivityCenter extends _$ActivityCenter
           jobs: jobsResult.jobs,
           jobErrorMessage: jobsResult.errorMessage,
           connectionState: ActivityConnectionState.polling,
-          connectionMessage: '每 3 秒同步任务进度',
+          connectionMessage: ref
+              .read(appLocalizationsProvider)
+              .activityConnectionPollingTasks,
         ),
       );
       _startPolling();
@@ -130,12 +140,16 @@ class ActivityCenter extends _$ActivityCenter
         current.copyWith(
           isInitialLoading: false,
           isLoadingJobs: false,
-          initialErrorMessage: apiErrorMessage(
+          initialErrorMessage: ref.apiErrorMessage(
             error,
-            fallback: '任务中心加载失败，请稍后重试',
+            fallback: ref
+                .read(appLocalizationsProvider)
+                .errorActivityLoadFailed,
           ),
           connectionState: ActivityConnectionState.polling,
-          connectionMessage: '任务同步失败，可手动刷新',
+          connectionMessage: ref
+              .read(appLocalizationsProvider)
+              .activityConnectionTaskSyncFailed,
         ),
       );
       _startPolling();
@@ -204,7 +218,12 @@ class ActivityCenter extends _$ActivityCenter
       );
     } catch (error) {
       if (isDisposed || !_taskFilterRequests.isCurrent(requestId)) return;
-      final message = apiErrorMessage(error, fallback: '任务筛选刷新失败，请重试');
+      final message = ref.apiErrorMessage(
+        error,
+        fallback: ref
+            .read(appLocalizationsProvider)
+            .errorTaskFilterRefreshFailed,
+      );
       state = AsyncData(
         current.copyWith(
           taskRefreshErrorMessage: message,
@@ -306,9 +325,11 @@ class ActivityCenter extends _$ActivityCenter
       if (isDisposed || generation != _taskFilterGeneration) return;
       state = AsyncData(
         current.copyWith(
-          taskLoadMoreErrorMessage: apiErrorMessage(
+          taskLoadMoreErrorMessage: ref.apiErrorMessage(
             error,
-            fallback: '加载更多任务失败，请点击重试',
+            fallback: ref
+                .read(appLocalizationsProvider)
+                .errorLoadMoreTasksFailed,
           ),
           isLoadingMoreTasks: false,
         ),
@@ -333,7 +354,12 @@ class ActivityCenter extends _$ActivityCenter
     } catch (error) {
       return _JobsResult(
         jobs: const <JobMetadataDto>[],
-        errorMessage: apiErrorMessage(error, fallback: '可执行任务加载失败，请重试'),
+        errorMessage: ref.apiErrorMessage(
+          error,
+          fallback: ref
+              .read(appLocalizationsProvider)
+              .errorExecutableTaskLoadFailed,
+        ),
       );
     }
   }
@@ -388,7 +414,9 @@ class ActivityCenter extends _$ActivityCenter
             activeTaskRuns: activeTaskRuns,
             taskRuns: _patchLoadedTasks(now.taskRuns, taskResponse.items),
             connectionState: ActivityConnectionState.polling,
-            connectionMessage: '每 3 秒同步任务进度',
+            connectionMessage: ref
+                .read(appLocalizationsProvider)
+                .activityConnectionPollingTasks,
           ),
         );
         return;
@@ -402,7 +430,9 @@ class ActivityCenter extends _$ActivityCenter
           taskLoadMoreErrorMessage: null,
           taskRefreshErrorMessage: null,
           connectionState: ActivityConnectionState.polling,
-          connectionMessage: '每 3 秒同步任务进度',
+          connectionMessage: ref
+              .read(appLocalizationsProvider)
+              .activityConnectionPollingTasks,
         ),
       );
     } catch (_) {
@@ -410,7 +440,9 @@ class ActivityCenter extends _$ActivityCenter
         state = AsyncData(
           current.copyWith(
             connectionState: ActivityConnectionState.polling,
-            connectionMessage: '任务同步失败，可手动刷新',
+            connectionMessage: ref
+                .read(appLocalizationsProvider)
+                .activityConnectionTaskSyncFailed,
           ),
         );
       }

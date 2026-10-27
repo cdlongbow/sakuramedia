@@ -23,6 +23,7 @@ import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.
 import 'package:sakuramedia/features/shared/presentation/providers/batch_operation_submission_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
@@ -90,6 +91,7 @@ class MomentsContent extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     ref.listen(momentCollectionMutationEventsProvider, (_, next) {
       if (next.value != null) {
         unawaited(
@@ -262,7 +264,7 @@ class MomentsContent extends HookConsumerWidget {
                 actions: [
                   AppButton(
                     key: Key('$keyPrefix-batch-add-collection-button'),
-                    label: '加入合集',
+                    label: l10n.momentAddToCollection,
                     variant: AppButtonVariant.secondary,
                     onPressed: selectedCount == 0 || submitting
                         ? null
@@ -278,7 +280,7 @@ class MomentsContent extends HookConsumerWidget {
                   ),
                   AppButton(
                     key: Key('$keyPrefix-batch-delete-button'),
-                    label: '删除',
+                    label: l10n.commonDelete,
                     variant: AppButtonVariant.danger,
                     onPressed: selectedCount == 0 || submitting
                         ? null
@@ -317,7 +319,7 @@ class MomentsContent extends HookConsumerWidget {
     final errorMessage = await momentsRefresh;
     await collectionsRefresh;
     if (errorMessage != null && context.mounted) {
-      showToast('刷新失败');
+      showToast(AppLocalizations.of(context).momentErrorRefreshFailed);
     }
   }
 
@@ -327,6 +329,7 @@ class MomentsContent extends HookConsumerWidget {
     AsyncValue<List<MomentCollectionDto>> collectionsAsync,
   ) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final collections = collectionsAsync.value ?? const <MomentCollectionDto>[];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,7 +338,7 @@ class MomentsContent extends HookConsumerWidget {
         Row(
           children: [
             Text(
-              '时刻合集',
+              l10n.momentCollectionSectionTitle,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s14,
@@ -346,7 +349,7 @@ class MomentsContent extends HookConsumerWidget {
             const Spacer(),
             AppTextButton(
               key: Key('$keyPrefix-create-collection-button'),
-              label: '新建',
+              label: l10n.momentNewAction,
               size: AppTextButtonSize.small,
               onPressed: () => _createCollection(context, ref),
             ),
@@ -354,7 +357,7 @@ class MomentsContent extends HookConsumerWidget {
               SizedBox(width: spacing.xs),
               AppTextButton(
                 key: Key('$keyPrefix-view-all-collections-button'),
-                label: '查看全部',
+                label: l10n.momentViewAll,
                 size: AppTextButtonSize.small,
                 onPressed: onOpenCollections,
               ),
@@ -382,7 +385,7 @@ class MomentsContent extends HookConsumerWidget {
       return CollectionHintBox(
         message: apiErrorMessage(
           collectionsAsync.error!,
-          fallback: '合集暂时无法加载，请稍后重试',
+          fallback: AppLocalizations.of(context).momentErrorCollectionLoadFailed,
         ),
       );
     }
@@ -391,7 +394,9 @@ class MomentsContent extends HookConsumerWidget {
         ? momentCollectionPlaceholders(count: 4)
         : collections;
     if (display.isEmpty) {
-      return const CollectionHintBox(message: '还没有合集，点「新建」把喜欢的时刻攒成一个合集吧');
+      return CollectionHintBox(
+        message: AppLocalizations.of(context).momentCollectionEmptyHint,
+      );
     }
     return AppSkeletonizer(
       enabled: isLoading,
@@ -429,7 +434,7 @@ class MomentsContent extends HookConsumerWidget {
     ref
         .read(momentCollectionsOverviewProvider.notifier)
         .insertCollection(created);
-    showToast('已创建时刻合集');
+    showToast(AppLocalizations.of(context).momentCollectionCreatedFromMomentsToast);
   }
 
   Widget _buildMomentsHeader(
@@ -492,15 +497,16 @@ class MomentsContent extends HookConsumerWidget {
     final ids = items.map((item) => item.pointId).toSet();
     final allSelected = ids.isNotEmpty && ids.every(selectedPointIds.contains);
     final hasSelection = selectedCount > 0;
+    final l10n = AppLocalizations.of(context);
     if (useMobileFilterDrawer) {
       return AppListHeader.selection(
-        selectionLabel: '已选 $selectedCount 个',
+        selectionLabel: l10n.momentSelectedCount(selectedCount),
         selectionExitButtonKey: Key('$keyPrefix-exit-selection-button'),
         onExitSelection: onExitSelection,
         actionSlots: [
           AppButton(
             key: Key('$keyPrefix-select-all-button'),
-            label: allSelected ? '取消全选' : '全选',
+            label: allSelected ? l10n.momentDeselectAll : l10n.momentSelectAll,
             variant: AppButtonVariant.ghost,
             size: AppButtonSize.xSmall,
             isSelected: allSelected,
@@ -510,14 +516,16 @@ class MomentsContent extends HookConsumerWidget {
       );
     }
     return AppSelectionHeaderToolbar(
-      countLabel: '已选 $selectedCount 个',
-      selectAllLabel: allSelected ? '取消全选' : '全选',
+      countLabel: l10n.momentSelectedCount(selectedCount),
+      selectAllLabel: allSelected
+          ? l10n.momentDeselectAll
+          : l10n.momentSelectAll,
       selectAllKey: Key('$keyPrefix-select-all-button'),
       onToggleAll: onToggleAll,
       actions: [
         AppButton(
           key: Key('$keyPrefix-selection-add-collection-button'),
-          label: '加入合集',
+          label: l10n.momentAddToCollection,
           variant: AppButtonVariant.secondary,
           size: AppButtonSize.small,
           onPressed: hasSelection && !submitting
@@ -526,7 +534,7 @@ class MomentsContent extends HookConsumerWidget {
         ),
         AppButton(
           key: Key('$keyPrefix-selection-delete-button'),
-          label: '删除',
+          label: l10n.commonDelete,
           variant: AppButtonVariant.danger,
           size: AppButtonSize.small,
           onPressed: hasSelection && !submitting ? onBatchDelete : null,
@@ -548,10 +556,11 @@ class MomentsContent extends HookConsumerWidget {
     MomentsFilter filter,
     VoidCallback onEnterSelection,
   ) {
+    final l10n = AppLocalizations.of(context);
     return AppListHeader(
       filterButtonKey: Key('$keyPrefix-filter-trigger'),
       // 摘要只报「内容类型」这一主维度，排序有独立分节，不堆在入口上。
-      filterLabel: filter.kindFilter.label,
+      filterLabel: filter.kindFilter.label(l10n),
       filterPanelKey: Key('$keyPrefix-filter-panel'),
       filterPanelExtraWidth: 180,
       filterUpdate: paged.filterUpdate,
@@ -591,7 +600,7 @@ class MomentsContent extends HookConsumerWidget {
       informationSlots: [
         AppListHeaderInfo(
           key: Key('$keyPrefix-page-total'),
-          label: '${paged.total} 个时刻',
+          label: l10n.momentCountLabel(paged.total),
         ),
       ],
       actionSlots: paged.items.isEmpty
@@ -599,7 +608,7 @@ class MomentsContent extends HookConsumerWidget {
           : [
               AppTextButton(
                 key: Key('$keyPrefix-enter-selection-button'),
-                label: '选择',
+                label: l10n.momentSelectAction,
                 size: useMobileFilterDrawer
                     ? AppTextButtonSize.xSmall
                     : AppTextButtonSize.small,
@@ -669,16 +678,17 @@ class MomentsContent extends HookConsumerWidget {
     required ValueChanged<MomentListItem> onLongPress,
   }) {
     final isLoading = async.isLoading && async.value == null;
+    final l10n = AppLocalizations.of(context);
     if (!isLoading && async.hasError && paged.isEmpty) {
-      return const SliverToBoxAdapter(
-        child: AppEmptyState(message: '时刻列表加载失败，请稍后重试'),
+      return SliverToBoxAdapter(
+        child: AppEmptyState(message: l10n.errorMomentListLoadFailed),
       );
     }
     if (!isLoading && paged.isEmpty && paged.filterUpdate.hasFailed) {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
     if (!isLoading && paged.isEmpty) {
-      return const SliverToBoxAdapter(child: AppEmptyState(message: '暂无时刻数据'));
+      return SliverToBoxAdapter(child: AppEmptyState(message: l10n.momentEmptyList));
     }
     // loading 用占位时刻渲染真实卡片，由 [AppSkeletonizer] 灰化。
     final items = isLoading ? momentListPlaceholders() : paged.items;
@@ -718,11 +728,14 @@ class MomentsContent extends HookConsumerWidget {
     WidgetRef ref,
     MomentListItem item,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除时刻',
-      message: '确认删除“${item.displayLabel}”？该时刻标记会被永久删除，不会删除原视频或切片。',
-      confirmLabel: '删除',
+      title: l10n.momentDeleteTitle,
+      message: l10n.momentDeleteMarkerConfirmMessage(
+        item.localizedDisplayLabel(l10n),
+      ),
+      confirmLabel: l10n.commonDelete,
       danger: true,
       dialogKey: Key('$keyPrefix-delete-dialog'),
       confirmKey: Key('$keyPrefix-delete-confirm-button'),
@@ -736,12 +749,12 @@ class MomentsContent extends HookConsumerWidget {
         return;
       }
       unawaited(_refreshAfterPointDelete(ref));
-      showToast('已删除时刻');
+      showToast(l10n.momentDeletedToast);
     } catch (error) {
       if (!context.mounted) {
         return;
       }
-      showToast(apiErrorMessage(error, fallback: '删除失败，请重试'));
+      showToast(apiErrorMessage(error, fallback: l10n.momentErrorDeleteFailed));
     }
   }
 
@@ -794,11 +807,12 @@ class MomentsContent extends HookConsumerWidget {
         .where((item) => selectedPointIds.contains(item.pointId))
         .toList(growable: false);
     if (selected.isEmpty) return;
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除时刻',
-      message: '确认删除选中的 ${selected.length} 个时刻？这些时刻标记会被永久删除，不会删除原视频或切片。',
-      confirmLabel: '删除',
+      title: l10n.momentDeleteTitle,
+      message: l10n.momentBatchDeleteMarkerConfirmMessage(selected.length),
+      confirmLabel: l10n.commonDelete,
       danger: true,
       dialogKey: Key('$keyPrefix-batch-delete-dialog'),
       confirmKey: Key('$keyPrefix-batch-delete-confirm-button'),

@@ -14,6 +14,7 @@ import 'package:sakuramedia/features/external_player/data/external_player_channe
 import 'package:sakuramedia/features/external_player/presentation/widgets/external_player_settings_content.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/blacklisted_movies_section.dart';
 import 'package:sakuramedia/features/plugins/presentation/pages/desktop/plugins_section.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_rail.dart';
@@ -33,68 +34,67 @@ class _DesktopConfigurationPageState
   );
   static const Key _advancedCategoryKey = Key('configuration-tab-advanced');
 
-  late final List<_ConfigurationTab> _tabs = _buildTabs();
-  late int _selectedIndex = _tabs.indexWhere(
-    (tab) => tab.category.itemKey == _defaultCategoryKey,
-  );
+  List<_ConfigurationTab> get _tabs =>
+      _buildTabs(AppLocalizations.of(context));
+  int _selectedIndex = 2;
   bool _advancedSettingsDirty = false;
 
   // 顺序即右侧 IndexedStack 的索引；itemKey 沿用原 tab key，保持深链/测试兼容。
-  List<_ConfigurationTab> _buildTabs() {
+  List<_ConfigurationTab> _buildTabs(AppLocalizations l10n) {
     return [
       _ConfigurationTab(
-        category: const _ConfigurationCategory(
-          itemKey: Key('configuration-tab-account-security'),
-          label: '账号安全',
+        category: _ConfigurationCategory(
+          itemKey: const Key('configuration-tab-account-security'),
+          label: l10n.configTabAccountSecurity,
           icon: Icons.shield_outlined,
         ),
         builder: (active) => AccountSecuritySection(active: active),
       ),
       _ConfigurationTab(
-        category: const _ConfigurationCategory(
-          itemKey: Key('configuration-tab-appearance'),
-          label: '外观',
+        category: _ConfigurationCategory(
+          itemKey: const Key('configuration-tab-appearance'),
+          label: l10n.configTabAppearance,
           icon: Icons.palette_outlined,
         ),
         builder: (active) => const AppearanceSettingsContent(),
       ),
       _ConfigurationTab(
-        category: const _ConfigurationCategory(
+        category: _ConfigurationCategory(
           itemKey: _defaultCategoryKey,
-          label: '媒体库',
+          label: l10n.configTabMediaLibraries,
           icon: Icons.folder_open_outlined,
         ),
         builder: (active) => MediaLibrariesSection(active: active),
       ),
       _ConfigurationTab(
-        category: const _ConfigurationCategory(
-          itemKey: Key('configuration-tab-downloads'),
-          label: '下载器',
+        category: _ConfigurationCategory(
+          itemKey: const Key('configuration-tab-downloads'),
+          label: l10n.configTabDownloadClients,
           icon: Icons.download_outlined,
         ),
         builder: (active) => DownloadClientsSection(active: active),
       ),
       _ConfigurationTab(
-        category: const _ConfigurationCategory(
-          itemKey: Key('configuration-tab-indexers'),
-          label: '索引器',
+        category: _ConfigurationCategory(
+          itemKey: const Key('configuration-tab-indexers'),
+          label: l10n.configTabIndexers,
           icon: Icons.travel_explore_outlined,
         ),
         builder: (active) => IndexerSettingsSection(active: active),
       ),
       if (const ExternalPlayerChannel().isSupported)
         _ConfigurationTab(
-          category: const _ConfigurationCategory(
-            itemKey: Key('configuration-tab-external-player'),
-            label: '外部播放器',
+          category: _ConfigurationCategory(
+            itemKey: const Key('configuration-tab-external-player'),
+            label: l10n.configTabExternalPlayer,
             icon: Icons.open_in_new_rounded,
           ),
           builder: (active) => ExternalPlayerSettingsContent(active: active),
         ),
       _ConfigurationTab(
-        category: const _ConfigurationCategory(
-          itemKey: Key('configuration-tab-blacklisted-movies'),
-          label: '屏蔽影片',
+        category: _ConfigurationCategory(
+          itemKey: const Key('configuration-tab-blacklisted-movies'),
+          label: l10n.configTabBlacklistedMovies,
           icon: Icons.block_outlined,
         ),
         // 列表页自持滚动容器（滚到底加载下一页），不再套外层滚动视图。
@@ -102,9 +102,9 @@ class _DesktopConfigurationPageState
         builder: (active) => BlacklistedMoviesSection(active: active),
       ),
       _ConfigurationTab(
-        category: const _ConfigurationCategory(
+        category: _ConfigurationCategory(
           itemKey: _advancedCategoryKey,
-          label: '高级设置',
+          label: l10n.configTabAdvanced,
           icon: Icons.tune_outlined,
         ),
         builder: (active) => DesktopAdvancedSettingsSection(
@@ -113,17 +113,17 @@ class _DesktopConfigurationPageState
         ),
       ),
       _ConfigurationTab(
-        category: const _ConfigurationCategory(
-          itemKey: Key('configuration-tab-plugins'),
-          label: '插件',
+        category: _ConfigurationCategory(
+          itemKey: const Key('configuration-tab-plugins'),
+          label: l10n.configTabPlugins,
           icon: Icons.extension_outlined,
         ),
         builder: (active) => DesktopPluginsSection(active: active),
       ),
       _ConfigurationTab(
-        category: const _ConfigurationCategory(
-          itemKey: Key('configuration-tab-system-maintenance'),
-          label: '系统维护',
+        category: _ConfigurationCategory(
+          itemKey: const Key('configuration-tab-system-maintenance'),
+          label: l10n.configTabSystemMaintenance,
           icon: Icons.build_outlined,
         ),
         builder: (active) => SystemMaintenanceSection(active: active),
@@ -139,11 +139,12 @@ class _DesktopConfigurationPageState
     final leavingAdvanced =
         _tabs[_selectedIndex].category.itemKey == _advancedCategoryKey;
     if (leavingAdvanced && _advancedSettingsDirty) {
+      final l10n = AppLocalizations.of(context);
       final confirmed = await showAppConfirmDialog(
         context,
-        title: '有未保存的改动',
-        message: '高级设置里还有未保存的改动，确认离开？',
-        confirmLabel: '确认离开',
+        title: l10n.configUnsavedChangesTitle,
+        message: l10n.configLeaveUnsavedMessage,
+        confirmLabel: l10n.configLeaveConfirm,
         dialogKey: const Key('configuration-advanced-leave-confirm-dialog'),
         confirmKey: const Key('configuration-advanced-leave-confirm-button'),
         cancelKey: const Key('configuration-advanced-leave-cancel-button'),

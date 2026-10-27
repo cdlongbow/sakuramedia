@@ -73,6 +73,45 @@ void main() {
     });
   });
 
+  test('getAccount maps user language', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/account',
+      statusCode: 200,
+      body: <String, dynamic>{
+        'username': 'account',
+        'language': 'en',
+        'created_at': '2026-03-08T09:00:00Z',
+        'last_login_at': '2026-03-08T10:00:00Z',
+      },
+    );
+
+    final account = await accountApi.getAccount();
+
+    expect(account.language, 'en');
+  });
+
+  test('updateLanguage patches account and maps response', () async {
+    adapter.enqueueJson(
+      method: 'PATCH',
+      path: '/account',
+      statusCode: 200,
+      body: <String, dynamic>{
+        'username': 'account',
+        'language': 'en',
+        'created_at': '2026-03-08T09:00:00Z',
+        'last_login_at': '2026-03-08T10:00:00Z',
+      },
+    );
+
+    final account = await accountApi.updateLanguage('en');
+
+    expect(account.language, 'en');
+    expect(adapter.requests.single.method, 'PATCH');
+    expect(adapter.requests.single.path, '/account');
+    expect(adapter.requests.single.body, <String, dynamic>{'language': 'en'});
+  });
+
   test('updateUsername converts backend error to ApiException', () async {
     adapter.enqueueJson(
       method: 'PATCH',

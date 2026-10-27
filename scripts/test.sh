@@ -15,6 +15,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# ARB 生成物不入库，测试前显式生成，避免依赖 Flutter 的隐式生成时机。
+flutter gen-l10n
+
 # 每次重新生成（不到 1s）。bundle 不入库，所以不存在「加了 test 文件却忘了重新
 # 生成、新测试被静默跳过」这种事。
 dart run tool/gen_test_bundles.dart --quiet

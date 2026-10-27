@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 /// 系统概览的纯展示格式化与状态口径（不依赖状态对象，输入即 DTO）。
@@ -43,12 +44,17 @@ StorageUsageBreakdown? storageUsageBreakdown(MediaLibraryUsageDto library) {
 }
 
 /// 嵌入服务（JoyTag）连通性；未启用 / 探测失败各有单独文案。
-String embeddingServiceHealthLabel(StatusImageSearchDto? status) {
-  if (status?.enabled == false) return '未启用';
+String embeddingServiceHealthLabel(
+  StatusImageSearchDto? status,
+  AppLocalizations l10n,
+) {
+  if (status?.enabled == false) return l10n.systemMaintenanceDisabled;
   if (status == null) {
-    return '不可用';
+    return l10n.overviewStatusUnavailable;
   }
-  return status.embeddingService.healthy ? '正常' : '异常';
+  return status.embeddingService.healthy
+      ? l10n.overviewStatusHealthy
+      : l10n.overviewStatusAbnormal;
 }
 
 AppTextTone embeddingServiceHealthTone(StatusImageSearchDto? status) {
@@ -68,20 +74,48 @@ int pendingIndexCount(StatusImageSearchDto? status) {
   return status.indexing.pendingThumbnails;
 }
 
-String imageSearchIndexSpaceLabel(StatusImageSearchDto? status) {
-  if (status?.enabled == false) return '未启用';
+String imageSearchIndexSpaceLabel(
+  StatusImageSearchDto? status,
+  AppLocalizations l10n,
+) {
+  if (status?.enabled == false) return l10n.systemMaintenanceDisabled;
   if (status == null) {
-    return '不可用';
+    return l10n.overviewStatusUnavailable;
   }
   if (status.indexSpace.isRebuilding) {
-    return '重建中';
+    return l10n.systemMaintenanceRebuilding;
   }
   return switch (status.indexSpace.state) {
-    'ready' => '就绪',
-    'rebuild_required' => '需重建',
-    'uninitialized' => '未建立',
-    'unavailable' => '不可用',
-    _ => '未知',
+    'ready' => l10n.overviewIndexSpaceReady,
+    'rebuild_required' => l10n.overviewIndexSpaceRebuildRequired,
+    'uninitialized' => l10n.overviewIndexSpaceUninitialized,
+    'unavailable' => l10n.overviewStatusUnavailable,
+    _ => l10n.commonUnknown,
+  };
+}
+
+/// 观看趋势时间窗口的完整描述（用于「近 30 天」这类句子）。
+String watchTrendRangePeriodLabel(
+  WatchTrendRange range,
+  AppLocalizations l10n,
+) {
+  return switch (range) {
+    WatchTrendRange.last7Days => l10n.overviewRangeLast7Days,
+    WatchTrendRange.last30Days => l10n.overviewRangeLast30Days,
+    WatchTrendRange.last90Days => l10n.overviewRangeLast90Days,
+    WatchTrendRange.lastYear => l10n.overviewRangeLastYear,
+    WatchTrendRange.all => l10n.overviewRangeAllTime,
+  };
+}
+
+/// 观看趋势时间窗口的短标签（用于分段控件）。
+String watchTrendRangeShortLabel(WatchTrendRange range, AppLocalizations l10n) {
+  return switch (range) {
+    WatchTrendRange.last7Days => l10n.overviewRangeLast7DaysShort,
+    WatchTrendRange.last30Days => l10n.overviewRangeLast30DaysShort,
+    WatchTrendRange.last90Days => l10n.overviewRangeLast90DaysShort,
+    WatchTrendRange.lastYear => l10n.overviewRangeLastYearShort,
+    WatchTrendRange.all => l10n.overviewRangeAllTimeShort,
   };
 }
 

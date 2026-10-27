@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/watch_trend_card.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 void main() {
@@ -16,10 +17,7 @@ void main() {
     );
 
     expect(find.text('近 30 天看过 3 部'), findsOneWidget);
-    expect(
-      find.byKey(const Key('overview-watch-trend-chart')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('overview-watch-trend-chart')), findsOneWidget);
     expect(find.text('09-01'), findsOneWidget);
     expect(find.text('09-03'), findsOneWidget);
   });
@@ -70,9 +68,7 @@ void main() {
       ),
     );
 
-    await tester.tap(
-      find.byKey(const Key('overview-watch-trend-range-7d')),
-    );
+    await tester.tap(find.byKey(const Key('overview-watch-trend-range-7d')));
     await tester.pump();
 
     expect(selected, <WatchTrendRange>[WatchTrendRange.last7Days]);
@@ -157,7 +153,10 @@ void main() {
       find.byKey(const Key('overview-watch-trend-range-1y')),
       findsOneWidget,
     );
-    expect(find.byKey(const Key('overview-watch-trend-range-90d')), findsNothing);
+    expect(
+      find.byKey(const Key('overview-watch-trend-range-90d')),
+      findsNothing,
+    );
   });
 }
 
@@ -178,6 +177,12 @@ Future<void> _pumpCard(WidgetTester tester, Widget card) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: sakuraThemeData,
+      locale: const Locale('zh'),
+      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
       home: Scaffold(body: SingleChildScrollView(child: card)),
     ),
   );

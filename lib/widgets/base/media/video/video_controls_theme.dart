@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_loading_indicator.dart';
 
 /// 「层级二」轻量播放器的控制主题 / 控件 builder 构建函数。
@@ -30,7 +31,9 @@ Widget Function(VideoState state) resolveMoviePlayerVideoControlsBuilder({
 
 @visibleForTesting
 Widget buildMoviePlayerBufferingIndicator(BuildContext context) {
-  return const VideoLoadingIndicator(label: '正在缓冲…');
+  return VideoLoadingIndicator(
+    label: appL10n(context).baseVideoBuffering,
+  );
 }
 
 MaterialVideoControlsThemeData buildMoviePlayerMobileControlsThemeData({

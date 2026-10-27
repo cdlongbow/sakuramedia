@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/features/recent_views/presentation/providers/recent_views_provider.dart';
 import 'package:sakuramedia/features/recent_views/presentation/widgets/recent_views_grid_sliver.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
@@ -12,19 +13,20 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_s
 class MobileRecentViewsPage extends ConsumerWidget {
   const MobileRecentViewsPage({super.key});
 
-  Future<void> _refresh(WidgetRef ref) async {
+  Future<void> _refresh(BuildContext context, WidgetRef ref) async {
+    final failureMessage = AppLocalizations.of(context).recentRefreshFailed;
     ref.invalidate(recentViewsProvider);
     try {
       await ref.read(recentViewsProvider.future);
     } catch (_) {
-      showToast('刷新失败');
+      showToast(failureMessage);
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AppAdaptiveRefreshScrollView(
-      onRefresh: () => _refresh(ref),
+      onRefresh: () => _refresh(context, ref),
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.all(AppPageInsets.compact),

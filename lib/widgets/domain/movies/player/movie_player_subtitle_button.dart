@@ -4,13 +4,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_subtitle_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/glass/app_glass_surface.dart';
 import 'package:sakuramedia/widgets/base/overlays/overlay_entry_rebuild.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_menu_widgets.dart';
 
 const Duration _subtitleMenuCloseDelay = Duration(milliseconds: 80);
-const String _noAvailableSubtitleLabel = '无可用字幕';
 
 class MoviePlayerSubtitleButton extends StatefulWidget {
   const MoviePlayerSubtitleButton({
@@ -376,7 +376,7 @@ class _MoviePlayerSubtitleButtonState extends State<MoviePlayerSubtitleButton> {
             ),
             alignment: Alignment.center,
             child: Text(
-              '字幕',
+              AppLocalizations.of(context).widgetMoviePlayerSubtitle,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s14,
@@ -453,7 +453,7 @@ class _MoviePlayerSubtitleEmptyItem extends StatelessWidget {
       height: overlayTokens.menuItemHeight,
       child: Center(
         child: Text(
-          _noAvailableSubtitleLabel,
+          AppLocalizations.of(context).widgetMoviePlayerNoSubtitle,
           key: const Key('movie-player-subtitle-menu-empty-label'),
           style: resolveAppTextStyle(
             context,

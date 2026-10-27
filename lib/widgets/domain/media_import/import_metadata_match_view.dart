@@ -6,6 +6,7 @@ import 'package:sakuramedia/features/media_import/data/import_failed_item_dto.da
 import 'package:sakuramedia/features/media_import/data/import_metadata_search_dto.dart';
 import 'package:sakuramedia/features/media_import/presentation/providers/import_metadata_match_provider.dart';
 import 'package:sakuramedia/features/media_import/presentation/providers/media_import_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
@@ -67,6 +68,7 @@ class _ImportMetadataMatchViewState
   Future<void> _retry() async {
     final candidateId = _selectedCandidateId;
     if (candidateId == null || _isRetrying) return;
+    final l10n = AppLocalizations.of(context);
     setState(() => _isRetrying = true);
     try {
       await ref
@@ -77,11 +79,17 @@ class _ImportMetadataMatchViewState
             candidateId: candidateId,
           );
       if (!mounted) return;
-      showToast('重试任务已提交');
+      showToast(l10n.widgetMediaImportRetrySubmitted);
       widget.onRetried();
     } catch (error) {
       if (!mounted) return;
-      showToast(apiErrorMessage(error, fallback: '提交重试失败，请稍后重试。'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: l10n.widgetMediaImportSubmitRetryFailed,
+          l10n: l10n,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isRetrying = false);
@@ -91,6 +99,7 @@ class _ImportMetadataMatchViewState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final matchState = ref.watch(
       importMetadataMatchProvider(widget.taskRunId, widget.item.id),
     );
@@ -103,7 +112,7 @@ class _ImportMetadataMatchViewState
           children: [
             AppIconButton(
               key: const Key('import-metadata-match-back'),
-              tooltip: '返回失败文件列表',
+              tooltip: l10n.widgetMediaImportBackToFailedList,
               icon: const Icon(Icons.arrow_back_rounded),
               onPressed: widget.onBack,
             ),
@@ -113,7 +122,7 @@ class _ImportMetadataMatchViewState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '手动匹配元数据',
+                    l10n.widgetMediaImportManualMatchTitle,
                     style: resolveAppTextStyle(
                       context,
                       size: AppTextSize.s16,
@@ -143,8 +152,8 @@ class _ImportMetadataMatchViewState
           fieldKey: const Key('import-metadata-number-field'),
           searchButtonKey: const Key('import-metadata-search-button'),
           controller: _numberController,
-          hintText: '输入影片番号，如 ABC-001',
-          searchButtonTooltip: '搜索番号元数据',
+          hintText: l10n.widgetMediaImportNumberHint,
+          searchButtonTooltip: l10n.widgetMediaImportSearchNumberTooltip,
           isSearching: matchState.isLoading,
           showSearchingIndicator: false,
           onSearchTap: matchState.isLoading ? null : _search,
@@ -158,7 +167,7 @@ class _ImportMetadataMatchViewState
             Expanded(
               child: AppButton(
                 key: const Key('import-metadata-retry-button'),
-                label: '用此元数据重试导入',
+                label: l10n.widgetMediaImportRetryWithMetadata,
                 variant: AppButtonVariant.primary,
                 isLoading: _isRetrying,
                 onPressed: _selectedCandidateId == null || _isRetrying
@@ -176,6 +185,7 @@ class _ImportMetadataMatchViewState
     BuildContext context,
     ImportMetadataMatchState matchState,
   ) {
+    final l10n = AppLocalizations.of(context);
     if (matchState.isLoading && matchState.response == null) {
       return const Center(child: AppInlineSpinner());
     }
@@ -196,7 +206,7 @@ class _ImportMetadataMatchViewState
             SizedBox(height: context.appSpacing.md),
             AppButton(
               key: const Key('import-metadata-search-retry'),
-              label: '重试',
+              label: l10n.commonRetry,
               onPressed: _search,
             ),
           ],
@@ -205,16 +215,19 @@ class _ImportMetadataMatchViewState
     }
     final response = matchState.response;
     if (!matchState.hasSearched || response == null) {
-      return const Center(
+      return Center(
         child: AppEmptyState(
           icon: Icons.search_rounded,
-          message: '输入影片番号后搜索影片元数据。',
+          message: l10n.widgetMediaImportSearchPrompt,
         ),
       );
     }
     if (response.candidates.isEmpty) {
-      return const Center(
-        child: AppEmptyState(icon: Icons.search_off_rounded, message: '没有找到匹配的影片'),
+      return Center(
+        child: AppEmptyState(
+          icon: Icons.search_off_rounded,
+          message: l10n.widgetMediaImportNoCandidates,
+        ),
       );
     }
     final sourceErrors = response.sourceErrors;
@@ -230,7 +243,7 @@ class _ImportMetadataMatchViewState
               .join();
           return AppNoticeCard(
             leadingIcon: Icons.warning_amber_rounded,
-            description: '$names查询失败，结果可能不完整。',
+            description: l10n.widgetMediaImportSourceErrors(names),
           );
         }
         final candidate = response.candidates[index - (hasErrors ? 1 : 0)];
@@ -265,7 +278,9 @@ class _MetadataCandidateCard extends StatelessWidget {
     final metaParts = <String>[
       candidate.movieNumber,
       if (candidate.releaseDate case final date? when date.isNotEmpty) date,
-      '${candidate.durationMinutes} 分钟',
+      AppLocalizations.of(
+        context,
+      ).widgetMediaImportDurationMinutes(candidate.durationMinutes),
     ];
     return AppLeftCoverCard(
       coverWidth: tokens.importMetadataCandidateCoverWidth,

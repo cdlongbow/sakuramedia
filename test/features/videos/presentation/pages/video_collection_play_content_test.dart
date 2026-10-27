@@ -13,9 +13,11 @@ import 'package:sakuramedia/features/videos/presentation/pages/shared/video_coll
 import 'package:sakuramedia/features/videos/presentation/providers/video_collection_playback_factory_provider.dart';
 import 'package:sakuramedia/widgets/domain/media/movie_media_thumbnail_grid.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/merged_position_indicator.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import '../../../../support/test_api_bundle.dart';
 import '../../../../support/test_playlist_player.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 class _Controller extends Fake implements VideoController {
   _Controller(this.player);
@@ -120,6 +122,12 @@ void main() {
           ],
           child: OKToast(
             child: MaterialApp(
+              locale: const Locale('zh'),
+              localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+                AppLocalizations.delegate,
+                ...GlobalMaterialLocalizations.delegates,
+              ],
+              supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
               theme: mobile ? sakuraMobileThemeData : sakuraThemeData,
               home: VideoCollectionPlayContent(
                 collectionId: 3,

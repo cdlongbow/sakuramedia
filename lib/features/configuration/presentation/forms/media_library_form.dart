@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/provider_catalog_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/provider_config_form.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
@@ -48,9 +49,12 @@ class MediaLibraryFormValue {
   }
 }
 
-String? validateMediaLibraryName(String? value) {
+String? validateMediaLibraryName(
+  String? value, {
+  required AppLocalizations l10n,
+}) {
   if (value == null || value.trim().isEmpty) {
-    return '请输入媒体库名称';
+    return l10n.mediaLibraryNameRequired;
   }
   return null;
 }
@@ -76,14 +80,15 @@ class MediaLibraryFormFields extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppTextField(
       fieldKey: nameFieldKey,
       controller: nameController,
       focusNode: nameFocusNode,
       enabled: enabled,
-      label: '名称',
-      hintText: '例如：Main Library',
-      validator: validateMediaLibraryName,
+      label: l10n.mediaLibraryNameLabel,
+      hintText: l10n.mediaLibraryNameHint,
+      validator: (value) => validateMediaLibraryName(value, l10n: l10n),
       autovalidateMode: autovalidateMode,
       textInputAction: TextInputAction.next,
       onFieldSubmitted: onNameSubmitted,
@@ -107,9 +112,10 @@ class MediaLibraryProviderSelectField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppSelectField<String>(
       key: const Key('media-library-provider-field'),
-      label: '存储 Provider',
+      label: l10n.mediaLibraryProviderLabel,
       value: value,
       items: [
         for (final provider in providers)
@@ -119,7 +125,8 @@ class MediaLibraryProviderSelectField extends StatelessWidget {
           ),
       ],
       onChanged: enabled ? onChanged : null,
-      validator: (selected) => selected == null ? '请选择存储 Provider' : null,
+      validator: (selected) =>
+          selected == null ? l10n.mediaLibrarySelectProvider : null,
     );
   }
 }
@@ -135,7 +142,9 @@ class MediaLibraryProviderUnavailableNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      'Provider「$providerKey」当前不可用，无法编辑其配置。可先修改名称；恢复插件后再编辑配置。',
+      AppLocalizations.of(
+        context,
+      ).mediaLibraryProviderUnavailableHint(providerKey),
       style: resolveAppTextStyle(
         context,
         size: AppTextSize.s12,

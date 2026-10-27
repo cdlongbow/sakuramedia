@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/overview/presentation/widgets/overview_card
 import 'package:sakuramedia/features/overview/presentation/widgets/overview_card_states.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
 import 'package:sakuramedia/features/status/presentation/status_placeholders.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/forms/app_segmented_control.dart';
@@ -40,6 +41,7 @@ class WatchTrendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final selector = AppSegmentedControl<WatchTrendRange>(
       key: const Key('overview-watch-trend-range-selector'),
       items: <AppSegmentedItem<WatchTrendRange>>[
@@ -47,7 +49,7 @@ class WatchTrendCard extends StatelessWidget {
           AppSegmentedItem<WatchTrendRange>(
             key: Key('overview-watch-trend-range-${item.apiValue}'),
             value: item,
-            label: item.shortLabel,
+            label: watchTrendRangeShortLabel(item, l10n),
           ),
       ],
       selected: range,
@@ -57,7 +59,7 @@ class WatchTrendCard extends StatelessWidget {
 
     return AppContentCard(
       key: const Key('overview-watch-trend-card'),
-      title: '观看趋势',
+      title: l10n.overviewWatchTrend,
       titleStyle: resolveAppTextStyle(
         context,
         size: AppTextSize.s16,
@@ -96,6 +98,7 @@ class WatchTrendCard extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (errorMessage != null) {
       return OverviewCardErrorRow(
         message: errorMessage!,
@@ -119,7 +122,10 @@ class WatchTrendCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Text(
-            '${range.periodLabel}看过 ${formatCount(watchedCount)} 部',
+            l10n.overviewWatchTrendSummary(
+              watchTrendRangePeriodLabel(range, l10n),
+              formatCount(watchedCount),
+            ),
             key: const Key('overview-watch-trend-summary'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -154,7 +160,7 @@ class WatchTrendCard extends StatelessWidget {
                   )
                 : Center(
                     child: Text(
-                      '该区间暂无观看记录',
+                      l10n.overviewNoWatchHistoryInRange,
                       style: resolveAppTextStyle(
                         context,
                         size: AppTextSize.s12,

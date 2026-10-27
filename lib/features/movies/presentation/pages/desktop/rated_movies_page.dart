@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_summary_list_content.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/rated_movies_header.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
@@ -21,10 +22,11 @@ class DesktopRatedMoviesPage extends ConsumerWidget {
       contentKey: const Key('desktop-rated-movies-page'),
       sectionSpacing: context.appSpacing.lg,
       registerPageRefresh: true,
-      emptyMessage: '还没有评分的影片',
+      emptyMessage: AppLocalizations.of(context).moviePageEmptyNotRated,
       headerBuilder: (context, args) =>
           RatedMoviesHeader(args: args, isMobile: false),
-      trailingLabelForMovie: ratedTotalLabel,
+      trailingLabelForMovie: (movie) =>
+          ratedTotalLabel(movie, l10n: AppLocalizations.of(context)),
       onMovieTap: (context, movieNumber) => context.pushDesktopMovieDetail(
         movieNumber: movieNumber,
         fallbackPath: desktopRatingsPath,

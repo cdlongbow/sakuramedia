@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto.dart';
 
@@ -30,8 +31,9 @@ class IndexerConnectionTestState {
     return IndexerConnectionTestState(
       isTesting: isTesting ?? this.isTesting,
       result: clearResult ? null : result ?? this.result,
-      requestError:
-          clearRequestError ? null : requestError ?? this.requestError,
+      requestError: clearRequestError
+          ? null
+          : requestError ?? this.requestError,
       configurationVersion: configurationVersion ?? this.configurationVersion,
     );
   }
@@ -74,7 +76,12 @@ class IndexerConnectionTest extends _$IndexerConnectionTest {
     } catch (error) {
       if (!_disposed && requestVersion == state.configurationVersion) {
         state = state.copyWith(
-          requestError: apiErrorMessage(error, fallback: 'Torznab 连通性测试请求失败'),
+          requestError: ref.apiErrorMessage(
+            error,
+            fallback: ref
+                .read(appLocalizationsProvider)
+                .errorTorznabConnectionTestFailed,
+          ),
         );
       }
       return null;

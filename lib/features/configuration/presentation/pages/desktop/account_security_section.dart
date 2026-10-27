@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/account/presentation/account_placeholders.d
 import 'package:sakuramedia/features/account/presentation/providers/account_profile_provider.dart';
 import 'package:sakuramedia/features/account/presentation/providers/account_profile_state.dart';
 import 'package:sakuramedia/features/account/presentation/providers/api_keys_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -107,7 +108,7 @@ class _AccountSecuritySectionState
     final state = ref.read(accountProfileProvider);
     if (saved) {
       _usernameController.text = state.account?.username ?? '';
-      showToast('用户名已更新');
+      showToast(AppLocalizations.of(context).accountUsernameUpdated);
       return;
     }
 
@@ -148,20 +149,29 @@ class _AccountSecuritySectionState
         if (!mounted) {
           return;
         }
-        showToast('密码已修改，但新密码登录校验失败，请重新登录确认');
+        showToast(
+          AppLocalizations.of(
+            context,
+          ).accountPasswordChangedReloginFailed,
+        );
         return;
       }
 
       if (!mounted) {
         return;
       }
-      showToast('密码已更新，请重新登录');
+      showToast(AppLocalizations.of(context).accountPasswordChangedRelogin);
       await context.logOut();
     } catch (error) {
       if (!mounted) {
         return;
       }
-      showToast(apiErrorMessage(error, fallback: '修改密码失败'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(context).errorChangePasswordFailed,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -191,14 +201,14 @@ class _AccountSecuritySectionState
 
   String? _validateCurrentPassword(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return '请输入当前密码';
+      return AppLocalizations.of(context).accountCurrentPasswordRequired;
     }
     return null;
   }
 
   String? _validateUsername(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return '请输入用户名';
+      return AppLocalizations.of(context).errorUsernameRequired;
     }
     return null;
   }
@@ -206,10 +216,10 @@ class _AccountSecuritySectionState
   String? _validateNewPassword(String? value) {
     final nextPassword = value?.trim() ?? '';
     if (nextPassword.isEmpty) {
-      return '请输入新密码';
+      return AppLocalizations.of(context).accountNewPasswordRequired;
     }
     if (nextPassword == _currentPasswordController.text.trim()) {
-      return '新密码不能与当前密码相同';
+      return AppLocalizations.of(context).accountNewPasswordSameAsCurrent;
     }
     return null;
   }
@@ -217,10 +227,10 @@ class _AccountSecuritySectionState
   String? _validateConfirmPassword(String? value) {
     final confirmPassword = value?.trim() ?? '';
     if (confirmPassword.isEmpty) {
-      return '请再次输入新密码';
+      return AppLocalizations.of(context).accountConfirmPasswordRequired;
     }
     if (confirmPassword != _newPasswordController.text.trim()) {
-      return '两次输入的新密码不一致';
+      return AppLocalizations.of(context).accountPasswordMismatch;
     }
     return null;
   }
@@ -251,6 +261,7 @@ class _AccountSecuritySectionState
     AccountProfileState profileState,
   ) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final account = profileState.account;
     final showSkeleton = profileState.isLoading && account == null;
     final displayAccount = showSkeleton ? accountPlaceholder() : account;
@@ -258,7 +269,7 @@ class _AccountSecuritySectionState
         !profileState.isLoading && !profileState.isSaving && account != null;
 
     return AppContentCard(
-      title: '账号资料',
+      title: l10n.accountProfileTitle,
       padding: EdgeInsets.all(spacing.lg),
       headerBottomSpacing: spacing.md,
       // loading 用占位账号渲染真实资料卡与表单壳，由 [AppSkeletonizer] 灰化。
@@ -280,7 +291,7 @@ class _AccountSecuritySectionState
                 )
               else ...[
                 Text(
-                  '用户名用于登录和账号识别，保存后当前登录态保持不变。',
+                  l10n.accountUsernameHelpDesktop,
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s12,
@@ -296,8 +307,8 @@ class _AccountSecuritySectionState
                 AppTextField(
                   fieldKey: const Key('configuration-username-field'),
                   controller: _usernameController,
-                  label: '用户名',
-                  hintText: '请输入新的用户名',
+                  label: l10n.accountUsername,
+                  hintText: l10n.accountUsernameHint,
                   enabled: !profileState.isSaving,
                   validator: _validateUsername,
                 ),
@@ -319,7 +330,7 @@ class _AccountSecuritySectionState
                   child: AppButton(
                     key: const Key('configuration-username-submit-button'),
                     onPressed: canSubmitUsername ? _submitUsername : null,
-                    label: '保存用户名',
+                    label: l10n.accountSaveUsername,
                     variant: AppButtonVariant.primary,
                     isLoading: profileState.isSaving,
                   ),
@@ -334,9 +345,10 @@ class _AccountSecuritySectionState
 
   Widget _buildPasswordCard(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
 
     return AppContentCard(
-      title: '修改密码',
+      title: l10n.accountChangePasswordTitle,
       padding: EdgeInsets.all(spacing.lg),
       headerBottomSpacing: spacing.md,
       child: Form(
@@ -345,7 +357,7 @@ class _AccountSecuritySectionState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '修改密码后将立即退出当前登录，需要使用新密码重新登录。',
+              l10n.accountChangePasswordNotice,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s12,
@@ -357,21 +369,21 @@ class _AccountSecuritySectionState
             AppPasswordField(
               fieldKey: const Key('configuration-password-current-field'),
               controller: _currentPasswordController,
-              label: '当前密码',
+              label: l10n.accountCurrentPassword,
               validator: _validateCurrentPassword,
             ),
             SizedBox(height: spacing.lg),
             AppPasswordField(
               fieldKey: const Key('configuration-password-new-field'),
               controller: _newPasswordController,
-              label: '新密码',
+              label: l10n.accountNewPassword,
               validator: _validateNewPassword,
             ),
             SizedBox(height: spacing.lg),
             AppPasswordField(
               fieldKey: const Key('configuration-password-confirm-field'),
               controller: _confirmPasswordController,
-              label: '确认新密码',
+              label: l10n.accountConfirmNewPassword,
               validator: _validateConfirmPassword,
             ),
             SizedBox(height: spacing.lg),
@@ -381,13 +393,13 @@ class _AccountSecuritySectionState
                 AppButton(
                   key: const Key('configuration-password-reset-button'),
                   onPressed: _isSubmitting ? null : _reset,
-                  label: '重置',
+                  label: l10n.accountReset,
                 ),
                 SizedBox(width: spacing.md),
                 AppButton(
                   key: const Key('configuration-password-submit-button'),
                   onPressed: _submit,
-                  label: '修改密码',
+                  label: l10n.accountChangePasswordTitle,
                   variant: AppButtonVariant.primary,
                   isLoading: _isSubmitting,
                 ),
@@ -401,19 +413,20 @@ class _AccountSecuritySectionState
 
   Widget _buildApiKeysCard(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final asyncKeys = ref.watch(apiKeysProvider);
     final keys = asyncKeys.value ?? const <ApiKeyDto>[];
     final showInitialLoading = asyncKeys.isLoading && !asyncKeys.hasValue;
 
     return AppContentCard(
-      title: 'API 密钥',
+      title: l10n.apiKeysTitle,
       padding: EdgeInsets.all(spacing.lg),
       headerBottomSpacing: spacing.md,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '供外部工具（如 MCP 服务）调用 API，权限等同于账号。密钥只在生成时显示一次，请妥善保存。',
+            l10n.apiKeysDescription,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -429,7 +442,10 @@ class _AccountSecuritySectionState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  apiErrorMessage(asyncKeys.error!, fallback: 'API 密钥加载失败'),
+                  apiErrorMessage(
+                    asyncKeys.error!,
+                    fallback: l10n.errorApiKeysLoadFailed,
+                  ),
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s12,
@@ -439,7 +455,7 @@ class _AccountSecuritySectionState
                 SizedBox(height: spacing.sm),
                 AppButton(
                   key: const Key('configuration-api-keys-retry-button'),
-                  label: '重试',
+                  label: l10n.commonRetry,
                   size: AppButtonSize.small,
                   onPressed: () => ref.invalidate(apiKeysProvider),
                 ),
@@ -447,7 +463,7 @@ class _AccountSecuritySectionState
             )
           else if (keys.isEmpty)
             Text(
-              '还没有 API 密钥。',
+              l10n.apiKeysEmpty,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s14,
@@ -470,7 +486,7 @@ class _AccountSecuritySectionState
             children: [
               AppButton(
                 key: const Key('configuration-api-keys-create-button'),
-                label: '生成新密钥',
+                label: l10n.apiKeysGenerate,
                 variant: AppButtonVariant.secondary,
                 icon: const Icon(Icons.add_rounded),
                 onPressed: () => _generateApiKey(context),
@@ -484,14 +500,16 @@ class _AccountSecuritySectionState
 
   Widget _buildApiKeyRow(BuildContext context, ApiKeyDto key) {
     final spacing = context.appSpacing;
-    final title = key.name.isEmpty ? '未命名密钥' : key.name;
+    final l10n = AppLocalizations.of(context);
+    final title = key.name.isEmpty ? l10n.apiKeyUnnamed : key.name;
     final createdAt = formatUpdatedAtLabel(key.createdAt);
-    final lastUsed = key.lastUsedAt == null
-        ? '从未使用'
-        : '最后使用 ${formatUpdatedAtLabel(key.lastUsedAt)}';
+    final lastUsedAt = formatUpdatedAtLabel(key.lastUsedAt);
+    final lastUsed = lastUsedAt == null
+        ? l10n.apiKeyNeverUsed
+        : l10n.apiKeyLastUsed(lastUsedAt);
     final subtitle = <String>[
       key.keyHint,
-      if (createdAt != null) '创建于 $createdAt',
+      if (createdAt != null) l10n.apiKeyCreatedAt(createdAt),
       lastUsed,
     ].join(' · ');
 
@@ -533,7 +551,7 @@ class _AccountSecuritySectionState
           AppIconButton(
             key: Key('configuration-api-key-delete-${key.id}'),
             icon: const Icon(Icons.delete_outline_rounded),
-            tooltip: '删除',
+            tooltip: l10n.commonDelete,
             onPressed: () => _deleteApiKey(context, key),
           ),
         ],
@@ -549,12 +567,13 @@ class _AccountSecuritySectionState
   }
 
   Future<void> _deleteApiKey(BuildContext context, ApiKeyDto key) async {
+    final l10n = AppLocalizations.of(context);
     final label = key.name.isEmpty ? key.keyHint : key.name;
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除 API 密钥',
-      message: '删除后使用「$label」的集成将立即失效，确认删除？',
-      confirmLabel: '删除',
+      title: l10n.apiKeyDeleteTitle,
+      message: l10n.apiKeyDeleteMessage(label),
+      confirmLabel: l10n.commonDelete,
       danger: true,
     );
     if (!confirmed || !context.mounted) {
@@ -564,7 +583,9 @@ class _AccountSecuritySectionState
       await ref.read(apiKeysProvider.notifier).delete(key.id);
     } catch (error) {
       if (context.mounted) {
-        showToast(apiErrorMessage(error, fallback: '删除密钥失败'));
+        showToast(
+          apiErrorMessage(error, fallback: l10n.errorApiKeyDeleteFailed),
+        );
       }
     }
   }
@@ -588,7 +609,7 @@ class _AccountProfileErrorBlock extends StatelessWidget {
         SizedBox(height: context.appSpacing.md),
         AppButton(
           key: const Key('configuration-username-retry-button'),
-          label: '重试',
+          label: AppLocalizations.of(context).commonRetry,
           onPressed: onRetry,
         ),
       ],
@@ -604,18 +625,24 @@ class _AccountProfileSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Wrap(
       spacing: spacing.md,
       runSpacing: spacing.sm,
       children: [
-        _AccountProfilePill(label: '当前用户名', value: account.username),
         _AccountProfilePill(
-          label: '创建时间',
-          value: formatUpdatedAtLabel(account.createdAt) ?? '未知',
+          label: l10n.accountCurrentUsername,
+          value: account.username,
         ),
         _AccountProfilePill(
-          label: '上次登录',
-          value: formatUpdatedAtLabel(account.lastLoginAt) ?? '未知',
+          label: l10n.accountCreatedAt,
+          value:
+              formatUpdatedAtLabel(account.createdAt) ?? l10n.commonUnknown,
+        ),
+        _AccountProfilePill(
+          label: l10n.accountLastLogin,
+          value:
+              formatUpdatedAtLabel(account.lastLoginAt) ?? l10n.commonUnknown,
         ),
       ],
     );

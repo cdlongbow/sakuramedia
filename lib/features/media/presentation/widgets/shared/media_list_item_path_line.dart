@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 /// 媒体列表行 / 移动端卡的共用文件名行：folder icon + 文件名 muted（省略号）。
@@ -58,7 +59,7 @@ class MediaListItemPathLine extends StatelessWidget {
           // 不用 Flexible：否则会和文件名行的 Expanded 平分剩余空间，
           // 把行尾动作顶不到最右边（末尾留一段空白）。
           Text(
-            '更新 $updatedLabel',
+            AppLocalizations.of(context).mediaListUpdatedAt(updatedLabel),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: mutedTextStyle,

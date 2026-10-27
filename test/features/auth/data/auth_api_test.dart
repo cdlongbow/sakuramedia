@@ -70,6 +70,27 @@ void main() {
     expect(credentialStore.password, 'pwd');
   });
 
+  test('createToken parses user language', () async {
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/auth/tokens',
+      statusCode: 200,
+      body: <String, dynamic>{
+        'access_token': 'access-1',
+        'refresh_token': 'refresh-1',
+        'token_type': 'Bearer',
+        'expires_in': 3600,
+        'expires_at': '2026-03-08T11:00:00Z',
+        'refresh_expires_at': '2026-03-15T11:00:00Z',
+        'user': <String, dynamic>{'username': 'account', 'language': 'en'},
+      },
+    );
+
+    final dto = await authApi.createToken(username: 'account', password: 'pwd');
+
+    expect(dto.user.language, 'en');
+  });
+
   test('createToken converts backend error to ApiException', () async {
     adapter.enqueueJson(
       method: 'POST',

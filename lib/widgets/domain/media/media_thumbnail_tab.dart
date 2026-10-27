@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_thumbnail_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
@@ -111,7 +112,13 @@ class MediaThumbnailTab extends ConsumerWidget {
                     if (onCreateClip != null)
                       AppIconButton(
                         key: Key('$keyPrefix-clip-toggle'),
-                        tooltip: state.clipSelectionMode ? '退出切片圈选' : '圈选切片',
+                        tooltip: state.clipSelectionMode
+                            ? AppLocalizations.of(
+                                context,
+                              ).widgetMediaClipSelectionExit
+                            : AppLocalizations.of(
+                                context,
+                              ).widgetMediaClipSelectionEnter,
                         isSelected: state.clipSelectionMode,
                         size: AppIconButtonSize.mini,
                         selectedIconColor: Theme.of(
@@ -198,11 +205,12 @@ class _MediaThumbnailIntervalSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return _MediaThumbnailControlGroup(
       key: Key('$keyPrefix-interval-group'),
       iconKey: Key('$keyPrefix-interval-icon'),
       icon: Icons.schedule_rounded,
-      tooltip: '缩略图时间间隔',
+      tooltip: l10n.widgetMediaThumbnailInterval,
       children: [
         for (final seconds in options)
           AppTextButton(
@@ -232,11 +240,12 @@ class _MediaThumbnailColumnsSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return _MediaThumbnailControlGroup(
       key: Key('$keyPrefix-columns-group'),
       iconKey: Key('$keyPrefix-columns-icon'),
       icon: Icons.grid_view_rounded,
-      tooltip: '缩略图列数',
+      tooltip: l10n.widgetMediaThumbnailColumns,
       children: [
         for (final columns in options)
           AppTextButton(
@@ -276,13 +285,15 @@ class _MediaThumbnailCompactToolbar extends StatelessWidget {
   final VoidCallback? onToggleClipSelectionMode;
 
   Future<void> _pickInterval(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     final value = await _showThumbnailOptionDrawer(
       context: context,
       drawerKey: Key('$keyPrefix-interval-drawer'),
-      title: '缩略图时间间隔',
+      title: l10n.widgetMediaThumbnailInterval,
       options: MediaThumbnailTab._intervalOptions,
       selectedValue: selectedIntervalSeconds,
-      optionLabelBuilder: (seconds) => '$seconds 秒',
+      optionLabelBuilder: (seconds) =>
+          l10n.widgetMediaThumbnailSeconds(seconds),
       optionKeyBuilder: (seconds) => Key('$keyPrefix-interval-option-$seconds'),
     );
     if (value != null) {
@@ -291,13 +302,15 @@ class _MediaThumbnailCompactToolbar extends StatelessWidget {
   }
 
   Future<void> _pickColumns(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     final value = await _showThumbnailOptionDrawer(
       context: context,
       drawerKey: Key('$keyPrefix-columns-drawer'),
-      title: '缩略图列数',
+      title: l10n.widgetMediaThumbnailColumns,
       options: MediaThumbnailTab._columnOptions,
       selectedValue: selectedColumns,
-      optionLabelBuilder: (columns) => '$columns 列',
+      optionLabelBuilder: (columns) =>
+          l10n.widgetMediaThumbnailColumnCount(columns),
       optionKeyBuilder: (columns) => Key('$keyPrefix-columns-option-$columns'),
     );
     if (value != null) {
@@ -307,6 +320,7 @@ class _MediaThumbnailCompactToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return SizedBox(
       height: context.appComponentTokens.buttonHeightXs,
       child: Row(
@@ -314,23 +328,27 @@ class _MediaThumbnailCompactToolbar extends StatelessWidget {
           AppFilterEntryButton(
             key: Key('$keyPrefix-interval-trigger'),
             icon: Icons.schedule_rounded,
-            label: '$selectedIntervalSeconds秒',
-            tooltip: '缩略图时间间隔',
+            label: l10n.widgetMediaThumbnailSecondsCompact(
+              selectedIntervalSeconds,
+            ),
+            tooltip: l10n.widgetMediaThumbnailInterval,
             onTap: () => unawaited(_pickInterval(context)),
           ),
           SizedBox(width: context.appSpacing.sm),
           AppFilterEntryButton(
             key: Key('$keyPrefix-columns-trigger'),
             icon: Icons.grid_view_rounded,
-            label: '$selectedColumns列',
-            tooltip: '缩略图列数',
+            label: l10n.widgetMediaThumbnailColumnCountCompact(selectedColumns),
+            tooltip: l10n.widgetMediaThumbnailColumns,
             onTap: () => unawaited(_pickColumns(context)),
           ),
           const Spacer(),
           if (onToggleClipSelectionMode != null)
             AppIconButton(
               key: Key('$keyPrefix-clip-toggle'),
-              tooltip: clipSelectionMode ? '退出切片圈选' : '圈选切片',
+              tooltip: clipSelectionMode
+                  ? l10n.widgetMediaClipSelectionExit
+                  : l10n.widgetMediaClipSelectionEnter,
               isSelected: clipSelectionMode,
               size: AppIconButtonSize.mini,
               selectedIconColor: Theme.of(context).colorScheme.primary,

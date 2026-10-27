@@ -2,6 +2,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/videos/presentation/actions/video_playback_launcher.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/shared/video_collection_detail_content.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_actions_dialog.dart';
+import 'package:sakuramedia/features/videos/presentation/video_display_title.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -20,6 +22,7 @@ class DesktopVideoCollectionDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return VideoCollectionDetailContent(
       collectionId: collectionId,
       surfaceColor: context.appColors.surfaceElevated,
@@ -30,7 +33,7 @@ class DesktopVideoCollectionDetailPage extends StatelessWidget {
       playAllBuilder: (context, {required enabled, required onPlayFrom}) {
         return AppButton(
           key: const Key('video-collection-play-all-button'),
-          label: '播放全部',
+          label: l10n.videoPlayAll,
           variant: AppButtonVariant.primary,
           onPressed: enabled ? onPlayFrom : null,
         );
@@ -45,7 +48,7 @@ class DesktopVideoCollectionDetailPage extends StatelessWidget {
           context,
           video: video,
           onPlay: () =>
-              actions.playSingle(context, video.id, video.preferredTitle),
+              actions.playSingle(context, video.id, video.displayTitle(l10n)),
           onThumbnails: () =>
               context.pushDesktopVideoThumbnails(videoId: video.id),
           onRemoveFromCollection: () => actions.remove(item.video.id),
@@ -88,7 +91,7 @@ class DesktopVideoCollectionDetailPage extends StatelessWidget {
             confirmLabel: confirmLabel,
             confirmKey: confirmKey,
             onConfirm: onConfirm,
-            failureFallback: '删除失败，请重试',
+            failureFallback: l10n.videoDeleteFailed,
           ),
     );
   }

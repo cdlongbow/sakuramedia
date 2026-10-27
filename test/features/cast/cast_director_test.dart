@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/cast/data/cast_director.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 import 'package:upnp_client/upnp_client.dart';
 
 import '../../support/cast_test_helpers.dart';
@@ -23,32 +24,40 @@ void main() {
   });
 
   group('castErrorMessage', () {
+    final l10n = AppLocalizationsZh();
+
     test('优先返回业务错误文案', () {
       expect(
-        castErrorMessage(const CastException('该设备不支持播放视频')),
+        castErrorMessage(
+          const CastException(CastErrorCode.deviceCannotPlayVideo),
+          l10n: l10n,
+        ),
         '该设备不支持播放视频',
       );
     });
 
     test('按 UPnP 错误码映射电视拒绝原因', () {
       expect(
-        castErrorMessage(UPnPException(errorCode: 704)),
+        castErrorMessage(UPnPException(errorCode: 704), l10n: l10n),
         '电视不支持播放该视频格式',
       );
       expect(
-        castErrorMessage(UPnPException(errorCode: 716)),
+        castErrorMessage(UPnPException(errorCode: 716), l10n: l10n),
         '电视无法访问该视频地址',
       );
-      expect(castErrorMessage(UPnPException(errorCode: 999)), '投屏失败，请重试');
+      expect(
+        castErrorMessage(UPnPException(errorCode: 999), l10n: l10n),
+        '投屏失败，请重试',
+      );
     });
 
     test('网络异常映射为可读提示', () {
       expect(
-        castErrorMessage(TimeoutException('timeout')),
+        castErrorMessage(TimeoutException('timeout'), l10n: l10n),
         '电视未响应，请确认设备处于开机状态',
       );
       expect(
-        castErrorMessage(const SocketException('refused')),
+        castErrorMessage(const SocketException('refused'), l10n: l10n),
         '连接电视失败，请确认设备与电视在同一网络',
       );
     });

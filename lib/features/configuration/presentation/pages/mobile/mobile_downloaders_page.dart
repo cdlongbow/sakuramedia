@@ -17,6 +17,7 @@ import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/m
 import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/mobile_entity_list_card.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/config_delete_helpers.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -63,7 +64,14 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
       ]);
     } catch (error) {
       if (mounted) {
-        showToast(apiErrorMessage(error, fallback: '下载器加载失败，请稍后重试。'));
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: AppLocalizations.of(
+              context,
+            ).downloaderLoadFailedFallback,
+          ),
+        );
       }
     }
   }
@@ -93,16 +101,17 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
   }
 
   Future<void> _deleteClient(DownloadClientDto client) {
+    final l10n = AppLocalizations.of(context);
     return showAppConfigDeleteConfirm(
       context: context,
-      title: '删除下载器',
-      message: '确认删除下载器“${client.name}”？该操作不会删除下载任务。',
+      title: l10n.downloaderDeleteTitle,
+      message: l10n.downloaderDeleteMessage(client.name),
       dialogKey: const Key('mobile-downloader-delete-drawer'),
       confirmKey: const Key('mobile-downloader-delete-confirm-button'),
       onDelete: () =>
           ref.read(downloadClientsProvider.notifier).delete(client.id),
-      successToast: '下载器已删除',
-      failureFallback: '删除下载器失败',
+      successToast: l10n.downloaderDeleted,
+      failureFallback: l10n.downloaderDeleteFailed,
     );
   }
 
@@ -125,6 +134,7 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     final colors = context.appColors;
+    final l10n = AppLocalizations.of(context);
     final clientsAsync = ref.watch(downloadClientsProvider);
     final librariesAsync = ref.watch(mediaLibrariesProvider);
     final providersAsync = ref.watch(mediaProviderCatalogProvider);
@@ -166,12 +176,15 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
               child: AppTabBar(
                 controller: _tabController,
                 variant: AppTabBarVariant.compact,
-                tabs: const [
+                tabs: [
                   Tab(
-                    key: Key('mobile-downloaders-tab-downloaders'),
-                    text: '下载器',
+                    key: const Key('mobile-downloaders-tab-downloaders'),
+                    text: l10n.downloaderTabDownloaders,
                   ),
-                  Tab(key: Key('mobile-downloaders-tab-guide'), text: '接入说明'),
+                  Tab(
+                    key: const Key('mobile-downloaders-tab-guide'),
+                    text: l10n.downloaderTabGuide,
+                  ),
                 ],
               ),
             ),
@@ -208,7 +221,7 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
               width: double.infinity,
               child: AppButton(
                 key: const Key('mobile-downloaders-create-button'),
-                label: '新增下载器',
+                label: l10n.downloaderAdd,
                 variant: AppButtonVariant.primary,
                 icon: const Icon(Icons.add_rounded),
                 onPressed:
@@ -234,6 +247,7 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
     required bool providerCatalogUnavailable,
   }) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final providersByKey = <String, MediaProviderDto>{
       for (final provider in providers) provider.providerKey: provider,
     };
@@ -257,16 +271,16 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
               children: [
                 AppNoticeCard(
                   key: const Key('mobile-downloaders-overview-card'),
-                  title: '下载器把索引器推送的资源请求交给对应 Provider 执行。',
-                  description: '先选择支持下载的媒体库，再填写该 Provider 提供的配置字段。',
+                  title: l10n.downloaderOverviewTitle,
+                  description: l10n.downloaderOverviewDescription,
                   stats: [
                     AppNoticeStat(
-                      label: '已配置下载器数',
+                      label: l10n.downloaderConfiguredCount,
                       value: '${clients.length}',
                       valueSize: AppTextSize.s18,
                     ),
                     AppNoticeStat(
-                      label: '可用媒体库数',
+                      label: l10n.downloaderAvailableLibraries,
                       value: '${downloadableLibraries.length}',
                       valueSize: AppTextSize.s18,
                     ),
@@ -274,11 +288,10 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
                 ),
                 SizedBox(height: spacing.md),
                 if (providerCatalogUnavailable) ...[
-                  const AppNoticeCard(
-                    key: Key('mobile-downloaders-provider-catalog-error'),
+                  AppNoticeCard(
+                    key: const Key('mobile-downloaders-provider-catalog-error'),
                     leadingIcon: Icons.warning_amber_rounded,
-                    description:
-                        'Provider 目录暂不可用，已有下载器仍可管理；恢复插件目录后才能新建或编辑 Provider 配置。',
+                    description: l10n.downloaderProviderUnavailable,
                   ),
                   SizedBox(height: spacing.md),
                 ],
@@ -287,17 +300,20 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
                 else if (error != null)
                   AppMobileSectionError(
                     key: const Key('mobile-downloaders-error-state'),
-                    title: '下载器加载失败',
-                    message: apiErrorMessage(error, fallback: '下载器加载失败，请稍后重试。'),
+                    title: l10n.downloaderLoadFailedTitle,
+                    message: apiErrorMessage(
+                      error,
+                      fallback: l10n.downloaderLoadFailedFallback,
+                    ),
                     onRetry: _refresh,
                     retryButtonKey: const Key(
                       'mobile-downloaders-retry-button',
                     ),
                   )
                 else if (clients.isEmpty)
-                  const MobileConfigEmptyCard(
-                    key: Key('mobile-downloaders-empty-state'),
-                    message: '还没有下载器配置',
+                  MobileConfigEmptyCard(
+                    key: const Key('mobile-downloaders-empty-state'),
+                    message: l10n.downloaderEmpty,
                   )
                 else
                   Column(
@@ -339,6 +355,7 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
     required List<DownloadClientDto> clients,
     required List<MediaLibraryDto> libraries,
   }) {
+    final l10n = AppLocalizations.of(context);
     final readyLibraries = libraries.isNotEmpty;
     return AppAdaptiveRefreshScrollView(
       onRefresh: _refresh,
@@ -352,14 +369,16 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
               children: [
                 MobileConfigOnboardingCard(
                   key: const Key('mobile-downloaders-guide-step-libraries'),
-                  title: '先准备媒体库',
-                  description: '下载器必须绑定一个支持下载的媒体库，配置由对应 Provider 提供。',
-                  tip: '如果列表为空，请先安装并配置支持下载的 Provider。',
-                  badgeLabel: readyLibraries ? '已配置' : '待配置',
+                  title: l10n.downloaderGuideLibrariesTitle,
+                  description: l10n.downloaderGuideLibrariesDescription,
+                  tip: l10n.downloaderGuideLibrariesTip,
+                  badgeLabel: readyLibraries
+                      ? l10n.downloaderGuideConfigured
+                      : l10n.downloaderGuidePending,
                   badgeTone: readyLibraries
                       ? AppBadgeTone.success
                       : AppBadgeTone.warning,
-                  actionLabel: '前往媒体库',
+                  actionLabel: l10n.downloaderGuideGoToLibraries,
                   onActionTap: () => GoRouter.of(
                     context,
                   ).push(mobileSettingsMediaLibrariesPath),
@@ -367,14 +386,16 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
                 SizedBox(height: context.appSpacing.md),
                 MobileConfigOnboardingCard(
                   key: const Key('mobile-downloaders-guide-step-downloaders'),
-                  title: '配置下载器',
-                  description: '选择目标媒体库后，填写 Provider 目录定义的配置字段。',
-                  tip: '敏感字段留空保存时会沿用已有值。',
-                  badgeLabel: clients.isNotEmpty ? '已配置' : '待配置',
+                  title: l10n.downloaderGuideConfigureTitle,
+                  description: l10n.downloaderGuideConfigureDescription,
+                  tip: l10n.downloaderGuideSensitiveHint,
+                  badgeLabel: clients.isNotEmpty
+                      ? l10n.downloaderGuideConfigured
+                      : l10n.downloaderGuidePending,
                   badgeTone: clients.isNotEmpty
                       ? AppBadgeTone.success
                       : AppBadgeTone.warning,
-                  actionLabel: '切换到下载器',
+                  actionLabel: l10n.downloaderGuideSwitchToDownloaders,
                   onActionTap: () => _tabController.animateTo(0),
                 ),
               ],
@@ -404,9 +425,13 @@ class _MobileDownloaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final providerName =
-        provider?.displayName ?? mediaLibrary?.providerKey ?? '未知 Provider';
-    final libraryName = mediaLibrary?.name ?? '未匹配 (${client.libraryId})';
+        provider?.displayName ??
+        mediaLibrary?.providerKey ??
+        l10n.downloaderUnknownProvider;
+    final libraryName =
+        mediaLibrary?.name ?? l10n.downloaderUnmatchedLibrary(client.libraryId);
     return MobileEntityListCard(
       outerKey: Key('mobile-downloader-card-${client.id}'),
       bodyKey: Key('mobile-downloader-card-body-${client.id}'),
@@ -433,12 +458,15 @@ class _MobileDownloaderCard extends StatelessWidget {
       body: [
         SizedBox(height: spacing.xs),
         _DownloaderMetaLine(label: 'Provider', value: providerName),
-        _DownloaderMetaLine(label: '媒体库', value: libraryName),
+        _DownloaderMetaLine(
+          label: l10n.downloaderMediaLibraryLabel,
+          value: libraryName,
+        ),
       ],
       onTap: onEdit,
       trailingAction: IconButton(
         key: Key('mobile-downloader-delete-${client.id}'),
-        tooltip: '删除',
+        tooltip: l10n.commonDelete,
         icon: const Icon(Icons.delete_outline),
         onPressed: onDelete,
       ),
@@ -579,6 +607,7 @@ class _MobileDownloaderEditorDrawerState
 
   Future<void> _submit() async {
     if (_isSubmitting || _isTesting) return;
+    final l10n = AppLocalizations.of(context);
     FocusScope.of(context).unfocus();
     setState(() => _hasAttemptedSubmit = true);
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -603,19 +632,27 @@ class _MobileDownloaderEditorDrawerState
                 .read(downloadClientsProvider.notifier)
                 .create(value.toCreatePayload());
       if (!mounted) return;
-      showToast(_isEditing ? '下载器已更新' : '下载器已创建');
+      showToast(
+        _isEditing ? l10n.downloaderUpdated : l10n.downloaderCreated,
+      );
       Navigator.of(context).pop(client);
     } catch (error) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
       showToast(
-        apiErrorMessage(error, fallback: _isEditing ? '更新下载器失败' : '创建下载器失败'),
+        apiErrorMessage(
+          error,
+          fallback: _isEditing
+              ? l10n.downloaderUpdateFailed
+              : l10n.downloaderCreateFailed,
+        ),
       );
     }
   }
 
   Future<void> _testClient() async {
     if (_isSubmitting || _isTesting) return;
+    final l10n = AppLocalizations.of(context);
     FocusScope.of(context).unfocus();
     setState(() => _hasAttemptedSubmit = true);
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -646,7 +683,11 @@ class _MobileDownloaderEditorDrawerState
       if (!mounted) return;
       setState(() => _diagnosticReport = report);
     } catch (error) {
-      if (mounted) showToast(apiErrorMessage(error, fallback: '下载器测试失败'));
+      if (mounted) {
+        showToast(
+          apiErrorMessage(error, fallback: l10n.downloaderTestFailed),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isTesting = false);
     }
@@ -654,10 +695,11 @@ class _MobileDownloaderEditorDrawerState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppBottomFormSheet(
       formKey: _formKey,
-      title: _isEditing ? '编辑下载器' : '新增下载器',
-      subtitle: '配置由目标媒体库的 Provider 决定。',
+      title: _isEditing ? l10n.downloaderEditTitle : l10n.downloaderAdd,
+      subtitle: l10n.downloaderFormSubtitle,
       submitKey: const Key('mobile-downloader-submit-button'),
       isSubmitting: _isSubmitting,
       submitDisabled: _isTesting,
@@ -682,7 +724,7 @@ class _MobileDownloaderEditorDrawerState
           SizedBox(height: context.appSpacing.lg),
           AppButton(
             key: const Key('mobile-downloader-test-button'),
-            label: '测试配置',
+            label: l10n.downloaderTestConfig,
             icon: const Icon(Icons.rule_rounded),
             isLoading: _isTesting,
             onPressed: _isSubmitting || _isTesting ? null : _testClient,

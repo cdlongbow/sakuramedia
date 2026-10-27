@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_summ
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 /// 把标签选择值显式同步到标签影片 provider。
 ///
@@ -103,7 +104,7 @@ class _TagMovieSummaryContentState
       contentKey: widget.contentKey,
       totalKey: widget.totalKey,
       sectionSpacing: widget.sectionSpacing,
-      emptyMessage: '该标签下暂无影片',
+      emptyMessage: AppLocalizations.of(context).tagEmptyMovieList,
       enableRefresh: widget.enableRefresh,
       registerPageRefresh: widget.registerPageRefresh,
       onRefreshFailure: widget.onRefreshFailure,

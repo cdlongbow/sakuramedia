@@ -6,6 +6,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/advanced_settings_section.dart';
 import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 
@@ -362,6 +363,12 @@ Future<void> _pumpSection(
       child: OKToast(
         child: MaterialApp(
           theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...?GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           home: Scaffold(
             body: Column(
               children: [

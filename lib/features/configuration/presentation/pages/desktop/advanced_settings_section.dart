@@ -12,6 +12,7 @@ import 'package:sakuramedia/features/configuration/data/api/config_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/config_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/restart_messages.dart';
 import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
@@ -118,9 +119,10 @@ class _DesktopAdvancedSettingsSectionState
   }
 
   Widget _buildContent(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (!_isLoading && _errorMessage != null) {
       return AppSectionError(
-        title: '高级设置加载失败',
+        title: l10n.errorAdvancedSettingsLoadFailed,
         message: _errorMessage!,
         onRetry: _load,
       );
@@ -151,44 +153,51 @@ class _DesktopAdvancedSettingsSectionState
 
   Widget _buildOptionalServicesCard(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final saving = _savingCards.contains(_AdvancedCardKind.optionalServices);
     return AppContentCard(
       key: const Key('configuration-optional-services-card'),
-      title: '图搜 / 相似度',
+      title: l10n.configOptionalServicesTitle,
       padding: EdgeInsets.all(spacing.lg),
       headerBottomSpacing: spacing.md,
       headerTrailing: _CardBadges(badges: [
-        const AppBadge(label: '重启容器生效', tone: AppBadgeTone.warning),
+        AppBadge(
+          label: l10n.configRestartRequiredBadge,
+          tone: AppBadgeTone.warning,
+        ),
         if (_dirtyCards.contains(_AdvancedCardKind.optionalServices))
-          const AppBadge(label: '未保存', tone: AppBadgeTone.warning),
+          AppBadge(
+            label: l10n.configUnsavedBadge,
+            tone: AppBadgeTone.warning,
+          ),
       ]),
       child: Form(key: _optionalFormKey, child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CardTip(icon: Icons.info_outline_rounded,
-            message: '保存后重启后端容器生效。关闭功能会保留索引；如需释放内存，请同时停止对应的可选容器。重新启用后可在系统维护中重建图搜索引，在任务中心重算相似影片。'),
+          _CardTip(icon: Icons.info_outline_rounded,
+            message: l10n.configOptionalServicesTip),
           SizedBox(height: spacing.md),
           _optionalSwitch(
             key: const Key('configuration-qdrant-enabled'),
-            title: '启用相似影片与向量服务',
-            subtitle: '使用 Qdrant 提供相似影片，并增强推荐结果',
+            title: l10n.configQdrantEnabledTitle,
+            subtitle: l10n.configQdrantEnabledSubtitle,
             value: _qdrantEnabled,
             onChanged: saving ? null : _changeQdrantEnabled,
           ),
           if (_qdrantEnabled) _buildFieldGrid(context, children: [
-            AppTextField(controller: _qdrantUrl, label: 'Qdrant 地址',
+            AppTextField(controller: _qdrantUrl, label: l10n.configQdrantUrlLabel,
               hintText: 'http://qdrant:6333',
-              helperText: '按快速开始的 Compose 示例部署时，默认即此地址，API Key 留空即可。',
+              helperText: l10n.configComposeDefaultHelper,
               fieldKey: const Key('configuration-qdrant-url'), enabled: !saving,
               validator: _httpUrlError, onChanged: (_) => _markDirty(_AdvancedCardKind.optionalServices)),
-            AppPasswordField(controller: _qdrantKey, label: 'Qdrant API Key（可选）', enabled: !saving,
+            AppPasswordField(controller: _qdrantKey, label: l10n.configQdrantApiKeyLabel, enabled: !saving,
               onChanged: (_) => _markDirty(_AdvancedCardKind.optionalServices)),
           ]),
           SizedBox(height: spacing.md),
           _optionalSwitch(
             key: const Key('configuration-image-search-enabled'),
-            title: '启用图片与文字搜图',
-            subtitle: _qdrantEnabled ? '使用嵌入服务生成图片与文字向量，并增强时刻推荐' : '需先启用上方的相似影片与向量服务',
+            title: l10n.configImageSearchEnabledTitle,
+            subtitle: _qdrantEnabled ? l10n.configImageSearchEnabledSubtitle : l10n.configImageSearchRequiresQdrant,
             value: _imageSearchEnabled,
             onChanged: saving || !_qdrantEnabled ? null : (value) {
               setState(() => _imageSearchEnabled = value);
@@ -196,12 +205,12 @@ class _DesktopAdvancedSettingsSectionState
             },
           ),
           if (_imageSearchEnabled) _buildFieldGrid(context, children: [
-            AppTextField(controller: _inferenceUrl, label: '嵌入服务地址',
+            AppTextField(controller: _inferenceUrl, label: l10n.configEmbeddingUrlLabel,
               hintText: 'http://siglip2-embed:8080',
-              helperText: '按快速开始的 Compose 示例部署时，默认即此地址，API Key 留空即可。',
+              helperText: l10n.configComposeDefaultHelper,
               fieldKey: const Key('configuration-inference-url'), enabled: !saving,
               validator: _httpUrlError, onChanged: (_) => _markDirty(_AdvancedCardKind.optionalServices)),
-            AppPasswordField(controller: _inferenceKey, label: '嵌入服务 API Key（可选）', enabled: !saving,
+            AppPasswordField(controller: _inferenceKey, label: l10n.configEmbeddingApiKeyLabel, enabled: !saving,
               onChanged: (_) => _markDirty(_AdvancedCardKind.optionalServices)),
           ]),
           SizedBox(height: spacing.lg),
@@ -225,10 +234,12 @@ class _DesktopAdvancedSettingsSectionState
   }
 
   Future<void> _changeQdrantEnabled(bool value) async {
+    final l10n = AppLocalizations.of(context);
     if (!value && _imageSearchEnabled) {
       final confirmed = await showAppConfirmDialog(context,
-        title: '关闭向量服务', message: '图片与文字搜图依赖 Qdrant，将同时关闭。已有配置与索引会保留，保存并重启后生效。',
-        confirmLabel: '同时关闭');
+        title: l10n.configDisableVectorTitle,
+        message: l10n.configDisableVectorMessage,
+        confirmLabel: l10n.configDisableVectorConfirm);
       if (!confirmed || !mounted) return;
     }
     setState(() {
@@ -239,7 +250,9 @@ class _DesktopAdvancedSettingsSectionState
   }
 
   String? _httpUrlError(String? value) {
-    return isValidHttpUrl(value ?? '') ? null : '请输入有效的 HTTP 或 HTTPS 地址';
+    return isValidHttpUrl(value ?? '')
+        ? null
+        : AppLocalizations.of(context).configInvalidHttpUrl;
   }
 
   Future<void> _saveOptionalServices() async {
@@ -263,16 +276,23 @@ class _DesktopAdvancedSettingsSectionState
 
   Widget _buildMediaCard(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return AppContentCard(
       key: const Key('configuration-advanced-media-card'),
-      title: '媒体导入',
+      title: l10n.configMediaImportTitle,
       padding: EdgeInsets.all(spacing.lg),
       headerBottomSpacing: spacing.md,
       headerTrailing: _CardBadges(
         badges: [
-          const AppBadge(label: '重启容器生效', tone: AppBadgeTone.warning),
+          AppBadge(
+            label: l10n.configRestartRequiredBadge,
+            tone: AppBadgeTone.warning,
+          ),
           if (_dirtyCards.contains(_AdvancedCardKind.media))
-            const AppBadge(label: '未保存', tone: AppBadgeTone.warning),
+            AppBadge(
+              label: l10n.configUnsavedBadge,
+              tone: AppBadgeTone.warning,
+            ),
         ],
       ),
       child: Form(
@@ -280,9 +300,9 @@ class _DesktopAdvancedSettingsSectionState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _CardTip(
+            _CardTip(
               icon: Icons.info_outline_rounded,
-              message: '这组配置仅控制 JAV 类影片导入的最小文件大小。第一次部署通常保持默认。',
+              message: l10n.configMediaImportTip,
             ),
             SizedBox(height: spacing.lg),
             _buildFieldGrid(
@@ -293,13 +313,16 @@ class _DesktopAdvancedSettingsSectionState
                     'configuration-advanced-min-video-size-field',
                   ),
                   controller: _allowedMinVideoFileSizeController,
-                  label: '允许导入的视频最小体积',
-                  hintText: '建议不低于 256',
-                  helperText: 'UI 按 MB 编辑，保存时会转换为字节；不建议低于 256 MB。',
+                  label: l10n.configMinVideoSizeLabel,
+                  hintText: l10n.configMinVideoSizeHint,
+                  helperText: l10n.configMinVideoSizeHelper,
                   keyboardType: TextInputType.number,
                   suffix: const _UnitSuffix(label: 'MB'),
                   tightSuffix: true,
-                  validator: (value) => _positiveIntError(value, label: '最小体积'),
+                  validator: (value) => _positiveIntError(
+                    value,
+                    label: l10n.configMinVideoSizeShort,
+                  ),
                   onChanged: (_) => _markDirty(_AdvancedCardKind.media),
                 ),
               ],
@@ -319,16 +342,24 @@ class _DesktopAdvancedSettingsSectionState
 
   Widget _buildSchedulerCard(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
+    final cronGroups = _buildCronGroups(l10n);
     return AppContentCard(
       key: const Key('configuration-advanced-scheduler-card'),
-      title: '定时任务频率',
+      title: l10n.configSchedulerTitle,
       padding: EdgeInsets.all(spacing.lg),
       headerBottomSpacing: spacing.md,
       headerTrailing: _CardBadges(
         badges: [
-          const AppBadge(label: '重启容器生效', tone: AppBadgeTone.warning),
+          AppBadge(
+            label: l10n.configRestartRequiredBadge,
+            tone: AppBadgeTone.warning,
+          ),
           if (_dirtyCards.contains(_AdvancedCardKind.scheduler))
-            const AppBadge(label: '未保存', tone: AppBadgeTone.warning),
+            AppBadge(
+              label: l10n.configUnsavedBadge,
+              tone: AppBadgeTone.warning,
+            ),
         ],
       ),
       child: Form(
@@ -336,13 +367,12 @@ class _DesktopAdvancedSettingsSectionState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _CardTip(
+            _CardTip(
               icon: Icons.schedule_outlined,
-              message:
-                  'Cron 语法：分 时 日 月 周（*/N 每隔 N，逗号列表，连字符区间）；普通任务并发数控制同时执行的任务数量。修改后需要重启容器才生效。',
+              message: l10n.configSchedulerTip,
             ),
             SizedBox(height: spacing.lg),
-            const _SubsectionTitle(title: '普通任务执行'),
+            _SubsectionTitle(title: l10n.configWorkerSectionTitle),
             SizedBox(height: spacing.md),
             _buildFieldGrid(
               context,
@@ -352,11 +382,13 @@ class _DesktopAdvancedSettingsSectionState
                     'configuration-advanced-worker-default-concurrency-field',
                   ),
                   controller: _workerDefaultConcurrencyController,
-                  label: '普通任务并发数',
+                  label: l10n.configWorkerConcurrencyLabel,
                   hintText: '4',
-                  helperText: '导入和存储迁移任务使用独立并发，不受此设置影响。',
+                  helperText: l10n.configWorkerConcurrencyHelper,
                   keyboardType: TextInputType.number,
-                  suffix: const _UnitSuffix(label: '个'),
+                  suffix: _UnitSuffix(
+                    label: l10n.configWorkerConcurrencyUnit,
+                  ),
                   tightSuffix: true,
                   validator: _workerConcurrencyError,
                   onChanged: (_) =>
@@ -365,7 +397,7 @@ class _DesktopAdvancedSettingsSectionState
               ],
             ),
             SizedBox(height: spacing.lg),
-            for (final group in _cronGroups) ...[
+            for (final group in cronGroups) ...[
               _SubsectionTitle(title: group.title),
               SizedBox(height: spacing.md),
               _buildFieldGrid(
@@ -375,15 +407,15 @@ class _DesktopAdvancedSettingsSectionState
                     AppTextField(
                       fieldKey: Key('configuration-advanced-cron-$key-field'),
                       controller: _cronControllers[key],
-                      label: _cronCopy[key] ?? key,
+                      label: _cronCopy(l10n, key),
                       hintText: '0 2 * * *',
-                      helperText: _cronFieldHelper[key],
+                      helperText: _cronFieldHelper(l10n, key),
                       validator: _cronError,
                       onChanged: (_) => _markDirty(_AdvancedCardKind.scheduler),
                     ),
                 ],
               ),
-              if (group != _cronGroups.last) SizedBox(height: spacing.lg),
+              if (group != cronGroups.last) SizedBox(height: spacing.lg),
             ],
             SizedBox(height: spacing.lg),
             _buildActions(
@@ -402,16 +434,23 @@ class _DesktopAdvancedSettingsSectionState
 
   Widget _buildOtherCard(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return AppContentCard(
       key: const Key('configuration-advanced-other-card'),
-      title: '日志',
+      title: l10n.configLoggingTitle,
       padding: EdgeInsets.all(spacing.lg),
       headerBottomSpacing: spacing.md,
       headerTrailing: _CardBadges(
         badges: [
-          const AppBadge(label: '重启容器生效', tone: AppBadgeTone.warning),
+          AppBadge(
+            label: l10n.configRestartRequiredBadge,
+            tone: AppBadgeTone.warning,
+          ),
           if (_dirtyCards.contains(_AdvancedCardKind.other))
-            const AppBadge(label: '未保存', tone: AppBadgeTone.warning),
+            AppBadge(
+              label: l10n.configUnsavedBadge,
+              tone: AppBadgeTone.warning,
+            ),
         ],
       ),
       child: Form(
@@ -419,9 +458,9 @@ class _DesktopAdvancedSettingsSectionState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _CardTip(
+            _CardTip(
               icon: Icons.tune_outlined,
-              message: '日志等级平时保持 INFO，排查问题时再临时改成 DEBUG。',
+              message: l10n.configLoggingTip,
             ),
             SizedBox(height: spacing.lg),
             _buildFieldGrid(
@@ -429,7 +468,7 @@ class _DesktopAdvancedSettingsSectionState
               children: [
                 AppSelectField<String>(
                   key: const Key('configuration-advanced-logging-level-field'),
-                  label: '日志等级',
+                  label: l10n.configLoggingLevelLabel,
                   value: _loggingLevel,
                   items: [
                     for (final level in _loggingLevels)
@@ -503,7 +542,7 @@ class _DesktopAdvancedSettingsSectionState
           width: context.appLayoutTokens.filterFieldWidthMd,
           child: AppButton(
             key: buttonKey,
-            label: '保存',
+            label: AppLocalizations.of(context).commonSave,
             variant: AppButtonVariant.primary,
             isLoading: isSaving,
             onPressed: onSave,
@@ -543,7 +582,12 @@ class _DesktopAdvancedSettingsSectionState
       setState(() {
         _initialized = true;
         _isLoading = false;
-        _errorMessage = apiErrorMessage(error, fallback: '高级设置加载失败');
+        _errorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(
+            context,
+          ).errorAdvancedSettingsLoadFailed,
+        );
       });
     }
   }
@@ -564,11 +608,12 @@ class _DesktopAdvancedSettingsSectionState
       return;
     }
     if (_dirtyCards.isNotEmpty) {
+      final l10n = AppLocalizations.of(context);
       final confirmed = await showAppConfirmDialog(
         context,
-        title: '有未保存的改动',
-        message: '刷新将丢弃当前未保存的高级设置，确认刷新？',
-        confirmLabel: '刷新',
+        title: l10n.configUnsavedChangesTitle,
+        message: l10n.configUnsavedChangesMessage,
+        confirmLabel: l10n.commonRefresh,
         dialogKey: const Key('configuration-advanced-refresh-confirm-dialog'),
         confirmKey: const Key('configuration-advanced-refresh-confirm-button'),
         cancelKey: const Key('configuration-advanced-refresh-cancel-button'),
@@ -601,11 +646,12 @@ class _DesktopAdvancedSettingsSectionState
   Future<void> _handleSaveOther() async {
     if (!(_otherFormKey.currentState?.validate() ?? false)) return;
     if (_loggingLevel != _savedLoggingLevel) {
+      final l10n = AppLocalizations.of(context);
       final confirmed = await showAppConfirmDialog(
         context,
-        title: '确认修改日志等级',
-        message: '修改日志等级将重启容器，页面会临时无响应并需刷新，是否继续？',
-        confirmLabel: '继续保存',
+        title: l10n.configLoggingConfirmTitle,
+        message: l10n.configLoggingConfirmMessage,
+        confirmLabel: l10n.configContinueSave,
         dialogKey: const Key('configuration-advanced-logging-confirm-dialog'),
         confirmKey: const Key('configuration-advanced-logging-confirm-button'),
         cancelKey: const Key('configuration-advanced-logging-cancel-button'),
@@ -646,7 +692,12 @@ class _DesktopAdvancedSettingsSectionState
         _dirtyCards.remove(card);
       });
       _notifyDirtyChanged();
-      showToast(buildAdvancedConfigSaveSuccessMessage(result.restartRequired));
+      showToast(
+        buildAdvancedConfigSaveSuccessMessage(
+          result.restartRequired,
+          l10n: AppLocalizations.of(context),
+        ),
+      );
     } catch (error) {
       if (!mounted) {
         return;
@@ -654,7 +705,14 @@ class _DesktopAdvancedSettingsSectionState
       setState(() {
         _savingCards.remove(card);
       });
-      showToast(apiErrorMessage(error, fallback: '保存高级设置失败'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(
+            context,
+          ).errorAdvancedSettingsSaveFailed,
+        ),
+      );
     }
   }
 
@@ -725,7 +783,7 @@ class _DesktopAdvancedSettingsSectionState
         .where((part) => part.isNotEmpty)
         .toList();
     if (parts.length != _cronPartCount) {
-      return '请输入 5 位标准 cron';
+      return AppLocalizations.of(context).configCronRequired;
     }
     return null;
   }
@@ -733,7 +791,7 @@ class _DesktopAdvancedSettingsSectionState
   String? _positiveIntError(String? value, {required String label}) {
     final parsed = int.tryParse(value?.trim() ?? '');
     if (parsed == null || parsed <= 0) {
-      return '请输入大于 0 的$label';
+      return AppLocalizations.of(context).configPositiveIntRequired(label);
     }
     return null;
   }
@@ -743,7 +801,10 @@ class _DesktopAdvancedSettingsSectionState
     if (parsed == null ||
         parsed < _workerConcurrencyMin ||
         parsed > _workerConcurrencyMax) {
-      return '请输入 $_workerConcurrencyMin–$_workerConcurrencyMax 的整数';
+      return AppLocalizations.of(context).configWorkerConcurrencyRange(
+        _workerConcurrencyMin,
+        _workerConcurrencyMax,
+      );
     }
     return null;
   }
@@ -758,11 +819,15 @@ enum _AdvancedCardKind { media, scheduler, other, optionalServices }
 /// 根据 `PATCH /config` 响应里的 `restart_required` 列表拼保存成功后的 toast 文案。
 ///
 /// 抽为顶层函数便于单元测试（widget 测里 oktoast 在 test env 下不可靠）。
-String buildAdvancedConfigSaveSuccessMessage(List<String> restartRequired) {
+String buildAdvancedConfigSaveSuccessMessage(
+  List<String> restartRequired, {
+  AppLocalizations? l10n,
+}) {
+  final saved = l10n?.commonSaved ?? '已保存';
   if (restartRequired.isEmpty) {
-    return '已保存';
+    return saved;
   }
-  return buildRestartRequiredMessage('已保存');
+  return buildRestartRequiredMessage(saved, l10n: l10n);
 }
 
 class _CardBadges extends StatelessWidget {
@@ -890,9 +955,9 @@ const List<String> _loggingLevels = <String>[
   'CRITICAL',
 ];
 
-const List<_CronGroup> _cronGroups = <_CronGroup>[
+List<_CronGroup> _buildCronGroups(AppLocalizations l10n) => <_CronGroup>[
   _CronGroup(
-    title: '下载 / 导入',
+    title: l10n.configCronGroupDownloadImport,
     keys: <String>[
       'download_task_sync',
       'download_task_auto_import',
@@ -900,7 +965,7 @@ const List<_CronGroup> _cronGroups = <_CronGroup>[
     ],
   ),
   _CronGroup(
-    title: '抓取 / 回填',
+    title: l10n.configCronGroupScrapeBackfill,
     keys: <String>[
       'actor_subscription_sync',
       'media_file_hash_backfill',
@@ -908,18 +973,18 @@ const List<_CronGroup> _cronGroups = <_CronGroup>[
     ],
   ),
   _CronGroup(
-    title: '图搜 / 相似度',
+    title: l10n.configOptionalServicesTitle,
     keys: <String>['image_search_index', 'movie_similarity_recompute'],
   ),
   _CronGroup(
-    title: '推荐',
+    title: l10n.configCronGroupRecommendation,
     keys: <String>[
       'moment_recommendation_generate',
       'daily_recommendation_generate',
     ],
   ),
   _CronGroup(
-    title: '巡检 / 清理',
+    title: l10n.configCronGroupMaintenance,
     keys: <String>[
       'media_thumbnail',
       'movie_heat',
@@ -931,40 +996,48 @@ const List<_CronGroup> _cronGroups = <_CronGroup>[
   ),
 ];
 
-const Map<String, String> _cronCopy = <String, String>{
-  'actor_subscription_sync': '订阅演员影片同步',
-  'subscribed_movie_auto_download': '已订阅缺失影片自动下载',
-  'download_task_sync': '下载任务状态同步',
-  'download_task_auto_import': '已完成下载自动导入',
-  'movie_heat': '影片热度更新',
-  'movie_interaction_sync': '影片互动数同步',
-  'movie_javdb_backfill': 'JavDB 影片补录',
-  'media_file_hash_backfill': '媒体文件哈希补算',
-  'media_file_scan': '媒体文件巡检',
-  'media_thumbnail': '媒体缩略图生成',
-  'image_search_index': '图像搜索索引构建',
-  'movie_similarity_recompute': '影片相似度重算',
-  'moment_recommendation_generate': '推荐时刻生成',
-  'daily_recommendation_generate': '每日推荐快照生成',
-  'activity_cleanup': '任务记录清理',
-  'gfriends_filetree_refresh': 'GFriends 缓存刷新',
+String _cronCopy(AppLocalizations l10n, String key) => switch (key) {
+  'actor_subscription_sync' => l10n.taskNameActorSubscriptionSync,
+  'subscribed_movie_auto_download' =>
+    l10n.taskNameSubscribedMovieAutoDownload,
+  'download_task_sync' => l10n.taskNameDownloadTaskSync,
+  'download_task_auto_import' => l10n.taskNameDownloadTaskAutoImport,
+  'movie_heat' => l10n.taskNameMovieHeatUpdate,
+  'movie_interaction_sync' => l10n.taskNameMovieInteractionSync,
+  'movie_javdb_backfill' => l10n.taskNameMovieJavdbBackfill,
+  'media_file_hash_backfill' => l10n.taskNameMediaFileHashBackfill,
+  'media_file_scan' => l10n.taskNameMediaFileScan,
+  'media_thumbnail' => l10n.taskNameMediaThumbnailGeneration,
+  'image_search_index' => l10n.taskNameImageSearchIndex,
+  'movie_similarity_recompute' => l10n.taskNameMovieSimilarityRecompute,
+  'moment_recommendation_generate' =>
+    l10n.taskNameMomentRecommendationGenerate,
+  'daily_recommendation_generate' =>
+    l10n.taskNameDailyRecommendationGenerate,
+  'activity_cleanup' => l10n.taskNameActivityRecordCleanup,
+  'gfriends_filetree_refresh' => l10n.taskNameGfriendsFiletreeRefresh,
+  _ => key,
 };
 
-const Map<String, String> _cronFieldHelper = <String, String>{
-  'actor_subscription_sync': '同步已订阅 JavDB 女优的影片数据；本地女优没有远端来源，不会参与同步。',
-  'subscribed_movie_auto_download': '自动下载已订阅但缺失的影片。',
-  'download_task_sync': '同步下载任务状态。',
-  'download_task_auto_import': '导入已完成的下载任务。',
-  'movie_heat': '重算影片热度。',
-  'movie_interaction_sync': '同步影片互动数，候选仍受分层刷新规则影响。',
-  'movie_javdb_backfill': '尝试从 JavDB 补录到期的插件影片，每部影片间隔 7 天检查。',
-  'media_file_hash_backfill': '补算缺失的媒体文件哈希。',
-  'media_file_scan': '用存储提供方清单校验媒体文件有效性。',
-  'media_thumbnail': '生成媒体缩略图。',
-  'image_search_index': '生成图片搜索索引。',
-  'movie_similarity_recompute': '离线重算影片相似度。',
-  'moment_recommendation_generate': '生成推荐时刻。',
-  'daily_recommendation_generate': '生成每日推荐快照。',
-  'activity_cleanup': '清理任务中心的通知与任务运行数据。',
-  'gfriends_filetree_refresh': '刷新 GFriends Filetree 缓存。',
+String _cronFieldHelper(AppLocalizations l10n, String key) => switch (key) {
+  'actor_subscription_sync' => l10n.taskHelpActorSubscriptionSync,
+  'subscribed_movie_auto_download' =>
+    l10n.taskHelpSubscribedMovieAutoDownload,
+  'download_task_sync' => l10n.taskHelpDownloadTaskSync,
+  'download_task_auto_import' => l10n.taskHelpDownloadTaskAutoImport,
+  'movie_heat' => l10n.taskHelpMovieHeatUpdate,
+  'movie_interaction_sync' => l10n.taskHelpMovieInteractionSync,
+  'movie_javdb_backfill' => l10n.taskHelpMovieJavdbBackfill,
+  'media_file_hash_backfill' => l10n.taskHelpMediaFileHashBackfill,
+  'media_file_scan' => l10n.taskHelpMediaFileScan,
+  'media_thumbnail' => l10n.taskHelpMediaThumbnailGeneration,
+  'image_search_index' => l10n.taskHelpImageSearchIndex,
+  'movie_similarity_recompute' => l10n.taskHelpMovieSimilarityRecompute,
+  'moment_recommendation_generate' =>
+    l10n.taskHelpMomentRecommendationGenerate,
+  'daily_recommendation_generate' =>
+    l10n.taskHelpDailyRecommendationGenerate,
+  'activity_cleanup' => l10n.taskHelpActivityRecordCleanup,
+  'gfriends_filetree_refresh' => l10n.taskHelpGfriendsFiletreeRefresh,
+  _ => '',
 };

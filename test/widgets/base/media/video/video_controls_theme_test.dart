@@ -1,9 +1,18 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_controls_theme.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_loading_indicator.dart';
+
+/// 测试树的本地化 delegate：ARB 文案 + material_ui 的 Material/Cupertino 文案。
+const List<LocalizationsDelegate<dynamic>> _testLocalizationsDelegates =
+    <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      ...GlobalMaterialLocalizations.delegates,
+    ];
 
 void main() {
   group('Movie player controls theme', () {
@@ -71,6 +80,9 @@ void main() {
     ) async {
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: _testLocalizationsDelegates,
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           home: Builder(
             builder: (context) => Column(
@@ -100,6 +112,9 @@ void main() {
     ) async {
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: _testLocalizationsDelegates,
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           home: Builder(
             builder: (context) => Column(

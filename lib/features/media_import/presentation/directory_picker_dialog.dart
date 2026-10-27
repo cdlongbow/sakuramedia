@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_source.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
@@ -66,6 +67,7 @@ class _DirectoryPickerDialogState extends State<_DirectoryPickerDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
     return SafeArea(
       top: false,
@@ -74,7 +76,7 @@ class _DirectoryPickerDialogState extends State<_DirectoryPickerDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '新建媒体导入',
+            l10n.mediaImportPickerTitle,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s18,
@@ -122,7 +124,7 @@ class _DirectoryPickerDialogState extends State<_DirectoryPickerDialog> {
               Expanded(
                 child: AppButton(
                   key: const Key('media-import-picker-cancel-button'),
-                  label: '取消',
+                  label: l10n.commonCancel,
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ),
@@ -130,7 +132,7 @@ class _DirectoryPickerDialogState extends State<_DirectoryPickerDialog> {
               Expanded(
                 child: AppButton(
                   key: const Key('media-import-picker-submit-button'),
-                  label: '开始导入',
+                  label: l10n.mediaImportPickerSubmitAction,
                   variant: AppButtonVariant.primary,
                   onPressed: _canSubmit ? _submit : null,
                 ),

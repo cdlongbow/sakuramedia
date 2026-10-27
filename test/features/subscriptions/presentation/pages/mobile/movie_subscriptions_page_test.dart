@@ -14,6 +14,7 @@ import 'package:sakuramedia/features/shared/presentation/providers/batch_operati
 import 'package:sakuramedia/features/subscriptions/data/api/movie_subscriptions_api.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/pages/mobile/movie_subscriptions_page.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_subscriptions_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../../../../support/fake_http_client_adapter.dart';
@@ -540,6 +541,12 @@ Future<void> _pumpPage(
       child: OKToast(
         child: MaterialApp(
           theme: sakuraMobileThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           home: const Scaffold(body: MobileMovieSubscriptionsPage()),
         ),
       ),

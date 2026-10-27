@@ -3,6 +3,7 @@ import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/subscriptions/data/api/movie_subscriptions_api.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
 
@@ -234,16 +235,19 @@ void main() {
     final items = (await api.getSubscriptions()).items;
 
     expect(items[0].isImportedMediaRemoved, isTrue);
-    expect(items[0].displayStatusLabel, '媒体已删除');
+    expect(items[0].displayStatusLabel(AppLocalizationsZh()), '媒体已删除');
     expect(items[1].isImportedMediaRemoved, isFalse);
-    expect(items[1].displayStatusLabel, '导入失败');
+    expect(items[1].displayStatusLabel(AppLocalizationsZh()), '导入失败');
   });
 
   test('import_failed 与 failed 是两个不同状态，文案不能混', () {
     expect(MovieSubscriptionStatus.importFailed.apiValue, 'import_failed');
-    expect(MovieSubscriptionStatus.importFailed.label, '导入失败');
+    expect(
+      MovieSubscriptionStatus.importFailed.label(AppLocalizationsZh()),
+      '导入失败',
+    );
     expect(MovieSubscriptionStatus.failed.apiValue, 'failed');
-    expect(MovieSubscriptionStatus.failed.label, '查询出错');
+    expect(MovieSubscriptionStatus.failed.label(AppLocalizationsZh()), '查询出错');
   });
 
   test('getStatusCounts 解析各状态计数并按状态取值', () async {
@@ -282,20 +286,23 @@ void main() {
     expect(sum, counts.total);
   });
 
-  test('resetSearches posts optional movie ids to the reset endpoint', () async {
-    adapter.enqueueJson(
-      method: 'POST',
-      path: '/movie-subscriptions/search/reset',
-      body: <String, dynamic>{'reset_count': 2},
-    );
+  test(
+    'resetSearches posts optional movie ids to the reset endpoint',
+    () async {
+      adapter.enqueueJson(
+        method: 'POST',
+        path: '/movie-subscriptions/search/reset',
+        body: <String, dynamic>{'reset_count': 2},
+      );
 
-    final result = await api.resetSearches(movieIds: <int>[11, 12]);
+      final result = await api.resetSearches(movieIds: <int>[11, 12]);
 
-    expect(result.resetCount, 2);
-    expect(adapter.requests.single.body, <String, dynamic>{
-      'movie_ids': <int>[11, 12],
-    });
-  });
+      expect(result.resetCount, 2);
+      expect(adapter.requests.single.body, <String, dynamic>{
+        'movie_ids': <int>[11, 12],
+      });
+    },
+  );
 }
 
 Map<String, dynamic> _page({

@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/account/presentation/providers/account_prof
 import 'package:sakuramedia/features/account/presentation/providers/account_profile_state.dart';
 import 'package:sakuramedia/features/account/presentation/providers/api_keys_provider.dart';
 import 'package:sakuramedia/features/auth/presentation/providers/auth_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -114,6 +115,7 @@ class _MobileAccountSecurityPageState
     AccountProfileState profileState,
   ) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final account = profileState.account;
     final showSkeleton = profileState.isLoading && account == null;
     final displayAccount = showSkeleton ? accountPlaceholder() : account;
@@ -122,7 +124,7 @@ class _MobileAccountSecurityPageState
 
     return AppContentCard(
       key: const Key('mobile-account-card'),
-      title: '账号',
+      title: l10n.accountTitle,
       padding: EdgeInsets.all(spacing.md),
       child: AppSkeletonizer(
         enabled: showSkeleton,
@@ -137,17 +139,23 @@ class _MobileAccountSecurityPageState
               )
             else ...[
               if (displayAccount != null) ...[
-                _AccountInfoRow(label: '用户名', value: displayAccount.username),
-                SizedBox(height: spacing.sm),
                 _AccountInfoRow(
-                  label: '创建时间',
-                  value: formatUpdatedAtLabel(displayAccount.createdAt) ?? '未知',
+                  label: l10n.accountUsername,
+                  value: displayAccount.username,
                 ),
                 SizedBox(height: spacing.sm),
                 _AccountInfoRow(
-                  label: '上次登录',
+                  label: l10n.accountCreatedAt,
                   value:
-                      formatUpdatedAtLabel(displayAccount.lastLoginAt) ?? '未知',
+                      formatUpdatedAtLabel(displayAccount.createdAt) ??
+                      l10n.commonUnknown,
+                ),
+                SizedBox(height: spacing.sm),
+                _AccountInfoRow(
+                  label: l10n.accountLastLogin,
+                  value:
+                      formatUpdatedAtLabel(displayAccount.lastLoginAt) ??
+                      l10n.commonUnknown,
                 ),
                 SizedBox(height: spacing.md),
                 Divider(height: 1, color: context.appColors.divider),
@@ -162,9 +170,9 @@ class _MobileAccountSecurityPageState
                     AppTextField(
                       fieldKey: const Key('mobile-account-username-field'),
                       controller: _usernameController,
-                      label: '用户名',
-                      hintText: '请输入新的用户名',
-                      helperText: '保存后当前登录态保持不变。',
+                      label: l10n.accountUsername,
+                      hintText: l10n.accountUsernameHint,
+                      helperText: l10n.accountUsernameHelpMobile,
                       enabled: !profileState.isSaving,
                       validator: _validateUsername,
                       textInputAction: TextInputAction.done,
@@ -186,7 +194,7 @@ class _MobileAccountSecurityPageState
                     SizedBox(height: spacing.lg),
                     AppButton(
                       key: const Key('mobile-account-username-submit-button'),
-                      label: '保存用户名',
+                      label: l10n.accountSaveUsername,
                       variant: AppButtonVariant.primary,
                       isLoading: profileState.isSaving,
                       onPressed: canSubmitUsername ? _submitUsername : null,
@@ -225,7 +233,7 @@ class _MobileAccountSecurityPageState
     final state = ref.read(accountProfileProvider);
     if (saved) {
       _usernameController.text = state.account?.username ?? '';
-      showToast('用户名已更新');
+      showToast(AppLocalizations.of(context).accountUsernameUpdated);
       return;
     }
 
@@ -237,7 +245,7 @@ class _MobileAccountSecurityPageState
 
   String? _validateUsername(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return '请输入用户名';
+      return AppLocalizations.of(context).errorUsernameRequired;
     }
     return null;
   }
@@ -246,10 +254,11 @@ class _MobileAccountSecurityPageState
 
   Widget _buildPasswordCard(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
 
     return AppContentCard(
       key: const Key('mobile-account-password-card'),
-      title: '修改密码',
+      title: l10n.accountChangePasswordTitle,
       padding: EdgeInsets.all(spacing.md),
       child: Form(
         key: _passwordFormKey,
@@ -258,7 +267,7 @@ class _MobileAccountSecurityPageState
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              '修改密码后将立即退出当前登录，需要使用新密码重新登录。',
+              l10n.accountChangePasswordNotice,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s12,
@@ -272,7 +281,7 @@ class _MobileAccountSecurityPageState
                 'mobile-account-password-current-visibility-toggle',
               ),
               controller: _currentPasswordController,
-              label: '当前密码',
+              label: l10n.accountCurrentPassword,
               enabled: !_isSubmittingPassword,
               validator: _validateCurrentPassword,
               textInputAction: TextInputAction.next,
@@ -284,7 +293,7 @@ class _MobileAccountSecurityPageState
                 'mobile-account-password-new-visibility-toggle',
               ),
               controller: _newPasswordController,
-              label: '新密码',
+              label: l10n.accountNewPassword,
               enabled: !_isSubmittingPassword,
               validator: _validateNewPassword,
               textInputAction: TextInputAction.next,
@@ -296,7 +305,7 @@ class _MobileAccountSecurityPageState
                 'mobile-account-password-confirm-visibility-toggle',
               ),
               controller: _confirmPasswordController,
-              label: '确认新密码',
+              label: l10n.accountConfirmNewPassword,
               enabled: !_isSubmittingPassword,
               validator: _validateConfirmPassword,
               textInputAction: TextInputAction.done,
@@ -305,7 +314,7 @@ class _MobileAccountSecurityPageState
             SizedBox(height: spacing.lg),
             AppButton(
               key: const Key('mobile-account-password-submit-button'),
-              label: '确认修改',
+              label: l10n.accountConfirmChange,
               variant: AppButtonVariant.primary,
               isLoading: _isSubmittingPassword,
               onPressed: _isSubmittingPassword ? null : _submitPassword,
@@ -358,20 +367,29 @@ class _MobileAccountSecurityPageState
         if (!mounted) {
           return;
         }
-        showToast('密码已修改，但新密码登录校验失败，请重新登录确认');
+        showToast(
+          AppLocalizations.of(
+            context,
+          ).accountPasswordChangedReloginFailed,
+        );
         return;
       }
 
       if (!mounted) {
         return;
       }
-      showToast('密码已更新，请重新登录');
+      showToast(AppLocalizations.of(context).accountPasswordChangedRelogin);
       await context.logOut();
     } catch (error) {
       if (!mounted) {
         return;
       }
-      showToast(apiErrorMessage(error, fallback: '修改密码失败'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(context).errorChangePasswordFailed,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -383,7 +401,7 @@ class _MobileAccountSecurityPageState
 
   String? _validateCurrentPassword(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return '请输入当前密码';
+      return AppLocalizations.of(context).accountCurrentPasswordRequired;
     }
     return null;
   }
@@ -391,10 +409,10 @@ class _MobileAccountSecurityPageState
   String? _validateNewPassword(String? value) {
     final nextPassword = value?.trim() ?? '';
     if (nextPassword.isEmpty) {
-      return '请输入新密码';
+      return AppLocalizations.of(context).accountNewPasswordRequired;
     }
     if (nextPassword == _currentPasswordController.text.trim()) {
-      return '新密码不能与当前密码相同';
+      return AppLocalizations.of(context).accountNewPasswordSameAsCurrent;
     }
     return null;
   }
@@ -402,10 +420,10 @@ class _MobileAccountSecurityPageState
   String? _validateConfirmPassword(String? value) {
     final confirmPassword = value?.trim() ?? '';
     if (confirmPassword.isEmpty) {
-      return '请再次输入新密码';
+      return AppLocalizations.of(context).accountConfirmPasswordRequired;
     }
     if (confirmPassword != _newPasswordController.text.trim()) {
-      return '两次输入的新密码不一致';
+      return AppLocalizations.of(context).accountPasswordMismatch;
     }
     return null;
   }
@@ -414,19 +432,20 @@ class _MobileAccountSecurityPageState
 
   Widget _buildApiKeysCard(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final asyncKeys = ref.watch(apiKeysProvider);
     final keys = asyncKeys.value ?? const <ApiKeyDto>[];
     final showInitialLoading = asyncKeys.isLoading && !asyncKeys.hasValue;
 
     return AppContentCard(
       key: const Key('mobile-account-apikeys-card'),
-      title: 'API 密钥',
+      title: l10n.apiKeysTitle,
       padding: EdgeInsets.all(spacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            '供外部工具（如 MCP 服务）调用 API，权限等同于账号。密钥只在生成时显示一次，请妥善保存。',
+            l10n.apiKeysDescription,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -444,7 +463,10 @@ class _MobileAccountSecurityPageState
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  apiErrorMessage(asyncKeys.error!, fallback: 'API 密钥加载失败'),
+                  apiErrorMessage(
+                    asyncKeys.error!,
+                    fallback: l10n.errorApiKeysLoadFailed,
+                  ),
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s12,
@@ -454,7 +476,7 @@ class _MobileAccountSecurityPageState
                 SizedBox(height: spacing.sm),
                 AppButton(
                   key: const Key('mobile-account-apikeys-retry-button'),
-                  label: '重试',
+                  label: l10n.commonRetry,
                   size: AppButtonSize.small,
                   onPressed: () => ref.invalidate(apiKeysProvider),
                 ),
@@ -462,7 +484,7 @@ class _MobileAccountSecurityPageState
             )
           else if (keys.isEmpty)
             Text(
-              '还没有 API 密钥。',
+              l10n.apiKeysEmpty,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s12,
@@ -478,7 +500,7 @@ class _MobileAccountSecurityPageState
           SizedBox(height: spacing.lg),
           AppButton(
             key: const Key('mobile-account-apikeys-create-button'),
-            label: '生成新密钥',
+            label: l10n.apiKeysGenerate,
             variant: AppButtonVariant.secondary,
             icon: const Icon(Icons.add_rounded),
             onPressed: _openGenerateDrawer,
@@ -490,10 +512,12 @@ class _MobileAccountSecurityPageState
 
   Widget _buildApiKeyRow(BuildContext context, ApiKeyDto key) {
     final spacing = context.appSpacing;
-    final title = key.name.isEmpty ? '未命名密钥' : key.name;
-    final lastUsed = key.lastUsedAt == null
-        ? '从未使用'
-        : '最后使用 ${formatUpdatedAtLabel(key.lastUsedAt)}';
+    final l10n = AppLocalizations.of(context);
+    final title = key.name.isEmpty ? l10n.apiKeyUnnamed : key.name;
+    final lastUsedAt = formatUpdatedAtLabel(key.lastUsedAt);
+    final lastUsed = lastUsedAt == null
+        ? l10n.apiKeyNeverUsed
+        : l10n.apiKeyLastUsed(lastUsedAt);
     final subtitle = '${key.keyHint} · $lastUsed';
 
     return Padding(
@@ -534,7 +558,7 @@ class _MobileAccountSecurityPageState
           AppIconButton(
             key: Key('mobile-account-apikey-delete-${key.id}'),
             icon: const Icon(Icons.delete_outline_rounded),
-            tooltip: '删除',
+            tooltip: l10n.commonDelete,
             onPressed: () => _deleteApiKey(key),
           ),
         ],
@@ -552,12 +576,13 @@ class _MobileAccountSecurityPageState
   }
 
   Future<void> _deleteApiKey(ApiKeyDto key) async {
+    final l10n = AppLocalizations.of(context);
     final label = key.name.isEmpty ? key.keyHint : key.name;
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除 API 密钥',
-      message: '删除后使用「$label」的集成将立即失效，确认删除？',
-      confirmLabel: '删除',
+      title: l10n.apiKeyDeleteTitle,
+      message: l10n.apiKeyDeleteMessage(label),
+      confirmLabel: l10n.commonDelete,
       danger: true,
     );
     if (!confirmed || !mounted) {
@@ -567,7 +592,9 @@ class _MobileAccountSecurityPageState
       await ref.read(apiKeysProvider.notifier).delete(key.id);
     } catch (error) {
       if (mounted) {
-        showToast(apiErrorMessage(error, fallback: '删除密钥失败'));
+        showToast(
+          apiErrorMessage(error, fallback: l10n.errorApiKeyDeleteFailed),
+        );
       }
     }
   }

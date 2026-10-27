@@ -19,6 +19,7 @@ import 'package:sakuramedia/features/activity/presentation/providers/activity_ce
 import 'package:sakuramedia/features/activity/presentation/job_params_dialog.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
@@ -86,6 +87,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage> {
   }
 
   Future<void> _triggerJob(JobMetadataDto job) async {
+    final l10n = AppLocalizations.of(context);
     try {
       Map<String, dynamic>? params;
       if (job.paramsSchema != null) {
@@ -96,7 +98,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage> {
       }
       await _controller.triggerJob(job.taskKey, params: params);
       if (mounted) {
-        showToast('任务已提交');
+        showToast(l10n.activityJobSubmitted);
       }
     } catch (error) {
       if (!mounted) {
@@ -105,10 +107,16 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage> {
       if (error is ApiException &&
           error.statusCode == 409 &&
           error.error?.code == 'task_conflict') {
-        showToast('任务已在运行中');
+        showToast(l10n.activityJobAlreadyRunning);
         return;
       }
-      showToast(apiErrorMessage(error, fallback: '任务提交失败，请重试'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: l10n.activityJobSubmitFailed,
+          l10n: l10n,
+        ),
+      );
     }
   }
 
@@ -193,6 +201,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage> {
   /// 任务 tab 的静态头（可执行任务区 + 「任务历史」标题）：只读 jobs 等低频字段，
   /// 跟随父级重建；活动区 / 历史 / 页脚是独立订阅的 sliver。
   Widget _buildTasksStaticHeader(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final titleStyle = resolveAppTextStyle(
       context,
       size: AppTextSize.s14,
@@ -209,7 +218,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage> {
             onOpen: () => unawaited(_openExecutableJobsDialog(context)),
           ),
           SizedBox(height: context.appSpacing.xl),
-          Text('任务历史', style: titleStyle),
+          Text(l10n.activityTaskHistory, style: titleStyle),
           SizedBox(height: context.appSpacing.lg),
         ],
       ),
@@ -366,7 +375,7 @@ class _ActiveRunsSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _ActivitySection(
-            title: '活动任务',
+            title: AppLocalizations.of(context).activityActiveTasks,
             titleStyle: resolveAppTextStyle(
               context,
               size: AppTextSize.s14,
@@ -417,8 +426,10 @@ class _HistoryRunsSliver extends ConsumerWidget {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
     if (historyRuns.isEmpty) {
-      return const SliverToBoxAdapter(
-        child: AppEmptyState(message: '当前筛选下暂无任务记录'),
+      return SliverToBoxAdapter(
+        child: AppEmptyState(
+          message: AppLocalizations.of(context).activityEmptyTasksFiltered,
+        ),
       );
     }
     return _HistoryRunsList(
@@ -471,14 +482,15 @@ class _InitialErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return _ActivitySection(
-      title: '任务中心',
+      title: l10n.activityCenterTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AppEmptyState(message: message),
           SizedBox(height: context.appSpacing.lg),
-          AppButton(label: '重试', onPressed: () => onRetry()),
+          AppButton(label: l10n.commonRetry, onPressed: () => onRetry()),
         ],
       ),
     );
@@ -588,20 +600,23 @@ class _ExecutableJobsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _ExecutableJobsHeader(summary: _summaryText, onOpen: onOpen);
+    return _ExecutableJobsHeader(
+      summary: _summaryText(AppLocalizations.of(context)),
+      onOpen: onOpen,
+    );
   }
 
-  String get _summaryText {
+  String _summaryText(AppLocalizations l10n) {
     if (controller.isLoadingJobs && controller.jobs.isEmpty) {
-      return '加载中';
+      return l10n.activityJobsLoading;
     }
     if (controller.jobErrorMessage != null && controller.jobs.isEmpty) {
-      return '加载失败';
+      return l10n.activityJobsLoadFailed;
     }
     if (controller.jobs.isEmpty) {
-      return '暂无任务';
+      return l10n.activityJobsEmpty;
     }
-    return '${controller.jobs.length} 个任务';
+    return l10n.activityJobsCount(controller.jobs.length);
   }
 }
 
@@ -613,8 +628,9 @@ class _ExecutableJobsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppContentCard(
-      title: '可执行任务',
+      title: l10n.activityExecutableJobsTitle,
       headerTrailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -622,7 +638,7 @@ class _ExecutableJobsHeader extends StatelessWidget {
           SizedBox(width: context.appSpacing.sm),
           AppButton(
             key: const Key('activity-jobs-toggle'),
-            label: '查看任务',
+            label: l10n.activityViewJobs,
             icon: const Icon(Icons.list_alt_rounded),
             size: AppButtonSize.small,
             onPressed: onOpen,
@@ -630,7 +646,7 @@ class _ExecutableJobsHeader extends StatelessWidget {
         ],
       ),
       child: Text(
-        '手动触发已注册的后台任务，执行状态会在任务中心实时更新。',
+        l10n.activityExecutableJobsDescription,
         style: resolveAppTextStyle(
           context,
           size: AppTextSize.s12,
@@ -655,6 +671,7 @@ class _ExecutableJobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final lastTaskRun = job.lastTaskRun;
     final canTrigger =
         job.disabledReason == null && job.manualTriggerAllowed && !isTriggering;
@@ -675,14 +692,14 @@ class _ExecutableJobCard extends StatelessWidget {
         child: AppButton(
           key: Key('activity-job-trigger-${job.taskKey}'),
           label: job.disabledReason != null
-              ? '未启用'
+              ? l10n.activityJobDisabled
               : job.manualTriggerAllowed
               ? (isTriggering
-                    ? '提交中'
+                    ? l10n.activityJobSubmitting
                     : job.paramsSchema == null
-                    ? '立即执行'
-                    : '填写参数')
-              : '不可手动执行',
+                    ? l10n.activityJobRunNow
+                    : l10n.activityJobFillParams)
+              : l10n.activityJobNotManual,
           size: AppButtonSize.small,
           variant: AppButtonVariant.primary,
           isLoading: isTriggering,
@@ -695,20 +712,25 @@ class _ExecutableJobCard extends StatelessWidget {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           AppBadge(
-            label: job.cronExpr.isEmpty ? '未配置定时' : job.cronExpr,
+            label: job.cronExpr.isEmpty
+                ? l10n.activityJobNoSchedule
+                : job.cronExpr,
             tone: AppBadgeTone.neutral,
           ),
           if (lastTaskRun != null)
             AppBadge(
-              label: _labelForTaskState(lastTaskRun.state),
+              label: _labelForTaskState(lastTaskRun.state, l10n),
               tone: _taskStateTone(lastTaskRun.state),
             ),
           if (job.paramsSchema != null)
-            const AppBadge(label: '需填写参数', tone: AppBadgeTone.info),
+            AppBadge(
+              label: l10n.activityJobNeedsParams,
+              tone: AppBadgeTone.info,
+            ),
           Text(
             lastTaskRun == null
-                ? '暂无运行记录'
-                : '最近运行：${_taskTimeSummary(lastTaskRun)}',
+                ? l10n.activityJobNoRuns
+                : l10n.activityJobLastRun(_taskTimeSummary(lastTaskRun, l10n)),
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -729,6 +751,7 @@ class _ExecutableJobsDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final activity = ref.watch(activityCenterProvider);
     final controller = ref.read(activityCenterProvider.notifier);
     final body = activity.when(
@@ -752,7 +775,11 @@ class _ExecutableJobsDialog extends ConsumerWidget {
       ),
       error: (error, _) => AppEmptyState(
         key: const Key('activity-jobs-error'),
-        message: apiErrorMessage(error, fallback: '可执行任务加载失败，请重试'),
+        message: apiErrorMessage(
+          error,
+          fallback: l10n.errorExecutableTaskLoadFailed,
+          l10n: l10n,
+        ),
         onRetry: controller.reloadAll,
         retryKey: const Key('activity-jobs-retry-button'),
       ),
@@ -801,6 +828,7 @@ class _ExecutableJobsDialogContentState
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final state = widget.state;
     final jobs = state.jobs;
     final jobPlaceholders = jobMetadataPlaceholders();
@@ -816,11 +844,14 @@ class _ExecutableJobsDialogContentState
     }
     final sortedPluginIds = pluginIds.toList()..sort();
     final filterItems = <DropdownMenuItem<String?>>[
-      const DropdownMenuItem<String?>(value: null, child: Text('全部任务')),
+      DropdownMenuItem<String?>(
+        value: null,
+        child: Text(l10n.activityFilterAllTasks),
+      ),
       if (hasSystemJobs)
-        const DropdownMenuItem<String?>(
+        DropdownMenuItem<String?>(
           value: _systemFilterValue,
-          child: Text('系统任务'),
+          child: Text(l10n.activityFilterSystemTasks),
         ),
       ...sortedPluginIds.map(
         (pluginId) =>
@@ -872,7 +903,7 @@ class _ExecutableJobsDialogContentState
             retryKey: const Key('activity-jobs-retry-button'),
           )
         else if (jobs.isEmpty)
-          const AppEmptyState(message: '暂无可执行任务')
+          AppEmptyState(message: l10n.activityExecutableJobsEmpty)
         else ...[
           if (state.isLoadingJobs) ...[
             Row(
@@ -880,7 +911,7 @@ class _ExecutableJobsDialogContentState
                 const AppInlineSpinner(),
                 SizedBox(width: spacing.sm),
                 Text(
-                  '正在刷新任务列表',
+                  l10n.activityJobsRefreshing,
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s12,
@@ -896,7 +927,7 @@ class _ExecutableJobsDialogContentState
             width: double.infinity,
             child: AppSelectField<String?>(
               key: const Key('activity-job-plugin-filter'),
-              label: '任务来源',
+              label: l10n.activityJobSourceLabel,
               value: selectedFilter,
               size: AppSelectFieldSize.compact,
               items: filterItems,
@@ -941,13 +972,14 @@ class _ExecutableJobsDialogHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: EdgeInsets.only(right: spacing.xxl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '可执行任务',
+            l10n.activityExecutableJobsTitle,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s18,
@@ -957,7 +989,7 @@ class _ExecutableJobsDialogHeader extends StatelessWidget {
           ),
           SizedBox(height: spacing.xs),
           Text(
-            '选择一个任务手动执行，运行结果会回到后台任务列表。',
+            l10n.activityExecutableJobsDialogDescription,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -983,6 +1015,7 @@ class _ExecutableJobsRefreshError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -1000,7 +1033,7 @@ class _ExecutableJobsRefreshError extends StatelessWidget {
         SizedBox(width: spacing.sm),
         AppButton(
           key: const Key('activity-jobs-retry-button'),
-          label: '重试',
+          label: l10n.commonRetry,
           size: AppButtonSize.xSmall,
           onPressed: onRetry,
         ),
@@ -1032,6 +1065,7 @@ class _TaskFilterBar extends StatelessWidget {
     if (AppPlatformScope.maybeOf(context) == AppPlatform.mobile) {
       return _MobileTaskFilterEntry(controller: controller);
     }
+    final l10n = AppLocalizations.of(context);
     final layoutTokens = context.appLayoutTokens;
     final taskKeyLabels = controller.knownTaskKeyLabels;
     final filterTextStyle = resolveAppTextStyle(
@@ -1053,11 +1087,14 @@ class _TaskFilterBar extends StatelessWidget {
             size: AppSelectFieldSize.compact,
             textStyle: filterTextStyle,
             items: <DropdownMenuItem<String?>>[
-              const DropdownMenuItem<String?>(value: null, child: Text('全部状态')),
+              DropdownMenuItem<String?>(
+                value: null,
+                child: Text(l10n.activityFilterAllStates),
+              ),
               ..._states.map(
                 (value) => DropdownMenuItem<String?>(
                   value: value,
-                  child: Text(_labelForTaskState(value)),
+                  child: Text(_labelForTaskState(value, l10n)),
                 ),
               ),
             ],
@@ -1074,9 +1111,9 @@ class _TaskFilterBar extends StatelessWidget {
             size: AppSelectFieldSize.compact,
             textStyle: filterTextStyle,
             items: <DropdownMenuItem<String?>>[
-              const DropdownMenuItem<String?>(
+              DropdownMenuItem<String?>(
                 value: null,
-                child: Text('全部任务类型'),
+                child: Text(l10n.activityFilterAllTaskTypes),
               ),
               ...controller.knownTaskKeys.map(
                 (value) => DropdownMenuItem<String?>(
@@ -1098,14 +1135,14 @@ class _TaskFilterBar extends StatelessWidget {
             size: AppSelectFieldSize.compact,
             textStyle: filterTextStyle,
             items: <DropdownMenuItem<String?>>[
-              const DropdownMenuItem<String?>(
+              DropdownMenuItem<String?>(
                 value: null,
-                child: Text('全部触发来源'),
+                child: Text(l10n.activityFilterAllTriggers),
               ),
               ..._triggerTypes.map(
                 (value) => DropdownMenuItem<String?>(
                   value: value,
-                  child: Text(_labelForTriggerType(value)),
+                  child: Text(_labelForTriggerType(value, l10n)),
                 ),
               ),
             ],
@@ -1135,6 +1172,7 @@ class _MobileTaskFilterEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final filter = controller.taskFilter;
     final taskKeyLabels = controller.knownTaskKeyLabels;
     final isSelected = filter.hasActiveFilters;
@@ -1142,7 +1180,7 @@ class _MobileTaskFilterEntry extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            _taskFilterSummary(filter, taskKeyLabels),
+            _taskFilterSummary(filter, taskKeyLabels, l10n),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: resolveAppTextStyle(
@@ -1168,7 +1206,9 @@ class _MobileTaskFilterEntry extends StatelessWidget {
         SizedBox(width: context.appSpacing.sm),
         AppButton(
           key: const Key('mobile-activity-task-filter-button'),
-          label: isSelected ? '已筛选' : '筛选',
+          label: isSelected
+              ? l10n.activityFilterApplied
+              : l10n.activityFilterAction,
           icon: const Icon(Icons.tune_rounded),
           size: AppButtonSize.small,
           isSelected: isSelected,
@@ -1235,6 +1275,7 @@ class _MobileTaskFilterDrawerContentState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppMobileFilterDrawerScaffold(
       scrollViewKey: const Key('mobile-activity-task-filter-scroll-view'),
       footer: AppFilterPanelFooter(
@@ -1245,7 +1286,7 @@ class _MobileTaskFilterDrawerContentState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            '筛选任务历史',
+            l10n.activityTaskFilterTitle,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s18,
@@ -1256,14 +1297,17 @@ class _MobileTaskFilterDrawerContentState
           SizedBox(height: context.appSpacing.lg),
           AppSelectField<String?>(
             key: const Key('mobile-activity-task-state-filter'),
-            label: '任务状态',
+            label: l10n.activityTaskStateLabel,
             value: _local.state,
             items: <DropdownMenuItem<String?>>[
-              const DropdownMenuItem<String?>(value: null, child: Text('全部状态')),
+              DropdownMenuItem<String?>(
+                value: null,
+                child: Text(l10n.activityFilterAllStates),
+              ),
               ..._TaskFilterBar._states.map(
                 (value) => DropdownMenuItem<String?>(
                   value: value,
-                  child: Text(_labelForTaskState(value)),
+                  child: Text(_labelForTaskState(value, l10n)),
                 ),
               ),
             ],
@@ -1272,12 +1316,12 @@ class _MobileTaskFilterDrawerContentState
           SizedBox(height: context.appSpacing.md),
           AppSelectField<String?>(
             key: const Key('mobile-activity-task-key-filter'),
-            label: '任务类型',
+            label: l10n.activityTaskTypeLabel,
             value: _local.taskKey,
             items: <DropdownMenuItem<String?>>[
-              const DropdownMenuItem<String?>(
+              DropdownMenuItem<String?>(
                 value: null,
-                child: Text('全部任务类型'),
+                child: Text(l10n.activityFilterAllTaskTypes),
               ),
               ...widget.taskKeyLabels.entries.map(
                 (entry) => DropdownMenuItem<String?>(
@@ -1291,17 +1335,17 @@ class _MobileTaskFilterDrawerContentState
           SizedBox(height: context.appSpacing.md),
           AppSelectField<String?>(
             key: const Key('mobile-activity-task-trigger-filter'),
-            label: '触发来源',
+            label: l10n.activityTaskTriggerLabel,
             value: _local.triggerType,
             items: <DropdownMenuItem<String?>>[
-              const DropdownMenuItem<String?>(
+              DropdownMenuItem<String?>(
                 value: null,
-                child: Text('全部触发来源'),
+                child: Text(l10n.activityFilterAllTriggers),
               ),
               ..._TaskFilterBar._triggerTypes.map(
                 (value) => DropdownMenuItem<String?>(
                   value: value,
-                  child: Text(_labelForTriggerType(value)),
+                  child: Text(_labelForTriggerType(value, l10n)),
                 ),
               ),
             ],
@@ -1316,16 +1360,19 @@ class _MobileTaskFilterDrawerContentState
 String _taskFilterSummary(
   ActivityTaskFilterState filter,
   Map<String, String> taskKeyLabels,
+  AppLocalizations l10n,
 ) {
   final values = <String>[];
-  if (filter.state != null) values.add(_labelForTaskState(filter.state!));
+  if (filter.state != null) {
+    values.add(_labelForTaskState(filter.state!, l10n));
+  }
   if (filter.taskKey != null) {
     values.add(taskKeyLabels[filter.taskKey] ?? filter.taskKey!);
   }
   if (filter.triggerType != null) {
-    values.add(_labelForTriggerType(filter.triggerType!));
+    values.add(_labelForTriggerType(filter.triggerType!, l10n));
   }
-  return values.isEmpty ? '全部任务' : values.join(' · ');
+  return values.isEmpty ? l10n.activityFilterAllTasks : values.join(' · ');
 }
 
 class _TaskRunCard extends StatelessWidget {
@@ -1336,8 +1383,10 @@ class _TaskRunCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.appColors;
     final progressValue = taskRun.progressValue;
+    final summary = taskRun.displaySummary(l10n);
 
     return Container(
       key: Key('activity-task-${taskRun.id}'),
@@ -1388,7 +1437,7 @@ class _TaskRunCard extends StatelessWidget {
               ),
               SizedBox(width: context.appSpacing.md),
               AppBadge(
-                label: _labelForTaskState(taskRun.state),
+                label: _labelForTaskState(taskRun.state, l10n),
                 tone: _taskStateTone(taskRun.state),
               ),
             ],
@@ -1419,11 +1468,11 @@ class _TaskRunCard extends StatelessWidget {
             runSpacing: context.appSpacing.sm,
             children: [
               AppBadge(
-                label: _labelForTriggerType(taskRun.triggerType),
+                label: _labelForTriggerType(taskRun.triggerType, l10n),
                 tone: AppBadgeTone.neutral,
               ),
               Text(
-                _taskTimeSummary(taskRun),
+                _taskTimeSummary(taskRun, l10n),
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s12,
@@ -1433,10 +1482,10 @@ class _TaskRunCard extends StatelessWidget {
               ),
             ],
           ),
-          if ((taskRun.displaySummary ?? '').trim().isNotEmpty) ...[
+          if ((summary ?? '').trim().isNotEmpty) ...[
             SizedBox(height: context.appSpacing.md),
             Text(
-              taskRun.displaySummary!,
+              summary!,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s14,
@@ -1454,8 +1503,10 @@ class _TaskRunCard extends StatelessWidget {
               child: AppTextButton(
                 key: Key('activity-task-failed-items-${taskRun.id}'),
                 label: taskRun.unresolvedFailedFileCount > 0
-                    ? '处理失败文件（${taskRun.unresolvedFailedFileCount}）'
-                    : '查看跳过文件（${taskRun.skippedFileCount}）',
+                    ? l10n.activityHandleFailedFiles(
+                        taskRun.unresolvedFailedFileCount,
+                      )
+                    : l10n.activityViewSkippedFiles(taskRun.skippedFileCount),
                 size: AppTextButtonSize.small,
                 emphasis: AppTextButtonEmphasis.accent,
                 onPressed: () => showImportFailedItemsDialog(
@@ -1472,14 +1523,20 @@ class _TaskRunCard extends StatelessWidget {
   }
 }
 
-String _taskTimeSummary(TaskRunDto item) {
+String _taskTimeSummary(TaskRunDto item, AppLocalizations l10n) {
   if (item.finishedAt != null) {
-    return '完成于 ${formatUpdatedAtLabel(item.finishedAt) ?? '时间未知'}';
+    return l10n.activityFinishedAt(
+      formatUpdatedAtLabel(item.finishedAt) ?? l10n.activityTimeUnknown,
+    );
   }
   if (item.startedAt != null) {
-    return '开始于 ${formatUpdatedAtLabel(item.startedAt) ?? '时间未知'}';
+    return l10n.activityStartedAt(
+      formatUpdatedAtLabel(item.startedAt) ?? l10n.activityTimeUnknown,
+    );
   }
-  return '创建于 ${formatUpdatedAtLabel(item.createdAt) ?? '时间未知'}';
+  return l10n.activityCreatedAt(
+    formatUpdatedAtLabel(item.createdAt) ?? l10n.activityTimeUnknown,
+  );
 }
 
 AppBadgeTone _taskStateTone(String state) {
@@ -1492,23 +1549,23 @@ AppBadgeTone _taskStateTone(String state) {
   };
 }
 
-String _labelForTaskState(String value) {
+String _labelForTaskState(String value, AppLocalizations l10n) {
   return switch (value) {
-    'running' => '运行中',
-    'completed' => '已完成',
-    'failed' => '失败',
-    'pending' => '排队中',
+    'running' => l10n.activityTaskStateRunning,
+    'completed' => l10n.activityTaskStateCompleted,
+    'failed' => l10n.activityTaskStateFailed,
+    'pending' => l10n.activityTaskStatePending,
     _ => value,
   };
 }
 
-String _labelForTriggerType(String value) {
+String _labelForTriggerType(String value, AppLocalizations l10n) {
   return switch (value) {
-    'scheduled' => '定时触发',
-    'manual' => '手动触发',
-    'startup' => '启动触发',
-    'internal' => '内部触发',
-    'plugin' => '插件触发',
+    'scheduled' => l10n.activityTriggerScheduled,
+    'manual' => l10n.activityTriggerManual,
+    'startup' => l10n.activityTriggerStartup,
+    'internal' => l10n.activityTriggerInternal,
+    'plugin' => l10n.activityTriggerPlugin,
     _ => value,
   };
 }

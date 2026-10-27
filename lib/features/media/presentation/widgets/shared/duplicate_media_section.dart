@@ -16,6 +16,7 @@ import 'package:sakuramedia/features/shared/presentation/providers/paged_async_n
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_collection_chips.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
@@ -57,6 +58,7 @@ class DuplicateMediaSection extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final provider = duplicateMediaProvider(kind);
     // 列表本体忽略 loadMore 状态：翻页 loading/失败只重建独立页脚。
     final asyncState = ref.watch(
@@ -81,11 +83,12 @@ class DuplicateMediaSection extends HookConsumerWidget {
 
     Future<void> deleteSelected() async {
       if (deleting.value || selected.isEmpty) return;
+      final l10n = AppLocalizations.of(context);
       final confirmed = await showAppConfirmDialog(
         context,
-        title: '批量删除重复媒体',
-        message: '将删除选中的 ${selected.length} 项媒体及对应文件，每组至少保留一个副本。确认继续？',
-        confirmLabel: '删除',
+        title: l10n.mediaListDuplicateBatchDeleteTitle,
+        message: l10n.mediaListDuplicateBatchDeleteMessage(selected.length),
+        confirmLabel: l10n.commonDelete,
         danger: true,
         dialogKey: Key('$keyPrefix-duplicates-batch-confirm-dialog'),
         confirmKey: Key('$keyPrefix-duplicates-batch-confirm'),
@@ -102,7 +105,7 @@ class DuplicateMediaSection extends HookConsumerWidget {
             (group) => group.mediaItems.every((item) => ids.contains(item.id)),
           )) {
         exitSelection();
-        showToast('重复媒体已变化，请重新选择，至少保留一个副本');
+        showToast(l10n.mediaListDuplicateChanged);
         return;
       }
       deleting.value = true;
@@ -119,7 +122,7 @@ class DuplicateMediaSection extends HookConsumerWidget {
 
     final deleteButton = AppButton(
       key: Key('$keyPrefix-duplicates-batch-delete'),
-      label: '删除已选',
+      label: l10n.mediaListBatchDeleteSelected,
       icon: const Icon(Icons.delete_outline_rounded),
       variant: AppButtonVariant.danger,
       size: mobile ? AppButtonSize.medium : AppButtonSize.small,
@@ -133,13 +136,13 @@ class DuplicateMediaSection extends HookConsumerWidget {
     ) async {
       final remainingCount = group.mediaItems.length - 1;
       final remainingHint = remainingCount >= 2
-          ? '删除后该组还会保留 $remainingCount 项媒体。'
-          : '删除后该组将不再属于重复媒体。';
+          ? l10n.mediaListDuplicateRemainingHint(remainingCount)
+          : l10n.mediaListDuplicateNoLongerHint;
       final confirmed = await showAppConfirmDialog(
         context,
-        title: '删除重复媒体',
-        message: '确认删除“${item.fileName}”及对应文件？$remainingHint',
-        confirmLabel: '删除',
+        title: l10n.mediaListDuplicateDeleteTitle,
+        message: l10n.mediaListDuplicateDeleteMessage(item.fileName, remainingHint),
+        confirmLabel: l10n.commonDelete,
         danger: true,
         dialogKey: Key('$keyPrefix-duplicate-delete-dialog-${item.id}'),
         confirmKey: Key(
@@ -152,10 +155,10 @@ class DuplicateMediaSection extends HookConsumerWidget {
               .deleteDuplicateMedia(mediaId: item.id);
           ref.read(mediaBrowseProvider.notifier).removeItemsByIds([item.id]);
         },
-        failureFallback: '删除重复媒体失败',
+        failureFallback: l10n.mediaListDuplicateDeleteFailed,
       );
       if (confirmed && context.mounted) {
-        showToast('重复媒体已删除');
+        showToast(l10n.mediaListDuplicateDeleted);
       }
     }
 
@@ -165,9 +168,9 @@ class DuplicateMediaSection extends HookConsumerWidget {
       return MediaFileGroupCard(
         key: Key('$keyPrefix-duplicate-group-${first.id}'),
         items: group.mediaItems,
-        countLabel: '${group.mediaCount} 个副本',
+        countLabel: l10n.mediaListDuplicateCopiesCount(group.mediaCount),
         headerKey: Key('$keyPrefix-duplicate-cover-tap-${first.id}'),
-        deleteLabel: '删除此项',
+        deleteLabel: l10n.mediaListDuplicateDeleteItem,
         keyPrefix: '$keyPrefix-duplicate',
         mobile: mobile,
         onOpen:
@@ -184,7 +187,9 @@ class DuplicateMediaSection extends HookConsumerWidget {
           selectedIds.value = next;
         },
         itemSupplement: (item) {
-          final headingDiffers = item.displayHeading != first.displayHeading;
+          final headingDiffers =
+              item.displayHeading(l10n: l10n) !=
+              first.displayHeading(l10n: l10n);
           final showCollections = item.isVideo && item.collections.isNotEmpty;
           if (!headingDiffers && !showCollections) {
             return null;
@@ -198,14 +203,14 @@ class DuplicateMediaSection extends HookConsumerWidget {
                     item.movieNumber != null &&
                     onOpenMovieDetail != null)
                   AppTextButton(
-                    label: item.displayHeading,
+                    label: item.displayHeading(l10n: l10n),
                     size: AppTextButtonSize.xxSmall,
                     onPressed: () =>
                         onOpenMovieDetail!(context, item.movieNumber!),
                   )
                 else
                   Text(
-                    item.displayHeading,
+                    item.displayHeading(l10n: l10n),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: resolveAppTextStyle(
@@ -232,9 +237,9 @@ class DuplicateMediaSection extends HookConsumerWidget {
     final content = AppFixedHeaderLayout(
       header: selectionMode.value
           ? AppSelectionHeaderToolbar(
-              countLabel: '已选 ${selected.length} 个',
+              countLabel: l10n.mediaListSelectedCopies(selected.length),
               countKey: Key('$keyPrefix-duplicates-selected-count'),
-              selectAllLabel: '清空',
+              selectAllLabel: l10n.mediaListClearSelection,
               selectAllKey: Key('$keyPrefix-duplicates-clear-selection'),
               onToggleAll: deleting.value || selected.isEmpty
                   ? null
@@ -265,8 +270,8 @@ class DuplicateMediaSection extends HookConsumerWidget {
               padding: EdgeInsets.only(bottom: spacing.md),
               child: Text(
                 selectionMode.value
-                    ? '请选择要删除的媒体，每组至少保留一个副本'
-                    : '按文件内容指纹聚合同一文件的媒体记录。删除前请确认至少保留一个可用副本。',
+                    ? l10n.mediaListDuplicateSelectionHint
+                    : l10n.mediaListDuplicateDescription,
                 key: Key('$keyPrefix-duplicate-description'),
                 style: resolveAppTextStyle(
                   context,
@@ -284,8 +289,8 @@ class DuplicateMediaSection extends HookConsumerWidget {
             asyncState: asyncState,
             pagedOf: (state) => state,
             itemSpacing: spacing.lg,
-            initialErrorMessage: '重复媒体加载失败，请稍后重试',
-            emptyMessage: '当前类型没有发现重复文件。',
+            initialErrorMessage: l10n.errorDuplicateMediaLoadFailed,
+            emptyMessage: l10n.mediaListDuplicateEmpty,
             // loading 用占位分组渲染真实组卡，由 [AppSkeletonizer] 灰化。
             skeletonBuilder: (context) {
               final placeholders = duplicateMediaGroupPlaceholders();
@@ -355,6 +360,7 @@ class _DuplicateMediaHeader extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     // 头部只订阅总数与首载状态：翻页 loading/失败不重建头部。
     final header = ref.watch(
       duplicateMediaProvider(kind).select(
@@ -385,7 +391,7 @@ class _DuplicateMediaHeader extends HookConsumerWidget {
             ])
               AppTextButton(
                 key: Key('$keyPrefix-duplicate-kind-${option.name}'),
-                label: option.label,
+                label: option.label(l10n: l10n),
                 size: AppTextButtonSize.xSmall,
                 isSelected: selectedKind.value == option,
                 onPressed: () => applyKind(option),
@@ -407,7 +413,7 @@ class _DuplicateMediaHeader extends HookConsumerWidget {
 
     return AppListHeader(
       filterButtonKey: Key('$keyPrefix-duplicates-filter'),
-      filterLabel: kind.label,
+      filterLabel: kind.label(l10n: l10n),
       filterPanelKey: Key('$keyPrefix-duplicates-filter-panel'),
       filterPanelBuilder: mobile ? null : filterOptions,
       filterPanelFooter: mobile ? null : filterFooter(),
@@ -425,7 +431,7 @@ class _DuplicateMediaHeader extends HookConsumerWidget {
       informationSlots: [
         AppListHeaderInfo(
           key: Key('$keyPrefix-duplicate-total-text'),
-          label: '共 $total 组',
+          label: l10n.mediaListTotalGroups(total),
         ),
       ],
       actionSlots: [
@@ -435,7 +441,9 @@ class _DuplicateMediaHeader extends HookConsumerWidget {
         ),
         AppIconButton(
           key: Key('$keyPrefix-duplicate-refresh-button'),
-          tooltip: isInitialLoading ? '刷新中' : '刷新',
+          tooltip: isInitialLoading
+              ? l10n.mediaListRefreshing
+              : l10n.commonRefresh,
           icon: const Icon(Icons.refresh_rounded),
           onPressed: isInitialLoading ? null : onRefresh,
         ),

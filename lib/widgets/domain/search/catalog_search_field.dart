@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
@@ -26,7 +27,7 @@ class CatalogSearchField extends StatelessWidget {
     this.onOnlineSearchToggle,
     this.isSearching = false,
     this.showSearchingIndicator = true,
-    this.searchButtonTooltip = '搜索影片或女优',
+    this.searchButtonTooltip,
     this.fillColor,
     this.contentPadding,
     this.tightSuffix = false,
@@ -64,8 +65,8 @@ class CatalogSearchField extends StatelessWidget {
   /// 图标不转圈，只做置灰禁用。
   final bool showSearchingIndicator;
 
-  /// 后缀搜索图标的 tooltip / 语义标签。
-  final String searchButtonTooltip;
+  /// 后缀搜索图标的 tooltip / 语义标签；为空时用通用搜索文案。
+  final String? searchButtonTooltip;
 
   /// 覆盖默认的填充色；用于把搜索框放到比 `surfaceMuted` 更暗的面板（如侧边栏）上时提升对比。
   final Color? fillColor;
@@ -82,6 +83,9 @@ class CatalogSearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final searchTooltip =
+        searchButtonTooltip ?? l10n.widgetSearchDefaultTooltip;
     return AppTextField(
       fieldKey: fieldKey,
       controller: controller,
@@ -99,8 +103,8 @@ class CatalogSearchField extends StatelessWidget {
           if (showTextImageSearchButton)
             AppIconButton(
               key: textImageSearchButtonKey,
-              tooltip: '文字搜图',
-              semanticLabel: '文字搜图',
+              tooltip: l10n.widgetSearchTextImageTooltip,
+              semanticLabel: l10n.widgetSearchTextImageTooltip,
               iconColor: context.appTextPalette.primary,
               icon: const Icon(Icons.text_fields_rounded),
               onPressed: onTextImageSearchTap,
@@ -108,8 +112,8 @@ class CatalogSearchField extends StatelessWidget {
           if (showImageSearchButton)
             AppIconButton(
               key: imageSearchButtonKey,
-              tooltip: '以图搜图',
-              semanticLabel: '以图搜图',
+              tooltip: l10n.widgetSearchImageSearchTooltip,
+              semanticLabel: l10n.widgetSearchImageSearchTooltip,
               iconColor: context.appTextPalette.primary,
               icon: const Icon(Icons.image_search_outlined),
               onPressed: onImageSearchTap,
@@ -117,8 +121,8 @@ class CatalogSearchField extends StatelessWidget {
           if (showOnlineToggle)
             AppIconButton(
               key: onlineToggleKey,
-              tooltip: '联网搜索',
-              semanticLabel: '联网搜索',
+              tooltip: l10n.widgetSearchOnlineToggleTooltip,
+              semanticLabel: l10n.widgetSearchOnlineToggleTooltip,
               icon: const Icon(Icons.public_rounded),
               isSelected: isOnlineSearchEnabled,
               onPressed: onOnlineSearchToggle == null
@@ -128,8 +132,8 @@ class CatalogSearchField extends StatelessWidget {
           if (showSearchButton)
             AppIconButton(
               key: searchButtonKey,
-              tooltip: searchButtonTooltip,
-              semanticLabel: searchButtonTooltip,
+              tooltip: searchTooltip,
+              semanticLabel: searchTooltip,
               iconColor: context.appTextPalette.primary,
               icon: isSearching && showSearchingIndicator
                   ? SizedBox(

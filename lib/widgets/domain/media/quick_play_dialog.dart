@@ -5,6 +5,7 @@ import 'package:sakuramedia/widgets/domain/media/media_playback_info_button.dart
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/videos/presentation/actions/video_playback_launcher.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/media/video/themed_video_player.dart';
@@ -26,7 +27,7 @@ class QuickPlayDialog extends StatefulWidget {
     required this.videoKey,
     required this.resolvePlayUrl,
     required this.noPlayableMessage,
-    this.errorFallback = '加载失败，请重试',
+    this.errorFallback,
     this.guardInitialSeek = false,
     this.subtitle,
   });
@@ -45,8 +46,8 @@ class QuickPlayDialog extends StatefulWidget {
   /// resolvePlayUrl 返回 null / 空时的空态文案。
   final String noPlayableMessage;
 
-  /// resolvePlayUrl throw 时的兜底错误文案。
-  final String errorFallback;
+  /// resolvePlayUrl throw 时的兜底错误文案；为空时用通用加载失败文案。
+  final String? errorFallback;
 
   /// 完整媒体启用初始化 seek 保护；切片是本地产物，保持关闭。
   final bool guardInitialSeek;
@@ -100,10 +101,13 @@ class _QuickPlayDialogState extends State<QuickPlayDialog> {
       }
       setState(() {
         _loading = false;
-        _errorMessage = apiErrorMessage(error, fallback: widget.errorFallback);
+        _errorMessage = apiErrorMessage(error, fallback: _errorFallback);
       });
     }
   }
+
+  String get _errorFallback =>
+      widget.errorFallback ?? AppLocalizations.of(context).widgetMediaLoadFailed;
 
   Future<void> _openMedia(Player player, String url) async {
     try {
@@ -118,7 +122,7 @@ class _QuickPlayDialogState extends State<QuickPlayDialog> {
       return;
     }
     setState(() {
-      _errorMessage = apiErrorMessage(error, fallback: widget.errorFallback);
+      _errorMessage = apiErrorMessage(error, fallback: _errorFallback);
     });
   }
 
@@ -219,13 +223,14 @@ Future<void> showVideoQuickPlayDialog(
   if (!context.mounted) {
     return;
   }
+  final l10n = AppLocalizations.of(context);
   return showDialog<void>(
     context: context,
     builder: (dialogContext) => QuickPlayDialog(
       title: title,
-      fallbackTitle: '视频',
+      fallbackTitle: l10n.widgetMediaVideo,
       videoKey: const Key('video-quick-play-video'),
-      noPlayableMessage: '暂无可播放的媒体',
+      noPlayableMessage: l10n.widgetMediaNoPlayableMedia,
       guardInitialSeek: true,
       subtitle: subtitle,
       resolvePlayUrl: (innerContext) async {

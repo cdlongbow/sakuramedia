@@ -1,7 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ConsumerWidget, ProviderScope, WidgetRef;
 import 'package:sakuramedia/app/app_platform.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/desktop/actor_detail_page.dart';
 import 'package:sakuramedia/features/auth/presentation/login_page.dart';
 import 'package:sakuramedia/features/discovery/presentation/pages/desktop/discover_moments_page.dart';
@@ -437,23 +439,55 @@ class DesktopShellRouteData extends ShellRouteData {
 
   @override
   Widget builder(BuildContext context, GoRouterState state, Widget navigator) {
-    return AppDesktopShell(
+    return _DesktopShellScope(
       currentPath: state.uri.path,
-      layout: resolveDesktopShellLayout(
-        currentPath: state.uri.path,
-        routeSpecs: desktopRouteSpecs,
-      ),
-      topBarConfig: resolveDesktopTopBarConfig(
-        currentPath: state.uri.path,
-        routeSpecs: desktopRouteSpecs,
-        routeExtra: state.extra,
-      ),
-      shellNavigatorKey: desktopShellNavigatorKey,
-      navGroups: desktopNavGroups,
+      routeExtra: state.extra,
       // 标签页的浏览态是页面中心的一整块主题墙，隐藏顶栏只保留标题栏高度的
       // 顶部留白；从影片详情带 tagId 进入的标签结果页仍保留顶栏的返回入口。
       showTopBar: state.uri.path != desktopTagsPath,
       child: navigator,
+    );
+  }
+}
+
+/// 桌面壳作用域：导航文案与顶栏标题按当前语言重建。
+///
+/// 壳路由的 builder 拿不到 Riverpod 的 `Ref`，语言切换时也不会重新走一遍
+/// builder，所以这里用 [ConsumerWidget] 订阅 [appLocalizationsProvider]：
+/// 语言一变就重新解析导航分组与顶栏标题，侧边栏文案随之更新。
+class _DesktopShellScope extends ConsumerWidget {
+  const _DesktopShellScope({
+    required this.currentPath,
+    required this.routeExtra,
+    required this.showTopBar,
+    required this.child,
+  });
+
+  final String currentPath;
+  final Object? routeExtra;
+  final bool showTopBar;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(appLocalizationsProvider);
+    final navGroups = desktopNavGroups(l10n);
+    return AppDesktopShell(
+      currentPath: currentPath,
+      layout: resolveDesktopShellLayout(
+        currentPath: currentPath,
+        routeSpecs: desktopRouteSpecs,
+      ),
+      topBarConfig: resolveDesktopTopBarConfig(
+        currentPath: currentPath,
+        navGroups: navGroups,
+        l10n: l10n,
+        routeExtra: routeExtra,
+      ),
+      shellNavigatorKey: desktopShellNavigatorKey,
+      navGroups: navGroups,
+      showTopBar: showTopBar,
+      child: child,
     );
   }
 }

@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/clips/presentation/actions/clip_playback_launcher.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -33,6 +34,12 @@ void main() {
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           navigatorObservers: [log],
           home: Builder(
             builder: (innerContext) {

@@ -19,6 +19,7 @@ import 'package:sakuramedia/features/configuration/presentation/widgets/shared/i
 import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/mobile_config_empty_card.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/mobile_config_onboarding_card.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/mobile_entity_list_card.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -69,6 +70,7 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     final colors = context.appColors;
+    final l10n = AppLocalizations.of(context);
 
     return ColoredBox(
       key: const Key('mobile-settings-indexers'),
@@ -109,7 +111,7 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
               width: double.infinity,
               child: AppButton(
                 key: const Key('mobile-indexers-create-button'),
-                label: '新增索引器',
+                label: l10n.indexerAdd,
                 variant: AppButtonVariant.primary,
                 icon: const Icon(Icons.add_rounded),
                 onPressed: !_isLoading && _hasDownloadClients
@@ -124,6 +126,7 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
   }
 
   Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (_isLoading) {
       return _buildLoadingBody(context);
     }
@@ -133,7 +136,7 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
         _downloadClients.isEmpty) {
       return AppMobileSectionError(
         key: const Key('mobile-indexers-error-state'),
-        title: '索引器加载失败',
+        title: l10n.indexerLoadFailedTitle,
         message: _errorMessage!,
         onRetry: _retryData,
         retryButtonKey: const Key('mobile-indexers-retry-button'),
@@ -147,15 +150,21 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
       children: [
         AppNoticeCard(
           key: const Key('mobile-indexers-overview-card'),
-          title: 'Torznab 索引器负责搜索候选资源，并把资源请求投递到对应下载器。',
-          description: '每个索引器可独立配置 API Key；留空的站点请求不会携带 apikey。',
+          title: l10n.indexerOverviewTitle,
+          description: l10n.indexerOverviewDescription,
           stats: [
             AppNoticeStat(
-              label: 'API Key 已配置',
-              value: '$_configuredApiKeyCount 个',
+              label: l10n.indexerApiKeyConfigured,
+              value: l10n.indexerCountValue(_configuredApiKeyCount),
             ),
-            AppNoticeStat(label: '索引器数', value: '${_indexers.length}'),
-            AppNoticeStat(label: '已绑定下载器', value: '$_boundIndexerCount'),
+            AppNoticeStat(
+              label: l10n.indexerCountLabel,
+              value: '${_indexers.length}',
+            ),
+            AppNoticeStat(
+              label: l10n.indexerBoundDownloadClientsLabel,
+              value: '$_boundIndexerCount',
+            ),
           ],
         ),
         SizedBox(height: spacing.md),
@@ -164,9 +173,9 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
         if (!_hasDownloadClients) ...[
           MobileConfigOnboardingCard(
             key: const Key('mobile-indexers-guide-downloaders'),
-            title: '请先在下载器页创建下载器',
-            description: '索引器需要先绑定下载器，影片详情里的资源投递才能生效。',
-            actionLabel: '前往下载器',
+            title: l10n.indexerGuideCreateDownloaderTitle,
+            description: l10n.indexerGuideCreateDownloaderDescription,
+            actionLabel: l10n.indexerGuideGoToDownloaders,
             onActionTap: () =>
                 GoRouter.of(context).push(mobileSettingsDownloadersPath),
           ),
@@ -208,6 +217,7 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
 
   Widget _buildLoadingBody(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final placeholders = indexerPlaceholders(count: 3);
     // loading 用占位索引器渲染真实卡片，由 [AppSkeletonizer] 灰化。
     return AppSkeletonizer(
@@ -217,12 +227,21 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
         children: [
           AppNoticeCard(
             key: const Key('mobile-indexers-overview-card'),
-            title: 'Torznab 索引器负责搜索候选资源，并把资源请求投递到对应下载器。',
-            description: '每个索引器可独立配置 API Key；留空的站点请求不会携带 apikey。',
+            title: l10n.indexerOverviewTitle,
+            description: l10n.indexerOverviewDescription,
             stats: [
-              AppNoticeStat(label: 'API Key 已配置', value: '0 个'),
-              AppNoticeStat(label: '索引器数', value: '${placeholders.length}'),
-              AppNoticeStat(label: '已绑定下载器', value: '0'),
+              AppNoticeStat(
+                label: l10n.indexerApiKeyConfigured,
+                value: l10n.indexerCountValue(0),
+              ),
+              AppNoticeStat(
+                label: l10n.indexerCountLabel,
+                value: '${placeholders.length}',
+              ),
+              AppNoticeStat(
+                label: l10n.indexerBoundDownloadClientsLabel,
+                value: '0',
+              ),
             ],
           ),
           SizedBox(height: spacing.md),
@@ -244,9 +263,9 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
 
   Widget _buildIndexersSection(BuildContext context) {
     if (_indexers.isEmpty) {
-      return const MobileConfigEmptyCard(
-        key: Key('mobile-indexers-empty-state'),
-        message: '还没有索引器配置',
+      return MobileConfigEmptyCard(
+        key: const Key('mobile-indexers-empty-state'),
+        message: AppLocalizations.of(context).indexerEmpty,
       );
     }
 
@@ -267,6 +286,7 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
   Widget _buildIndexerCard(BuildContext context, IndexerEntryDto entry) {
     final spacing = context.appSpacing;
     final colors = context.appColors;
+    final l10n = AppLocalizations.of(context);
     final hasInvalidBinding = !_boundClientsStillExist(entry);
 
     return MobileEntityListCard(
@@ -296,7 +316,9 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
         ),
         SizedBox(height: spacing.sm),
         Text(
-          'API Key: ${entry.hasApiKey ? '已配置' : '未配置'}',
+          l10n.indexerApiKeyLine(
+            entry.hasApiKey ? l10n.indexerConfigured : l10n.indexerNotConfigured,
+          ),
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -306,7 +328,11 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
         ),
         SizedBox(height: spacing.sm),
         Text(
-          '绑定下载器: ${entry.downloadClientNames.isEmpty ? '未匹配' : entry.downloadClientNames}',
+          l10n.indexerBoundDownloadClientsLine(
+            entry.downloadClientNames.isEmpty
+                ? l10n.indexerNotMatched
+                : entry.downloadClientNames,
+          ),
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -325,7 +351,7 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
               borderRadius: context.appRadius.mdBorder,
             ),
             child: Text(
-              '绑定下载器已失效，请重新选择',
+              l10n.indexerBoundDownloaderInvalid,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s12,
@@ -365,7 +391,10 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
       }
       setState(() {
         _isLoading = false;
-        _errorMessage = apiErrorMessage(error, fallback: '索引器加载失败，请稍后重试。');
+        _errorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(context).indexerLoadFailedFallback,
+        );
       });
     }
   }
@@ -393,7 +422,12 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
       if (!mounted) {
         return;
       }
-      showToast(apiErrorMessage(error, fallback: '索引器加载失败，请稍后重试。'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(context).indexerLoadFailedFallback,
+        ),
+      );
     }
   }
 
@@ -419,7 +453,10 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = apiErrorMessage(error, fallback: '索引器加载失败，请稍后重试。');
+        _errorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(context).indexerLoadFailedFallback,
+        );
       });
     }
   }
@@ -436,7 +473,12 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
     if (!mounted || result == null) {
       return;
     }
-    showToast(result.healthy ? 'Torznab 连通正常' : 'Torznab 连通性测试失败');
+    final l10n = AppLocalizations.of(context);
+    showToast(
+      result.healthy
+          ? l10n.indexerConnectionHealthy
+          : l10n.indexerConnectionTestFailed,
+    );
   }
 
   Future<void> _handleCreateIndexer() async {
@@ -492,15 +534,16 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
         .where((item) => item.id != entry.id)
         .toList(growable: false);
     IndexerSettingsDto? savedSettings;
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除索引器',
-      message: '确认删除索引器"${entry.name}"？删除后，该索引器将无法继续把资源请求投递到当前下载器。',
+      title: l10n.indexerDeleteTitle,
+      message: l10n.indexerDeleteMessage(entry.name),
       danger: true,
-      confirmLabel: '删除',
+      confirmLabel: l10n.commonDelete,
       dialogKey: const Key('mobile-indexer-delete-drawer'),
       confirmKey: const Key('mobile-indexer-delete-confirm-button'),
-      failureFallback: '删除索引器失败',
+      failureFallback: l10n.indexerDeleteFailed,
       onConfirm: () async {
         savedSettings = await ref
             .read(indexerSettingsProvider.notifier)
@@ -510,7 +553,7 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
     if (!confirmed || !mounted || savedSettings == null) {
       return;
     }
-    showToast('索引器已删除');
+    showToast(l10n.indexerDeleted);
     setState(() {
       _applySettings(savedSettings!);
       _errorMessage = null;
@@ -557,7 +600,7 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
 
   String? get _connectionTestDisabledMessage {
     if (_hasUnsavedChanges) {
-      return '当前配置尚未保存，保存后再测试。';
+      return AppLocalizations.of(context).indexerUnsavedTestHint;
     }
     return null;
   }
@@ -672,10 +715,11 @@ class _MobileIndexerEditorDrawerState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppBottomFormSheet(
       formKey: _formKey,
-      title: _isEditing ? '编辑索引器' : '新增索引器',
-      subtitle: '维护索引器地址、类别与下载器绑定关系。',
+      title: _isEditing ? l10n.indexerEditTitle : l10n.indexerAdd,
+      subtitle: l10n.indexerFormSubtitle,
       submitKey: const Key('mobile-indexer-submit-button'),
       isSubmitting: _isSubmitting,
       onSubmit: _submit,
@@ -717,14 +761,15 @@ class _MobileIndexerEditorDrawerState
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     if (!isSupportedIndexerKind(_kind)) {
-      showToast('索引器类型仅支持 pt 或 bt');
+      showToast(l10n.indexerUnsupportedKind);
       return;
     }
 
     final selectedDownloadClients = _selectedDownloadClients();
     if (selectedDownloadClients.isEmpty) {
-      showToast('请至少选择一个仍可用的下载器');
+      showToast(l10n.indexerSelectDownloader);
       return;
     }
 
@@ -759,14 +804,19 @@ class _MobileIndexerEditorDrawerState
       if (!mounted) {
         return;
       }
-      showToast(_isEditing ? '索引器已更新' : '索引器已创建');
+      showToast(_isEditing ? l10n.indexerUpdated : l10n.indexerCreated);
       Navigator.of(context).pop(saved);
     } catch (error) {
       if (!mounted) {
         return;
       }
       showToast(
-        apiErrorMessage(error, fallback: _isEditing ? '更新索引器失败' : '创建索引器失败'),
+        apiErrorMessage(
+          error,
+          fallback: _isEditing
+              ? l10n.indexerUpdateFailed
+              : l10n.indexerCreateFailed,
+        ),
       );
       setState(() {
         _isSubmitting = false;
@@ -800,6 +850,7 @@ class _MobileIndexerDetailDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -837,17 +888,22 @@ class _MobileIndexerDetailDrawer extends StatelessWidget {
             ],
           ),
           SizedBox(height: spacing.lg),
-          AppInfoBlock(label: '类别', value: entry.kind.toUpperCase()),
-          SizedBox(height: spacing.sm),
           AppInfoBlock(
-            label: 'API Key',
-            value: entry.hasApiKey ? '已配置' : '未配置',
+            label: l10n.indexerKindLabel,
+            value: entry.kind.toUpperCase(),
           ),
           SizedBox(height: spacing.sm),
           AppInfoBlock(
-            label: '绑定下载器',
+            label: 'API Key',
+            value: entry.hasApiKey
+                ? l10n.indexerConfigured
+                : l10n.indexerNotConfigured,
+          ),
+          SizedBox(height: spacing.sm),
+          AppInfoBlock(
+            label: l10n.indexerBoundDownloadClientLabel,
             value: entry.downloadClientNames.isEmpty
-                ? '未匹配'
+                ? l10n.indexerNotMatched
                 : entry.downloadClientNames,
           ),
           if (hasInvalidBinding) ...[
@@ -860,7 +916,7 @@ class _MobileIndexerDetailDrawer extends StatelessWidget {
                 borderRadius: context.appRadius.mdBorder,
               ),
               child: Text(
-                '绑定下载器已失效，请重新选择',
+                l10n.indexerBoundDownloaderInvalid,
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s12,
@@ -876,7 +932,7 @@ class _MobileIndexerDetailDrawer extends StatelessWidget {
               Expanded(
                 child: AppButton(
                   key: const Key('mobile-indexer-detail-edit-button'),
-                  label: '编辑',
+                  label: l10n.commonEdit,
                   variant: AppButtonVariant.primary,
                   onPressed: () =>
                       Navigator.of(context).pop(MobileIndexerDetailAction.edit),
@@ -886,7 +942,7 @@ class _MobileIndexerDetailDrawer extends StatelessWidget {
               Expanded(
                 child: AppButton(
                   key: const Key('mobile-indexer-detail-delete-button'),
-                  label: '删除',
+                  label: l10n.commonDelete,
                   variant: AppButtonVariant.danger,
                   onPressed: () => Navigator.of(
                     context,

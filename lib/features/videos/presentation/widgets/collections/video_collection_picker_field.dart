@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 
@@ -37,6 +38,7 @@ class VideoCollectionPickerField extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.appColors;
     final formTokens = context.appFormTokens;
+    final l10n = AppLocalizations.of(context);
     final label = valueLabel?.trim() ?? '';
     final canCreate = onCreate != null;
     return Column(
@@ -45,7 +47,7 @@ class VideoCollectionPickerField extends StatelessWidget {
         Row(
           children: [
             Text(
-              '加入合集（可选）',
+              l10n.videoAddToCollectionOptional,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s12,
@@ -56,7 +58,7 @@ class VideoCollectionPickerField extends StatelessWidget {
             if (canCreate)
               AppTextButton(
                 key: createButtonKey,
-                label: '新建合集',
+                label: l10n.videoNewCollection,
                 size: AppTextButtonSize.small,
                 onPressed: enabled ? onCreate : null,
               ),
@@ -83,7 +85,7 @@ class VideoCollectionPickerField extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      label.isEmpty ? '不加入合集' : label,
+                      label.isEmpty ? l10n.videoNoCollection : label,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: resolveAppTextStyle(

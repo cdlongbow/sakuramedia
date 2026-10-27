@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_summary_list_content.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
@@ -20,15 +21,13 @@ class DesktopFollowPage extends StatelessWidget {
       sectionSpacing: context.appSpacing.lg,
       registerPageRefresh: true,
       showHeader: false,
-      emptyMessage: '暂无关注影片',
+      emptyMessage: AppLocalizations.of(context).subscriptionFollowEmpty,
       onMovieTap: (context, movieNumber) => context.pushDesktopMovieDetail(
         movieNumber: movieNumber,
         fallbackPath: desktopFollowPath,
       ),
-      bodyBuilder: (context, scrollController, sliver, _) => CustomScrollView(
-        controller: scrollController,
-        slivers: [sliver],
-      ),
+      bodyBuilder: (context, scrollController, sliver, _) =>
+          CustomScrollView(controller: scrollController, slivers: [sliver]),
     );
   }
 }

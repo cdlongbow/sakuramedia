@@ -13,6 +13,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_action_grid.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 import '../../../../support/test_api_bundle.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 const resultItem = ImageSearchResultItemDto(
   thumbnailId: 1,
@@ -108,6 +109,12 @@ Future<void> pumpResultPreview(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
       child: MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: Scaffold(
           body: Builder(

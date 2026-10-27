@@ -65,7 +65,7 @@ final class ActorSummaryProvider
   }
 }
 
-String _$actorSummaryHash() => r'2da486e563c3e1886b6f8e58998f8213e28bb488';
+String _$actorSummaryHash() => r'5ddaa90e27db837a62c7a6e1c3dad877bdcda214';
 
 /// 缓存页（桌面 / 移动演员列表）共用的 autoDispose family。
 ///

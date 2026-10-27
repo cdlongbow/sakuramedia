@@ -1,5 +1,6 @@
 import 'package:sakuramedia/features/status/data/status_dto.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/hints/diagnostic_hints.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 /// JavDB 元数据源诊断 hint。
 ///
@@ -9,30 +10,29 @@ import 'package:sakuramedia/features/system_diagnostics/presentation/hints/diagn
 /// key 与后端 [MetadataProviderErrorType] 的三个取值一一对应，外加一个前端侧的
 /// `probe-request-failed`（调 `/metadata-providers/{p}/test` 本身就失败了）。
 
-const DiagnosticHint _probeRequestFailedHint = DiagnosticHint(
-  cause: '检测请求没完成，后端没有响应。',
-  fixHint: '确认后端正常后重新检测。',
+DiagnosticHint _probeRequestFailedHint(AppLocalizations l10n) => DiagnosticHint(
+  cause: l10n.diagnosticHintProbeRequestFailedCause,
+  fixHint: l10n.diagnosticHintBackendCheckRetryFix,
 );
 
 /// JavDB 侧一律不给 fixTarget：真正的修法在路由器/透明代理一侧（见 wiki
 /// 「常见问题 · 代理配置」），SakuraMedia 里没有对应开关。
-const Map<String, DiagnosticHint> javdbHints = <String, DiagnosticHint>{
-  MetadataProviderErrorType.notFound: DiagnosticHint(
-    cause: 'JavDB 打得开，但搜不到测试用的番号。',
-    fixHint: '先重新检测一次。还是失败就是 JavDB 改版了，需要等适配。',
-  ),
-  MetadataProviderErrorType.requestError: DiagnosticHint(
-    cause: '连不上 JavDB。',
-    fixHint:
-        '代理改由部署侧环境变量分流：若配置了 HTTP_PROXY，需在 NO_PROXY 排除 '
-        'JavDB 相关域名，或让透明代理规则放行直连，详见 wiki「常见问题 · 代理配置」。',
-  ),
-  MetadataProviderErrorType.unexpected: DiagnosticHint(
-    cause: 'JavDB 抓取时出错了。',
-    fixHint: '确认后端日志后重新检测。',
-  ),
-  'probe-request-failed': _probeRequestFailedHint,
-};
+Map<String, DiagnosticHint> javdbHints(AppLocalizations l10n) =>
+    <String, DiagnosticHint>{
+      MetadataProviderErrorType.notFound: DiagnosticHint(
+        cause: l10n.diagnosticHintJavdbNotFoundCause,
+        fixHint: l10n.diagnosticHintJavdbNotFoundFix,
+      ),
+      MetadataProviderErrorType.requestError: DiagnosticHint(
+        cause: l10n.diagnosticHintJavdbUnreachableCause,
+        fixHint: l10n.diagnosticHintJavdbUnreachableFix,
+      ),
+      MetadataProviderErrorType.unexpected: DiagnosticHint(
+        cause: l10n.diagnosticHintJavdbUnexpectedCause,
+        fixHint: l10n.diagnosticHintJavdbUnexpectedFix,
+      ),
+      'probe-request-failed': _probeRequestFailedHint(l10n),
+    };
 
 /// 按后端 `error.type` 分派 hint key。
 ///

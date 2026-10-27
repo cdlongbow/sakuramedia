@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_mobile_drawers.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_playback_info.dart';
@@ -29,6 +31,7 @@ MoviePlayerPlaybackInfoSnapshot _snapshot({
     decoderDropFramePerSecond: null,
     delayedFramePerSecond: null,
     mistimedFramePerSecond: null,
+    l10n: AppLocalizationsZh(),
     originalUrl: originalUrl,
     fileFormat: fileFormat,
   );
@@ -145,6 +148,12 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: Scaffold(
           body: SizedBox(
@@ -181,6 +190,12 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: Scaffold(
           body: Stack(

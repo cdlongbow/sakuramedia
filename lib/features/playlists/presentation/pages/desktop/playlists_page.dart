@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/playlists/presentation/providers/playlists_
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_scope.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_state.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/create_playlist_dialog.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
@@ -66,7 +67,7 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
             return AppEmptyState(
               message: apiErrorMessage(
                 async.error!,
-                fallback: '播放列表暂时无法加载，请稍后重试',
+                fallback: AppLocalizations.of(context).playlistLoadFailed,
               ),
             );
           }
@@ -84,8 +85,10 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
                   child: AppIconButton(
                     key: const Key('playlists-create-button'),
                     icon: const Icon(Icons.add_rounded),
-                    tooltip: '新建播放列表',
-                    semanticLabel: '新建播放列表',
+                    tooltip: AppLocalizations.of(context).playlistCreateTooltip,
+                    semanticLabel: AppLocalizations.of(
+                      context,
+                    ).playlistCreateTooltip,
                     onPressed: _openCreateDialog,
                     iconColor: context.appTextPalette.primary,
                   ),
@@ -106,8 +109,9 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
     PlaylistsOverview notifier,
   ) {
     final playlists = state.playlists;
+    final l10n = AppLocalizations.of(context);
     if (playlists.isEmpty) {
-      return const AppEmptyState(message: '暂无播放列表');
+      return AppEmptyState(message: l10n.playlistEmpty);
     }
     final systemPlaylists = playlists
         .where((playlist) => playlist.isSystem)
@@ -123,8 +127,8 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
         if (systemPlaylists.isNotEmpty) ...[
           SliverToBoxAdapter(
             child: AppSectionHeader(
-              title: '系统列表',
-              trailingText: '${systemPlaylists.length} 个',
+              title: l10n.playlistSectionSystem,
+              trailingText: l10n.playlistCountBadge(systemPlaylists.length),
             ),
           ),
           SliverToBoxAdapter(child: SizedBox(height: spacing.sm)),
@@ -145,8 +149,8 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
         if (customPlaylists.isNotEmpty) ...[
           SliverToBoxAdapter(
             child: AppSectionHeader(
-              title: '我的播放列表',
-              trailingText: '${customPlaylists.length} 个',
+              title: l10n.playlistSectionMine,
+              trailingText: l10n.playlistCountBadge(customPlaylists.length),
             ),
           ),
           SliverToBoxAdapter(child: SizedBox(height: spacing.sm)),
@@ -259,7 +263,7 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
     if (!mounted) {
       return;
     }
-    showToast('已创建播放列表');
+    showToast(AppLocalizations.of(context).playlistCreatedToast);
   }
 }
 

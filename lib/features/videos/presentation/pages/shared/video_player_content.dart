@@ -15,8 +15,11 @@ import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/image_search/presentation/actions/image_search_launcher.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/video_display_title.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
@@ -63,7 +66,7 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent>
   VideoController? _controller;
   MovieMediaItemDto? _media;
   List<MovieMediaThumbnailDto> _thumbnails = const <MovieMediaThumbnailDto>[];
-  String _title = '视频';
+  String _title = '';
   bool _isLoading = true;
   String? _errorMessage;
   bool _isThumbnailLoading = false;
@@ -132,7 +135,9 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent>
       if (playable == null) {
         setState(() {
           _isLoading = false;
-          _errorMessage = '暂无可播放的媒体';
+          _errorMessage = AppLocalizations.of(
+            context,
+          ).videoNoPlayableMedia;
         });
         return;
       }
@@ -143,7 +148,7 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent>
         configuration: const VideoControllerConfiguration(hwdec: 'auto'),
       );
       _media = playable.media;
-      _title = detail.preferredTitle;
+      _title = detail.displayTitle(AppLocalizations.of(context));
       _progressController.reset();
       final initialPositionSeconds = widget.initialPositionSeconds;
       if (initialPositionSeconds != null && initialPositionSeconds >= 0) {
@@ -177,7 +182,10 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent>
       }
       setState(() {
         _isLoading = false;
-        _errorMessage = apiErrorMessage(error, fallback: '加载失败，请重试');
+        _errorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(context).videoLoadFailed,
+        );
       });
     }
   }
@@ -219,7 +227,10 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent>
       setState(() {
         _thumbnails = const <MovieMediaThumbnailDto>[];
         _isThumbnailLoading = false;
-        _thumbnailErrorMessage = apiErrorMessage(error, fallback: '请稍后重试。');
+        _thumbnailErrorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(context).videoRetryLater,
+        );
       });
       _setActiveThumbnailIndex(null);
     }
@@ -249,7 +260,10 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent>
       return;
     }
     setState(() {
-      _errorMessage = apiErrorMessage(error, fallback: '加载失败，请重试');
+      _errorMessage = apiErrorMessage(
+        error,
+        fallback: AppLocalizations.of(context).videoLoadFailed,
+      );
     });
   }
 
@@ -354,6 +368,7 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent>
       globalPosition: globalPosition,
       items: buildImageActionMenuItems(
         buildMediaThumbnailActionDescriptors(
+          l10n: AppLocalizations.of(context),
           showSearchSimilar: ref.read(imageSearchEnabledProvider),
           thumbnail: thumbnail,
           point: point,
@@ -441,6 +456,7 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent>
   }
 
   Widget _buildPlayerSurface(VideoController videoController) {
+    final l10n = AppLocalizations.of(context);
     final title = _title.trim();
     final bottomControls = <Widget>[
       const MaterialPlayOrPauseButton(),
@@ -464,7 +480,7 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent>
       reservePanelToggleSpace: true,
       topControls: [
         ...buildMoviePlayerTopControls(
-          movieNumber: title.isEmpty ? '视频' : title,
+          movieNumber: title.isEmpty ? l10n.videoFallbackTitle : title,
           onBackPressed: _handleBack,
         ),
         const Spacer(),

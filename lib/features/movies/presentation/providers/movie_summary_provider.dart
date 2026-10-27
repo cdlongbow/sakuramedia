@@ -1,15 +1,16 @@
 import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_subscription_events_provider.dart';
-import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_subscription_mutation_mixin.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/controllers/playlist_filter_state.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/optimistic_patch_mixin.dart';
@@ -49,7 +50,8 @@ class MovieSummary extends _$MovieSummary
   String get initialLoadErrorText => scope.initialLoadErrorText;
 
   @override
-  String get loadMoreErrorText => '加载更多失败，请点击重试';
+  String get loadMoreErrorText =>
+      ref.read(appLocalizationsProvider).errorLoadMoreFailed;
 
   @override
   MovieSummaryFilter get initialFilter => MovieSummaryFilter(

@@ -8,6 +8,7 @@ import 'package:sakuramedia/core/media/image_save_service.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/image_search/presentation/actions/image_search_launcher.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
@@ -35,6 +36,7 @@ Future<void> showMoviePlotImageActionMenu({
 
   // 全屏图片宿主画在路由之上，只有宿主自己的底部抽屉能盖住它；移动端统一走
   // 抽屉，桌面端（详情页未开启全屏）用锚定弹层。
+  final l10n = AppLocalizations.of(context);
   final isMobile = AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
   final action = await showAppActionMenu<AppImageActionType>(
     context: context,
@@ -48,14 +50,14 @@ Future<void> showMoviePlotImageActionMenu({
         context,
         listen: false,
       ).read(imageSearchEnabledProvider))
-        const AppImageActionDescriptor(
+        AppImageActionDescriptor(
           type: AppImageActionType.searchSimilar,
-          label: '相似图片',
+          label: l10n.movieActionSearchSimilarImages,
           icon: Icons.image_search_outlined,
         ),
-      const AppImageActionDescriptor(
+      AppImageActionDescriptor(
         type: AppImageActionType.saveToLocal,
-        label: '保存到本地',
+        label: l10n.movieActionSaveToLocal,
         icon: Icons.download_outlined,
       ),
     ]),
@@ -117,6 +119,7 @@ Future<void> _searchSimilarWithCallback({
   )
   onSearchSimilar,
 }) async {
+  final l10n = AppLocalizations.of(hostContext);
   try {
     if (closeCurrentRouteOnSearch) {
       Navigator.of(context).pop();
@@ -131,7 +134,13 @@ Future<void> _searchSimilarWithCallback({
     await onSearchSimilar(hostContext, imageUrl, fileName);
   } catch (error) {
     if (hostContext.mounted) {
-      showToast(apiErrorMessage(error, fallback: '读取图片失败，请稍后重试'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: l10n.movieActionReadImageFailed,
+          l10n: l10n,
+        ),
+      );
     }
   }
 }
@@ -153,6 +162,7 @@ Future<void> _searchSimilar({
     fileName: fileName,
     currentMovieNumber: movieNumber,
   );
+  final l10n = AppLocalizations.of(hostContext);
 
   try {
     if (closeCurrentRouteOnSearch) {
@@ -165,7 +175,13 @@ Future<void> _searchSimilar({
           await launch();
         } catch (error) {
           if (hostContext.mounted) {
-            showToast(apiErrorMessage(error, fallback: '读取图片失败，请稍后重试'));
+            showToast(
+              apiErrorMessage(
+                error,
+                fallback: l10n.movieActionReadImageFailed,
+                l10n: l10n,
+              ),
+            );
           }
         }
       });
@@ -175,7 +191,13 @@ Future<void> _searchSimilar({
     await launch();
   } catch (error) {
     if (hostContext.mounted) {
-      showToast(apiErrorMessage(error, fallback: '读取图片失败，请稍后重试'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: l10n.movieActionReadImageFailed,
+          l10n: l10n,
+        ),
+      );
     }
   }
 }
@@ -185,6 +207,7 @@ Future<void> _saveToLocal({
   required String imageUrl,
   required String fileName,
 }) async {
+  final l10n = AppLocalizations.of(context);
   final result =
       await ImageSaveService(
         fetchBytes: ProviderScope.containerOf(
@@ -194,15 +217,15 @@ Future<void> _saveToLocal({
       ).saveImageFromUrl(
         imageUrl: imageUrl,
         fileName: fileName,
-        dialogTitle: '保存到本地',
+        dialogTitle: l10n.movieActionSaveToLocal,
       );
   if (!context.mounted) {
     return;
   }
   if (result.status == ImageSaveStatus.success) {
-    showToast(result.message ?? '图片已保存');
+    showToast(result.message ?? l10n.movieActionImageSaved);
   }
   if (result.status == ImageSaveStatus.failed) {
-    showToast(result.message ?? '保存失败，请稍后重试');
+    showToast(result.message ?? l10n.movieActionImageSaveFailed);
   }
 }

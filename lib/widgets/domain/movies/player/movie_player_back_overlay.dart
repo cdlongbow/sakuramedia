@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
 
@@ -47,7 +48,7 @@ class MoviePlayerInfoButton extends StatelessWidget {
     final componentTokens = context.appComponentTokens;
     final overlayTokens = context.appOverlayTokens;
     return Tooltip(
-      message: '播放信息',
+      message: AppLocalizations.of(context).widgetMoviePlayerInfoTooltip,
       child: AppClickable(
         enabled: true,
         child: Material(

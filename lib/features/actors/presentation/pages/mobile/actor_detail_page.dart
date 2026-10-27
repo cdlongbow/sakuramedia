@@ -5,6 +5,7 @@ import 'package:sakuramedia/features/actors/presentation/pages/shared/actor_deta
 import 'package:sakuramedia/features/actors/presentation/pages/shared/actor_profile_details.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/theme.dart';
@@ -97,7 +98,8 @@ class _MobileActorDetailPageState extends State<MobileActorDetailPage> {
             slivers: <Widget>[child],
           ),
       enableRefresh: true,
-      onRefreshFailure: (_) => showToast('刷新失败'),
+      onRefreshFailure: (_) =>
+          showToast(AppLocalizations.of(context).actorRefreshFailed),
       // 与移动影片页同一套移动范式：筛选走底部抽屉，多选态顶栏只留退出/计数/
       // 全选、批量动作下沉到底部条。
       useMobileFilterDrawer: true,
@@ -172,7 +174,7 @@ class _MobileActorDetailHeader extends StatelessWidget {
               if (actor.isLocal) ...[
                 SizedBox(height: context.appSpacing.xs),
                 Text(
-                  '本地女优不会同步新作品，订阅仅作为收藏。',
+                  AppLocalizations.of(context).actorLocalSubscriptionHint,
                   key: const Key('mobile-actor-detail-local-subscription-hint'),
                   style: resolveAppTextStyle(
                     context,
@@ -190,8 +192,8 @@ class _MobileActorDetailHeader extends StatelessWidget {
             key: const Key('mobile-actor-detail-merge-button'),
             icon: const Icon(Icons.call_merge_outlined),
             size: AppIconButtonSize.mini,
-            tooltip: '合并女优',
-            semanticLabel: '合并女优',
+            tooltip: AppLocalizations.of(context).actorMergeTooltip,
+            semanticLabel: AppLocalizations.of(context).actorMergeTooltip,
             onPressed: onMergeTap,
           ),
           SizedBox(width: context.appSpacing.sm),
@@ -200,8 +202,8 @@ class _MobileActorDetailHeader extends StatelessWidget {
           key: const Key('mobile-actor-detail-edit-button'),
           icon: const Icon(Icons.edit_outlined),
           size: AppIconButtonSize.mini,
-          tooltip: '编辑女优资料',
-          semanticLabel: '编辑女优资料',
+          tooltip: AppLocalizations.of(context).actorEditProfileTooltip,
+          semanticLabel: AppLocalizations.of(context).actorEditProfileTooltip,
           onPressed: onEditTap,
         ),
         SizedBox(width: context.appSpacing.sm),

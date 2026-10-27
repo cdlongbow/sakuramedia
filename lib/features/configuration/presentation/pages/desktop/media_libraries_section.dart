@@ -12,6 +12,7 @@ import 'package:sakuramedia/features/configuration/presentation/forms/provider_c
 import 'package:sakuramedia/features/configuration/presentation/providers/media_libraries_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/media_provider_catalog_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/config_delete_helpers.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_inline_action_button.dart';
@@ -51,7 +52,14 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection> {
       return await ref.read(mediaProviderCatalogProvider.future);
     } catch (error) {
       if (showError && mounted) {
-        showToast(apiErrorMessage(error, fallback: 'Provider 目录加载失败，请稍后重试。'));
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: AppLocalizations.of(
+              context,
+            ).mediaLibraryProviderCatalogLoadFailed,
+          ),
+        );
       }
       return null;
     }
@@ -70,12 +78,17 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection> {
       return;
     }
     if (providers.isEmpty) {
-      showToast('暂无可用 Provider，请先在“插件”设置中安装并启用媒体 Provider。');
+      showToast(
+        AppLocalizations.of(context).mediaLibraryNoProviderInstalled,
+      );
       return;
     }
     await showDialog<void>(
       context: context,
-      builder: (_) => MediaLibraryDialog(title: '新增媒体库', providers: providers),
+      builder: (_) => MediaLibraryDialog(
+        title: AppLocalizations.of(context).mediaLibraryAdd,
+        providers: providers,
+      ),
     );
   }
 
@@ -88,7 +101,7 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection> {
     await showDialog<void>(
       context: context,
       builder: (_) => MediaLibraryDialog(
-        title: '编辑媒体库',
+        title: AppLocalizations.of(context).mediaLibraryEditTitle,
         providers: providers,
         initialLibrary: library,
       ),
@@ -96,27 +109,29 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection> {
   }
 
   Future<void> _deleteLibrary(MediaLibraryDto library) async {
+    final l10n = AppLocalizations.of(context);
     await showAppConfigDeleteConfirm(
       context: context,
-      title: '删除媒体库',
-      message: '确认删除媒体库“${library.name}”？该操作不可恢复。',
+      title: l10n.mediaLibraryDeleteTitle,
+      message: l10n.mediaLibraryDeleteMessage(library.name),
       onDelete: () =>
           ref.read(mediaLibrariesProvider.notifier).delete(library.id),
-      successToast: '媒体库已删除',
-      failureFallback: '删除媒体库失败',
+      successToast: l10n.mediaLibraryDeleted,
+      failureFallback: l10n.mediaLibraryDeleteFailed,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     if (!widget.active) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
     final libraries = ref.watch(mediaLibrariesProvider);
     final content = libraries.hasError
         ? AppSectionError(
-            title: '媒体库加载失败',
+            title: l10n.mediaLibraryLoadFailedTitle,
             message: apiErrorMessage(
               libraries.error!,
-              fallback: '媒体库加载失败，请稍后重试。',
+              fallback: l10n.mediaLibraryLoadFailedFallback,
             ),
             onRetry: () => ref.read(mediaLibrariesProvider.notifier).reload(),
           )
@@ -138,31 +153,32 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection> {
 
   Widget _buildLoaded(BuildContext context, List<MediaLibraryDto> libraries) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final catalog = ref.watch(mediaProviderCatalogProvider);
     final providers = catalog.value ?? const <MediaProviderDto>[];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const AppNoticeCard(
+        AppNoticeCard(
           leadingIcon: Icons.folder_open_outlined,
-          title: '媒体库存储',
-          description: '媒体库通过已安装的 Provider 连接存储；Provider 配置由插件目录动态提供。',
+          title: l10n.mediaLibraryStorageTitle,
+          description: l10n.mediaLibraryStorageDescriptionDesktop,
         ),
         SizedBox(height: spacing.lg),
         if (catalog.hasError)
-          const AppNoticeCard(
+          AppNoticeCard(
             leadingIcon: Icons.warning_amber_rounded,
-            description: 'Provider 目录暂不可用，已存在的媒体库仍可管理；新增或编辑配置前请重试。',
+            description: l10n.mediaLibraryProviderCatalogUnavailable,
           ),
         if (catalog.hasError) SizedBox(height: spacing.lg),
         if (catalog.hasValue && providers.isEmpty)
-          const AppNoticeCard(
+          AppNoticeCard(
             leadingIcon: Icons.extension_off_outlined,
-            description: '暂无可用 Provider，请先在“插件”设置中安装并启用媒体 Provider。',
+            description: l10n.mediaLibraryNoProviderInstalled,
           ),
         if (catalog.hasValue && providers.isEmpty) SizedBox(height: spacing.lg),
         if (libraries.isEmpty)
-          const AppEmptyState(message: '还没有媒体库')
+          AppEmptyState(message: l10n.mediaLibraryEmpty)
         else
           AppSettingsGroup(
             dividerIndent: spacing.lg + spacing.xxl + spacing.md,
@@ -183,7 +199,7 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection> {
               key: const Key('configuration-media-library-create-button'),
               icon: Icons.add_rounded,
               iconColor: Theme.of(context).colorScheme.primary,
-              title: '新增媒体库',
+              title: l10n.mediaLibraryAdd,
               titleTone: AppTextTone.accent,
               titleWeight: AppTextWeight.medium,
               trailing: const AppSettingCellChevron(),
@@ -201,6 +217,7 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection> {
     List<MediaProviderDto> providers, {
     required bool catalogReady,
   }) {
+    final l10n = AppLocalizations.of(context);
     final provider = _findProvider(providers, library.providerKey);
     final unavailable = catalogReady && provider == null;
     return AppSettingCell(
@@ -210,14 +227,14 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection> {
       subtitle:
           provider?.displayName ??
           (catalogReady
-              ? 'Provider 不可用 · ${library.providerKey}'
+              ? l10n.mediaLibraryProviderUnavailable(library.providerKey)
               : library.providerKey),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (unavailable)
             Text(
-              '不可用',
+              l10n.mediaLibraryUnavailable,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s12,
@@ -337,6 +354,7 @@ class _MediaLibraryDialogState extends ConsumerState<MediaLibraryDialog> {
         _selectedProviderKey == null) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     final value = MediaLibraryFormValue.fromControllers(
       nameController: _nameController,
       providerKey: _selectedProviderKey!,
@@ -360,7 +378,9 @@ class _MediaLibraryDialogState extends ConsumerState<MediaLibraryDialog> {
             .create(value.toCreatePayload());
       }
       if (!mounted) return;
-      showToast(_isEditing ? '媒体库已更新' : '媒体库已创建');
+      showToast(
+        _isEditing ? l10n.mediaLibraryUpdated : l10n.mediaLibraryCreated,
+      );
       Navigator.of(context).pop();
     } catch (error) {
       if (!mounted) return;
@@ -368,7 +388,9 @@ class _MediaLibraryDialogState extends ConsumerState<MediaLibraryDialog> {
       showToast(
         apiErrorMessage(
           error,
-          fallback: _isEditing ? '更新媒体库失败' : '创建媒体库失败',
+          fallback: _isEditing
+              ? l10n.mediaLibraryUpdateFailed
+              : l10n.mediaLibraryCreateFailed,
         ),
       );
     }
@@ -377,6 +399,7 @@ class _MediaLibraryDialogState extends ConsumerState<MediaLibraryDialog> {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final provider = _selectedProvider;
     final unavailable = _isEditing && provider == null;
     return AppDesktopDialog(
@@ -439,14 +462,14 @@ class _MediaLibraryDialogState extends ConsumerState<MediaLibraryDialog> {
                         onPressed: _isSubmitting
                             ? null
                             : () => Navigator.of(context).pop(),
-                        label: '取消',
+                        label: l10n.commonCancel,
                       ),
                     ),
                     SizedBox(width: spacing.md),
                     Expanded(
                       child: AppButton(
                         onPressed: _isSubmitting ? null : _submit,
-                        label: '保存',
+                        label: l10n.commonSave,
                         variant: AppButtonVariant.primary,
                         isLoading: _isSubmitting,
                       ),

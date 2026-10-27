@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 export 'package:file_picker/file_picker.dart' show FileType;
 
@@ -28,11 +29,15 @@ Future<PickedFileWithBytes?> pickFileWithBytes({
   FileType type = FileType.custom,
   String? initialDirectory,
   int? maxBytes,
-  String tooLargeMessage = '文件过大',
+  String? tooLargeMessage,
+  AppLocalizations? l10n,
   required String unreadableMessage,
   required String pickerUnavailableMessage,
   required String openFailureMessage,
 }) async {
+  // 未显式给出超限文案时按当前语言渲染；无语言包时回退中文兜底。
+  final tooLarge =
+      tooLargeMessage ?? l10n?.sharedFileTooLarge ?? '文件过大';
   try {
     final file = await FilePicker.pickFile(
       initialDirectory: initialDirectory,
@@ -52,7 +57,7 @@ Future<PickedFileWithBytes?> pickFileWithBytes({
         // 平台不提供长度时继续按字节兜底。
       }
       if (knownLength != null && knownLength > maxBytes) {
-        throw FilePickerWithBytesException(tooLargeMessage);
+        throw FilePickerWithBytesException(tooLarge);
       }
     }
 
@@ -66,7 +71,7 @@ Future<PickedFileWithBytes?> pickFileWithBytes({
       throw FilePickerWithBytesException(unreadableMessage);
     }
     if (maxBytes != null && bytes.length > maxBytes) {
-      throw FilePickerWithBytesException(tooLargeMessage);
+      throw FilePickerWithBytesException(tooLarge);
     }
     return PickedFileWithBytes(bytes: bytes, fileName: file.name);
   } on MissingPluginException catch (error, stackTrace) {

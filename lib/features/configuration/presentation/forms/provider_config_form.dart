@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/configuration/data/dto/provider_catalog_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/forms/app_password_field.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
@@ -114,8 +115,12 @@ class ProviderConfigFormFields extends StatelessWidget {
     final fieldFocusNode = focusNodes[field.key];
     final fieldEnabled = enabled;
     final validator = field.required
-        ? (String? value) =>
-              _validateRequired(field, value, isEditing: isEditing)
+        ? (String? value) => _validateRequired(
+            field,
+            value,
+            l10n: AppLocalizations.of(context),
+            isEditing: isEditing,
+          )
         : null;
     final fieldKey = Key('provider-config-field-${field.key}');
     final multiline = field.multiline;
@@ -154,13 +159,14 @@ class ProviderConfigFormFields extends StatelessWidget {
 String? _validateRequired(
   ProviderConfigFieldDto field,
   String? value, {
+  required AppLocalizations l10n,
   required bool isEditing,
 }) {
   if (field.isSecret && isEditing) {
     return null;
   }
   if (value == null || value.trim().isEmpty) {
-    return '请输入${field.label}';
+    return l10n.providerConfigFieldRequired(field.label);
   }
   return null;
 }

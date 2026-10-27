@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 
@@ -10,5 +11,8 @@ part 'movies_api_provider.g.dart';
 /// 测试需要替身时用 `overrideWithValue(...)`。
 @Riverpod(keepAlive: true)
 MoviesApi moviesApi(Ref ref) {
-  return MoviesApi(apiClient: ref.watch(apiClientProvider));
+  return MoviesApi(
+    apiClient: ref.watch(apiClientProvider),
+    l10n: () => ref.read(appLocalizationsProvider),
+  );
 }

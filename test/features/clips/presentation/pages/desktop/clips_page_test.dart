@@ -11,6 +11,7 @@ import 'package:sakuramedia/features/clips/presentation/pages/desktop/clips_page
 import 'package:sakuramedia/features/clips/presentation/providers/clips_overview_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_overview_state.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
@@ -20,6 +21,7 @@ import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 
 import '../../../../../support/logged_in_session_store.dart';
 import '../../../../../support/test_api_bundle.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('initial loading keeps the desktop clips layout as skeletons', (
@@ -41,6 +43,12 @@ void main() {
           ),
         ],
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraDesktopThemeData,
           home: const Scaffold(body: DesktopClipsPage()),
         ),
@@ -77,6 +85,12 @@ void main() {
           ),
         ],
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraDesktopThemeData,
           home: const Scaffold(body: DesktopClipsPage()),
         ),
@@ -121,6 +135,12 @@ void main() {
           ),
         ],
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraDesktopThemeData,
           home: const Scaffold(body: DesktopClipsPage()),
         ),
@@ -202,6 +222,12 @@ void main() {
         ],
         child: OKToast(
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraDesktopThemeData,
             home: const Scaffold(body: DesktopClipsPage()),
           ),

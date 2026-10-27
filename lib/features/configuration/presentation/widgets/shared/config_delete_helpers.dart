@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 
 /// 配置域标准删除流程：danger 确认 → 调 [onDelete] → 成功 toast + 返回 true。
@@ -17,7 +18,7 @@ Future<bool> showAppConfigDeleteConfirm({
   required Future<void> Function() onDelete,
   required String successToast,
   required String failureFallback,
-  String confirmLabel = '删除',
+  String? confirmLabel,
   Key? dialogKey,
   Key? confirmKey,
 }) async {
@@ -26,7 +27,7 @@ Future<bool> showAppConfigDeleteConfirm({
     title: title,
     message: message,
     danger: true,
-    confirmLabel: confirmLabel,
+    confirmLabel: confirmLabel ?? AppLocalizations.of(context).commonDelete,
     dialogKey: dialogKey,
     confirmKey: confirmKey,
     failureFallback: failureFallback,

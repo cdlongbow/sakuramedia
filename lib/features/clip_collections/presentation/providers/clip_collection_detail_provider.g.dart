@@ -91,7 +91,7 @@ final class ClipCollectionDetailProvider
 }
 
 String _$clipCollectionDetailHash() =>
-    r'8760162c1bf470e1c88e21dbbdbe780e99ff2d1c';
+    r'bb26025dc06be8f516c03eef419b710977503ba8';
 
 /// 切片合集详情：加载合集元信息 + 全量切片，支持移除、删除本体。
 ///

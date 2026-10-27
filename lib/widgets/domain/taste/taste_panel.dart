@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 /// 口味画像的渐变外壳：品牌色光晕 + 斜向底色 + 头部。
@@ -123,7 +124,19 @@ class _TastePanelHeader extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final spacing = context.appSpacing;
     final tokens = context.appComponentTokens;
+    final l10n = AppLocalizations.of(context);
     final count = sampleMovieCount ?? 0;
+    final sampleLabel = count > 0
+        ? l10n.widgetTasteBasedOnMovies(count)
+        : l10n.widgetTasteSourceHint;
+    final countText = '$count';
+    final countIndex = count > 0 ? sampleLabel.indexOf(countText) : -1;
+    final prefix = countIndex >= 0
+        ? sampleLabel.substring(0, countIndex)
+        : sampleLabel;
+    final suffix = countIndex >= 0
+        ? sampleLabel.substring(countIndex + countText.length)
+        : '';
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -162,7 +175,7 @@ class _TastePanelHeader extends StatelessWidget {
                   children: <InlineSpan>[
                     if (count > 0) ...<InlineSpan>[
                       TextSpan(
-                        text: '基于 ',
+                        text: prefix,
                         style: resolveAppTextStyle(
                           context,
                           size: AppTextSize.s12,
@@ -170,7 +183,7 @@ class _TastePanelHeader extends StatelessWidget {
                         ),
                       ),
                       TextSpan(
-                        text: '$count',
+                        text: countText,
                         style: resolveAppTextStyle(
                           context,
                           size: AppTextSize.s16,
@@ -178,7 +191,7 @@ class _TastePanelHeader extends StatelessWidget {
                         ).copyWith(color: colors.primary),
                       ),
                       TextSpan(
-                        text: ' 部影片的播放与收藏',
+                        text: suffix,
                         style: resolveAppTextStyle(
                           context,
                           size: AppTextSize.s12,
@@ -187,7 +200,7 @@ class _TastePanelHeader extends StatelessWidget {
                       ),
                     ] else
                       TextSpan(
-                        text: '来自你的播放、收藏与片单',
+                        text: sampleLabel,
                         style: resolveAppTextStyle(
                           context,
                           size: AppTextSize.s12,

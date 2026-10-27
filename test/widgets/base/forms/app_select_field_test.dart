@@ -1,7 +1,15 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
+
+/// 测试树的本地化 delegate：ARB 文案 + material_ui 的 Material/Cupertino 文案。
+const List<LocalizationsDelegate<dynamic>> _testLocalizationsDelegates =
+    <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      ...GlobalMaterialLocalizations.delegates,
+    ];
 
 void main() {
   List<DropdownMenuItem<int>> buildItems(int count) {
@@ -45,6 +53,9 @@ void main() {
     double height = 320,
   }) {
     return MaterialApp(
+      locale: const Locale('zh'),
+      localizationsDelegates: _testLocalizationsDelegates,
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
       theme: theme ?? sakuraThemeData,
       home: Scaffold(
         body: SizedBox(
@@ -505,6 +516,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: Scaffold(
           body: Column(

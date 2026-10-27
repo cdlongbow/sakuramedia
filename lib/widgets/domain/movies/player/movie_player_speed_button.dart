@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/glass/app_glass_surface.dart';
 import 'package:sakuramedia/widgets/base/overlays/overlay_entry_rebuild.dart';
@@ -300,7 +301,7 @@ class _MoviePlayerSpeedButtonState extends State<MoviePlayerSpeedButton> {
     final overlayTokens = context.appOverlayTokens;
     final label = _displayHasExplicitSelection
         ? formatMoviePlayerPlaybackRateLabel(_displayRate)
-        : '倍速';
+        : AppLocalizations.of(context).widgetMoviePlayerSpeed;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,

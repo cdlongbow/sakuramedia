@@ -54,7 +54,7 @@ final class MovieSubscriptionToggleProvider
 }
 
 String _$movieSubscriptionToggleHash() =>
-    r'2fc5a66ee1b7905a5d2ddbed8e91fe9defcb1ded';
+    r'61ed54bf2f2e2543e68079945e6a70ba394dabaa';
 
 /// 跨影片列表复用的单片订阅动作：统一请求、行级 busy 状态和变更广播。
 ///

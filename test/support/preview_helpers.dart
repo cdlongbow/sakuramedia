@@ -11,6 +11,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/core/media/app_image_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 import 'test_api_bundle.dart';
 
@@ -51,10 +52,12 @@ Future<void> loadPreviewFonts() async {
     '/System/Library/Fonts/STHeiti Light.ttc',
     '/System/Library/Fonts/Supplemental/Arial Unicode.ttf',
   ];
-  final cjkFile = candidates.map(File.new).firstWhere(
-    (file) => file.existsSync(),
-    orElse: () => throw StateError('找不到可用的中文字体，请检查本机字体路径'),
-  );
+  final cjkFile = candidates
+      .map(File.new)
+      .firstWhere(
+        (file) => file.existsSync(),
+        orElse: () => throw StateError('找不到可用的中文字体，请检查本机字体路径'),
+      );
   final cjk = FontLoader('PreviewCjk');
   cjk.addFont(cjkFile.readAsBytes().then(ByteData.sublistView));
   await cjk.load();
@@ -65,9 +68,9 @@ Future<void> loadPreviewFonts() async {
   }
   final icons = FontLoader('MaterialIcons');
   icons.addFont(
-    File('$root/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf')
-        .readAsBytes()
-        .then(ByteData.sublistView),
+    File(
+      '$root/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
+    ).readAsBytes().then(ByteData.sublistView),
   );
   await icons.load();
 }
@@ -251,6 +254,12 @@ Future<GlobalKey> pumpPreviewApp(
             key: boundaryKey,
             child: MaterialApp(
               debugShowCheckedModeBanner: false,
+              locale: const Locale('zh'),
+              localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+                AppLocalizations.delegate,
+                ...GlobalMaterialLocalizations.delegates,
+              ],
+              supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
               theme: previewTheme(theme, platform),
               home: wrap?.call(home) ?? Scaffold(body: home),
             ),

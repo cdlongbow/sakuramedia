@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_search_stream_update.dart';
 import 'package:sakuramedia/features/actors/presentation/actor_subscription_toggle_result.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_subscription_events_provider.dart';
@@ -11,9 +10,11 @@ import 'package:sakuramedia/features/movies/data/dto/series_import/movie_search_
 import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+import 'package:sakuramedia/features/search/data/catalog_search_stream_stats.dart';
 import 'package:sakuramedia/features/search/presentation/catalog_search_stream_status.dart';
 import 'package:sakuramedia/features/search/presentation/providers/catalog_search_scope.dart';
 import 'package:sakuramedia/features/search/presentation/providers/catalog_search_state.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 
 part 'catalog_search_provider.g.dart';
 
@@ -125,7 +126,10 @@ class CatalogSearch extends _$CatalogSearch {
       state = state.copyWith(
         movieResults: const [],
         actorResults: const [],
-        errorMessage: apiErrorMessage(error, fallback: '搜索失败，请稍后重试'),
+        errorMessage: ref.apiErrorMessage(
+          error,
+          fallback: ref.read(appLocalizationsProvider).errorSearchFailed,
+        ),
         isLoading: false,
       );
     }
@@ -148,8 +152,8 @@ class CatalogSearch extends _$CatalogSearch {
       state = state.copyWith(
         activeKind: CatalogSearchKind.movies,
         isOnlineSearchActive: true,
-        streamStatus: const CatalogSearchStreamStatus(
-          message: '正在从外部数据源搜索影片',
+        streamStatus: CatalogSearchStreamStatus(
+          message: ref.read(appLocalizationsProvider).sseMovieSearchingExternal,
           isRunning: true,
           isFailure: false,
         ),
@@ -164,8 +168,8 @@ class CatalogSearch extends _$CatalogSearch {
     state = state.copyWith(
       activeKind: CatalogSearchKind.actors,
       isOnlineSearchActive: true,
-      streamStatus: const CatalogSearchStreamStatus(
-        message: '正在从外部数据源搜索女优',
+      streamStatus: CatalogSearchStreamStatus(
+        message: ref.read(appLocalizationsProvider).sseActorSearchingExternal,
         isRunning: true,
         isFailure: false,
       ),
@@ -220,10 +224,9 @@ class CatalogSearch extends _$CatalogSearch {
   Future<MovieSubscriptionToggleResult> toggleMovieSubscription(
     String movieNumber,
   ) async {
-    final movie =
-        state.movieResults
-            .where((item) => item.movieNumber == movieNumber)
-            .firstOrNull;
+    final movie = state.movieResults
+        .where((item) => item.movieNumber == movieNumber)
+        .firstOrNull;
     if (movie == null || state.isMovieSubscriptionUpdating(movieNumber)) {
       return const MovieSubscriptionToggleResult.ignored();
     }
@@ -254,9 +257,11 @@ class CatalogSearch extends _$CatalogSearch {
         return const MovieSubscriptionToggleResult.blockedByMedia();
       }
       return MovieSubscriptionToggleResult.failed(
-        message: apiErrorMessage(
+        message: ref.apiErrorMessage(
           error,
-          fallback: subscribe ? '订阅影片失败' : '取消订阅影片失败',
+          fallback: subscribe
+              ? ref.read(appLocalizationsProvider).searchSubscribeMovieFailed
+              : ref.read(appLocalizationsProvider).errorUnsubscribeMovieFailed,
         ),
       );
     } finally {
@@ -269,8 +274,9 @@ class CatalogSearch extends _$CatalogSearch {
   Future<ActorSubscriptionToggleResult> toggleActorSubscription(
     int actorId,
   ) async {
-    final actor =
-        state.actorResults.where((item) => item.id == actorId).firstOrNull;
+    final actor = state.actorResults
+        .where((item) => item.id == actorId)
+        .firstOrNull;
     if (actor == null || state.isActorSubscriptionUpdating(actorId)) {
       return const ActorSubscriptionToggleResult.ignored();
     }
@@ -288,10 +294,9 @@ class CatalogSearch extends _$CatalogSearch {
       }
       final items = state.actorResults
           .map(
-            (item) =>
-                item.id == actorId
-                    ? item.copyWith(isSubscribed: subscribe)
-                    : item,
+            (item) => item.id == actorId
+                ? item.copyWith(isSubscribed: subscribe)
+                : item,
           )
           .toList(growable: false);
       state = state.copyWith(actorResults: items);
@@ -303,9 +308,11 @@ class CatalogSearch extends _$CatalogSearch {
           : const ActorSubscriptionToggleResult.unsubscribed();
     } catch (error) {
       return ActorSubscriptionToggleResult.failed(
-        message: apiErrorMessage(
+        message: ref.apiErrorMessage(
           error,
-          fallback: subscribe ? '订阅女优失败' : '取消订阅女优失败',
+          fallback: subscribe
+              ? ref.read(appLocalizationsProvider).searchSubscribeActorFailed
+              : ref.read(appLocalizationsProvider).searchUnsubscribeActorFailed,
         ),
       );
     } finally {
@@ -389,7 +396,12 @@ class CatalogSearch extends _$CatalogSearch {
               state = state.copyWith(
                 movieResults: const [],
                 actorResults: const [],
-                errorMessage: apiErrorMessage(error, fallback: '搜索失败，请稍后重试'),
+                errorMessage: ref.apiErrorMessage(
+                  error,
+                  fallback: ref
+                      .read(appLocalizationsProvider)
+                      .errorSearchFailed,
+                ),
                 isLoading: false,
               );
             }
@@ -433,7 +445,12 @@ class CatalogSearch extends _$CatalogSearch {
               state = state.copyWith(
                 movieResults: const [],
                 actorResults: const [],
-                errorMessage: apiErrorMessage(error, fallback: '搜索失败，请稍后重试'),
+                errorMessage: ref.apiErrorMessage(
+                  error,
+                  fallback: ref
+                      .read(appLocalizationsProvider)
+                      .errorSearchFailed,
+                ),
                 isLoading: false,
               );
             }
@@ -469,7 +486,7 @@ class CatalogSearch extends _$CatalogSearch {
             !_isNotFoundReason(update.reason),
         current: update.current,
         total: update.total,
-        stats: update.stats,
+        statsLabel: _statsLabelOf(update.stats),
       ),
       movieResults: update.isComplete ? update.results : null,
       actorResults: update.isComplete ? const [] : null,
@@ -488,7 +505,7 @@ class CatalogSearch extends _$CatalogSearch {
             !_isNotFoundReason(update.reason),
         current: update.current,
         total: update.total,
-        stats: update.stats,
+        statsLabel: _statsLabelOf(update.stats),
       ),
       actorResults: update.isComplete ? update.results : null,
       movieResults: update.isComplete ? const [] : null,
@@ -507,6 +524,20 @@ class CatalogSearch extends _$CatalogSearch {
 
   bool _isNotFoundReason(String? reason) =>
       reason == 'movie_not_found' || reason == 'actor_not_found';
+
+  /// 把检索统计渲染成当前语言的摘要文案；无统计时返回 null。
+  String? _statsLabelOf(CatalogSearchStreamStats? stats) {
+    final value = stats;
+    if (value == null) {
+      return null;
+    }
+    return ref.read(appLocalizationsProvider).searchStatsLabel(
+      value.total,
+      value.createdCount,
+      value.alreadyExistsCount,
+      value.failedCount,
+    );
+  }
 
   void _patchMovieSubscription(String movieNumber, bool isSubscribed) {
     applyMovieSubscriptionChanges(<MovieSubscriptionChange>[

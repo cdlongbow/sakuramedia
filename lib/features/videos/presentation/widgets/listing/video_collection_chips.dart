@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_pill.dart';
 
@@ -56,7 +57,11 @@ class _VideoCollectionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = collection.name.trim().isEmpty ? '未命名合集' : collection.name;
+    final l10n = AppLocalizations.of(context);
+    final label =
+        collection.name.trim().isEmpty
+            ? l10n.videoUnnamedCollection
+            : collection.name;
 
     return AppPillButton(
       label: label,
@@ -64,7 +69,7 @@ class _VideoCollectionChip extends StatelessWidget {
       size: AppPillSize.prominent,
       leading: const Icon(Icons.folder_outlined),
       onTap: onTap,
-      semanticLabel: '查看合集「$label」',
+      semanticLabel: l10n.videoViewCollectionSemantics(label),
     );
   }
 }

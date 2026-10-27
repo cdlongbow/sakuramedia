@@ -12,12 +12,17 @@ import 'package:sakuramedia/core/network/debug_latency_interceptor.dart';
 import 'package:sakuramedia/core/network/sse_decoder.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/core/session/session_token_payload.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 class ApiClient {
   ApiClient({
     required SessionStore sessionStore,
     void Function()? onUnauthorized,
+    String Function()? languageProvider,
+    AppLocalizations Function()? localizationsProvider,
   }) : _sessionStore = sessionStore,
+       _languageProvider = languageProvider,
+       _localizationsProvider = localizationsProvider,
        _dio = Dio(
          BaseOptions(
            connectTimeout: const Duration(seconds: 30),
@@ -36,6 +41,8 @@ class ApiClient {
            contentType: Headers.jsonContentType,
          ),
        ) {
+    _dio.interceptors.add(_languageInterceptor());
+    _refreshDio.interceptors.add(_languageInterceptor());
     _dio.interceptors.add(
       AuthInterceptor(
         dio: _dio,
@@ -52,8 +59,27 @@ class ApiClient {
   }
 
   final SessionStore _sessionStore;
+  final String Function()? _languageProvider;
+  final AppLocalizations Function()? _localizationsProvider;
   final Dio _dio;
   final Dio _refreshDio;
+
+  InterceptorsWrapper _languageInterceptor() {
+    return InterceptorsWrapper(
+      onRequest: (options, handler) {
+        options.headers['Accept-Language'] = _currentLanguageTag();
+        handler.next(options);
+      },
+    );
+  }
+
+  String _currentLanguageTag() {
+    final tag = _languageProvider?.call().trim() ?? '';
+    return tag.isEmpty ? 'zh-CN' : tag;
+  }
+
+  /// 当前语言的文案；未注入时返回 `null`，调用点保留旧的中文兜底。
+  AppLocalizations? get _currentLocalizations => _localizationsProvider?.call();
 
   Dio get rawDio => _dio;
   Dio get rawRefreshDio => _refreshDio;
@@ -452,9 +478,14 @@ class ApiClient {
       );
       final responseData = response.data;
       if (responseData is! Map) {
-        throw SessionTokenPayload.invalidResponseException;
+        throw SessionTokenPayload.invalidResponseException(
+          l10n: _currentLocalizations,
+        );
       }
-      final tokens = SessionTokenPayload.fromJson(_asJsonMap(responseData));
+      final tokens = SessionTokenPayload.fromJson(
+        _asJsonMap(responseData),
+        l10n: _currentLocalizations,
+      );
       await _sessionStore.saveTokens(
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,

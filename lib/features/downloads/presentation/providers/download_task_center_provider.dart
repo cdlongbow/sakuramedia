@@ -9,6 +9,7 @@ import 'package:sakuramedia/features/downloads/presentation/providers/downloads_
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/session_scoped_invalidation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 
 part 'download_task_center_provider.g.dart';
 
@@ -35,10 +36,12 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
   int get pageSize => _pageSize;
 
   @override
-  String get initialLoadErrorText => '下载任务加载失败，请稍后重试';
+  String get initialLoadErrorText =>
+      ref.read(appLocalizationsProvider).errorDownloadTaskLoadFailed;
 
   @override
-  String get loadMoreErrorText => '加载更多失败，请点击重试';
+  String get loadMoreErrorText =>
+      ref.read(appLocalizationsProvider).errorLoadMoreFailed;
 
   @override
   DownloadTaskFilterState get initialFilter => DownloadTaskFilterState.initial;

@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
@@ -41,14 +42,16 @@ class ActorListSearchField extends StatefulWidget {
     required this.onChanged,
     this.fieldKey,
     this.clearButtonKey,
-    this.hintText = '搜索女优',
+    this.hintText,
   });
 
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final Key? fieldKey;
   final Key? clearButtonKey;
-  final String hintText;
+
+  /// 输入框占位文案；为 `null` 时使用当前语言的默认文案。
+  final String? hintText;
 
   @override
   State<ActorListSearchField> createState() => _ActorListSearchFieldState();
@@ -80,11 +83,12 @@ class _ActorListSearchFieldState extends State<ActorListSearchField> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppTextField(
       fieldKey: widget.fieldKey,
       controller: widget.controller,
       focusNode: _focusNode,
-      hintText: widget.hintText,
+      hintText: widget.hintText ?? l10n.widgetActorSearchHint,
       contentPadding: EdgeInsets.symmetric(
         horizontal: context.appFormTokens.fieldHorizontalPadding,
         vertical: context.appSpacing.sm,
@@ -95,8 +99,8 @@ class _ActorListSearchFieldState extends State<ActorListSearchField> {
           : AppIconButton(
               key: widget.clearButtonKey,
               icon: const Icon(Icons.close_rounded),
-              tooltip: '清空搜索',
-              semanticLabel: '清空搜索',
+              tooltip: l10n.widgetActorClearSearch,
+              semanticLabel: l10n.widgetActorClearSearch,
               size: AppIconButtonSize.mini,
               onPressed: () {
                 widget.controller.clear();

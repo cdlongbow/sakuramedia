@@ -11,6 +11,7 @@ part of 'api_client_provider.dart';
 /// 全局 [ApiClient] 的 Riverpod 入口。
 ///
 /// 原生装配：依赖（[SessionStore]）经 `ref.watch` 拉取，组合根不再 override。
+/// 语言头用回调在每次请求时读取，避免切语言重建 client、中断 SSE/在飞请求。
 /// 测试需要替身时用 `overrideWithValue(...)`。
 
 @ProviderFor(apiClient)
@@ -19,6 +20,7 @@ final apiClientProvider = ApiClientProvider._();
 /// 全局 [ApiClient] 的 Riverpod 入口。
 ///
 /// 原生装配：依赖（[SessionStore]）经 `ref.watch` 拉取，组合根不再 override。
+/// 语言头用回调在每次请求时读取，避免切语言重建 client、中断 SSE/在飞请求。
 /// 测试需要替身时用 `overrideWithValue(...)`。
 
 final class ApiClientProvider
@@ -27,6 +29,7 @@ final class ApiClientProvider
   /// 全局 [ApiClient] 的 Riverpod 入口。
   ///
   /// 原生装配：依赖（[SessionStore]）经 `ref.watch` 拉取，组合根不再 override。
+  /// 语言头用回调在每次请求时读取，避免切语言重建 client、中断 SSE/在飞请求。
   /// 测试需要替身时用 `overrideWithValue(...)`。
   ApiClientProvider._()
     : super(
@@ -61,4 +64,4 @@ final class ApiClientProvider
   }
 }
 
-String _$apiClientHash() => r'5aa2af31962c8f4383a2875e4ac316038a928b56';
+String _$apiClientHash() => r'97950a292293e6a0300691816c6e833773d626e2';

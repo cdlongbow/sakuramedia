@@ -3,6 +3,7 @@ import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.da
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_grid.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/staggered_layout.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_summary_card.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 /// 视频卡片瀑布流：骨架屏 → 错误态 → 空态 → 卡片，按封面真实分辨率排版，
 /// 横/竖封面混排时不留底色。封面宽高缺失（后端探测失败 / 无媒体）按 16:9 兜底。
@@ -23,7 +24,7 @@ class VideoSummarySliver extends StatelessWidget {
     this.selectionMode = false,
     this.selectedIds = const <int>{},
     this.onVideoToggleSelect,
-    this.emptyMessage = '当前没有可展示的视频数据。',
+    this.emptyMessage,
   });
 
   final List<VideoItemListItemDto> items;
@@ -45,15 +46,18 @@ class VideoSummarySliver extends StatelessWidget {
   final bool selectionMode;
   final Set<int> selectedIds;
   final ValueChanged<VideoItemListItemDto>? onVideoToggleSelect;
-  final String emptyMessage;
+
+  /// 空态文案；为 `null` 时用语言包的默认文案。
+  final String? emptyMessage;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppAdaptiveCardSliver<VideoItemListItemDto>(
       gridKey: const Key('video-summary-grid'),
       items: items,
       errorMessage: errorMessage,
-      emptyMessage: emptyMessage,
+      emptyMessage: emptyMessage ?? l10n.videoEmptyGrid,
       layout: AppAdaptiveCardGridLayout.masonry,
       tileAspect:
           (index) =>

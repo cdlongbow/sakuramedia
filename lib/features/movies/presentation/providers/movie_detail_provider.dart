@@ -1,6 +1,7 @@
 import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
 import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
@@ -214,7 +215,11 @@ class MovieDetail extends _$MovieDetail {
       );
     } catch (_) {
       if (_isDisposed) return;
-      state = state.copyWith(similarMoviesErrorMessage: '相似影片暂时无法加载，请稍后重试');
+      state = state.copyWith(
+        similarMoviesErrorMessage: ref
+            .read(appLocalizationsProvider)
+            .movieProviderSimilarMoviesLoadFailed,
+      );
     } finally {
       if (!_isDisposed) {
         state = state.copyWith(isSimilarMoviesLoading: false);
@@ -241,10 +246,11 @@ class MovieDetail extends _$MovieDetail {
   }
 
   String _messageForError(Object error) {
+    final l10n = ref.read(appLocalizationsProvider);
     if (error is ApiException &&
         (error.statusCode == 404 || error.error?.code == 'movie_not_found')) {
-      return '未找到该影片';
+      return l10n.movieProviderMovieNotFound;
     }
-    return '影片详情暂时无法加载，请稍后重试';
+    return l10n.movieProviderMovieDetailLoadFailed;
   }
 }

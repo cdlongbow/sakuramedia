@@ -1,43 +1,44 @@
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/image_search/data/image_search_target.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 enum ImageSearchActorFilterMode { none, includeSelected, excludeSelected }
 
 enum ImageSearchCurrentMovieScope { all, onlyCurrent, excludeCurrent }
 
 extension ImageSearchActorFilterModeLabel on ImageSearchActorFilterMode {
-  String get label {
+  String label(AppLocalizations l10n) {
     switch (this) {
       case ImageSearchActorFilterMode.none:
-        return '不过滤';
+        return l10n.imageSearchActorFilterNone;
       case ImageSearchActorFilterMode.includeSelected:
-        return '仅包含所选';
+        return l10n.imageSearchActorFilterInclude;
       case ImageSearchActorFilterMode.excludeSelected:
-        return '排除所选';
+        return l10n.imageSearchActorFilterExclude;
     }
   }
 }
 
 extension ImageSearchCurrentMovieScopeLabel on ImageSearchCurrentMovieScope {
-  String get label {
+  String label(AppLocalizations l10n) {
     switch (this) {
       case ImageSearchCurrentMovieScope.all:
-        return '全部';
+        return l10n.imageSearchMovieScopeAll;
       case ImageSearchCurrentMovieScope.onlyCurrent:
-        return '仅当前影片';
+        return l10n.imageSearchMovieScopeOnlyCurrent;
       case ImageSearchCurrentMovieScope.excludeCurrent:
-        return '排除当前影片';
+        return l10n.imageSearchMovieScopeExcludeCurrent;
     }
   }
 }
 
 extension ImageSearchTargetLabel on ImageSearchTarget {
-  String get label {
+  String label(AppLocalizations l10n) {
     switch (this) {
       case ImageSearchTarget.thumbnail:
-        return '缩略图';
+        return l10n.imageSearchTargetThumbnail;
       case ImageSearchTarget.plot:
-        return '剧情图';
+        return l10n.imageSearchTargetPlot;
     }
   }
 }

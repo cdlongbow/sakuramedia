@@ -14,11 +14,13 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_collection_detail_page.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_member_views.dart';
 
 import '../../../../../support/fake_http_client_adapter.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -108,6 +110,12 @@ void main() {
         ],
         child: OKToast(
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraThemeData,
             home: const Scaffold(
               body: DesktopVideoCollectionDetailPage(collectionId: 1),

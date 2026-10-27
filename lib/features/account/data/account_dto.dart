@@ -3,15 +3,18 @@ class AccountDto {
     required this.username,
     required this.createdAt,
     required this.lastLoginAt,
+    this.language,
   });
 
   final String username;
+  final String? language;
   final DateTime? createdAt;
   final DateTime? lastLoginAt;
 
   factory AccountDto.fromJson(Map<String, dynamic> json) {
     return AccountDto(
       username: json['username'] as String? ?? '',
+      language: json['language'] as String?,
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
       lastLoginAt: DateTime.tryParse(json['last_login_at'] as String? ?? ''),
     );
@@ -20,6 +23,7 @@ class AccountDto {
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'username': username,
+      if (language != null) 'language': language,
       if (createdAt != null) 'created_at': createdAt!.toUtc().toIso8601String(),
       if (lastLoginAt != null)
         'last_login_at': lastLoginAt!.toUtc().toIso8601String(),

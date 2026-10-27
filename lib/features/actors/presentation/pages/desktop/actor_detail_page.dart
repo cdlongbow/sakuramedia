@@ -5,6 +5,7 @@ import 'package:sakuramedia/features/actors/presentation/pages/shared/actor_deta
 import 'package:sakuramedia/features/actors/presentation/pages/shared/actor_profile_details.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
@@ -154,7 +155,7 @@ class _ActorDetailHeader extends StatelessWidget {
               if (actor.summary.isLocal) ...[
                 SizedBox(height: context.appSpacing.xs),
                 Text(
-                  '本地女优不会同步新作品，订阅仅作为收藏。',
+                  AppLocalizations.of(context).actorLocalSubscriptionHint,
                   key: const Key('actor-detail-local-subscription-hint'),
                   style: resolveAppTextStyle(
                     context,
@@ -172,8 +173,8 @@ class _ActorDetailHeader extends StatelessWidget {
             key: const Key('actor-detail-merge-button'),
             icon: const Icon(Icons.call_merge_outlined),
             size: AppIconButtonSize.compact,
-            tooltip: '合并女优',
-            semanticLabel: '合并女优',
+            tooltip: AppLocalizations.of(context).actorMergeTooltip,
+            semanticLabel: AppLocalizations.of(context).actorMergeTooltip,
             onPressed: onMergeTap,
           ),
           SizedBox(width: context.appSpacing.sm),
@@ -182,8 +183,8 @@ class _ActorDetailHeader extends StatelessWidget {
           key: const Key('actor-detail-edit-button'),
           icon: const Icon(Icons.edit_outlined),
           size: AppIconButtonSize.compact,
-          tooltip: '编辑女优资料',
-          semanticLabel: '编辑女优资料',
+          tooltip: AppLocalizations.of(context).actorEditProfileTooltip,
+          semanticLabel: AppLocalizations.of(context).actorEditProfileTooltip,
           onPressed: onEditTap,
         ),
         SizedBox(width: context.appSpacing.sm),
@@ -213,7 +214,10 @@ class _ActorDetailErrorState extends StatelessWidget {
       children: [
         AppEmptyState(message: message),
         SizedBox(height: context.appSpacing.lg),
-        TextButton(onPressed: onRetry, child: const Text('重试')),
+        TextButton(
+          onPressed: onRetry,
+          child: Text(AppLocalizations.of(context).commonRetry),
+        ),
       ],
     );
   }

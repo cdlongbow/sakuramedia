@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 
@@ -16,26 +17,27 @@ Future<PlaylistDetailActionType?> showPlaylistDetailActionMenu({
   Offset position = Offset.zero,
 }) {
   final isDrawer = presentation == AppMenuPresentation.bottomDrawer;
+  final l10n = AppLocalizations.of(context);
   return showAppActionMenu<PlaylistDetailActionType>(
     context: context,
     globalPosition: position,
     presentation: presentation,
     useRootNavigator: !isDrawer,
     drawerKey: const Key('playlist-detail-actions-drawer'),
-    title: isDrawer ? '播放列表操作' : null,
+    title: isDrawer ? l10n.playlistActionsTooltip : null,
     items: <AppMenuItem<PlaylistDetailActionType>>[
       if (playlist.isMutable)
-        const AppMenuItem(
-          key: Key('playlist-detail-action-edit'),
+        AppMenuItem(
+          key: const Key('playlist-detail-action-edit'),
           value: PlaylistDetailActionType.edit,
-          label: '编辑信息',
+          label: l10n.playlistEditInfo,
           icon: Icons.edit_outlined,
         ),
       if (playlist.isDeletable)
-        const AppMenuItem(
-          key: Key('playlist-detail-action-delete'),
+        AppMenuItem(
+          key: const Key('playlist-detail-action-delete'),
           value: PlaylistDetailActionType.delete,
-          label: '删除播放列表',
+          label: l10n.playlistDeleteTitle,
           icon: Icons.delete_outline_rounded,
           tone: AppTextTone.error,
         ),

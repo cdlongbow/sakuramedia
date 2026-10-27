@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
@@ -6,9 +7,22 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_filter_total_heade
 import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 
+/// 测试树的本地化 delegate：ARB 文案 + material_ui 的 Material/Cupertino 文案。
+const List<LocalizationsDelegate<dynamic>> _testLocalizationsDelegates =
+    <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      ...GlobalMaterialLocalizations.delegates,
+    ];
+
 void main() {
   Widget wrap(Widget child) {
-    return MaterialApp(theme: sakuraThemeData, home: Scaffold(body: child));
+    return MaterialApp(
+      locale: const Locale('zh'),
+      localizationsDelegates: _testLocalizationsDelegates,
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+      theme: sakuraThemeData,
+      home: Scaffold(body: child),
+    );
   }
 
   testWidgets('常规态按筛选、只读信息、操作的顺序渲染', (tester) async {

@@ -14,6 +14,7 @@ import 'package:sakuramedia/features/configuration/presentation/configuration_pl
 import 'package:sakuramedia/features/configuration/presentation/providers/indexer_connection_test_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/indexer_entry_form.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/indexer_connection_test_panel.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_inline_action_button.dart';
@@ -88,7 +89,12 @@ class _IndexerSettingsSectionState
       setState(() {
         _initialized = true;
         _isLoading = false;
-        _errorMessage = apiErrorMessage(error, fallback: '索引器配置加载失败，请稍后重试。');
+        _errorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(
+            context,
+          ).indexerConfigLoadFailedFallback,
+        );
       });
     }
   }
@@ -134,25 +140,26 @@ class _IndexerSettingsSectionState
     if (_isSaving) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     final duplicateNames = findDuplicateIndexerNames(indexers);
     if (duplicateNames.isNotEmpty) {
-      showToast('索引器名称重复: ${duplicateNames.first}');
+      showToast(l10n.indexerNameDuplicateWithName(duplicateNames.first));
       return;
     }
     for (final item in indexers) {
       if (!isValidIndexerHttpUrl(item.url)) {
-        showToast('索引器 URL 必须是合法的 http/https 地址');
+        showToast(l10n.indexerUrlMustBeHttp);
         return;
       }
       if (!isSupportedIndexerKind(item.kind)) {
-        showToast('索引器类型仅支持 pt 或 bt');
+        showToast(l10n.indexerUnsupportedKind);
         return;
       }
       final availableClientIds = _currentDownloadClients
           .map((client) => client.id)
           .toSet();
       if (!item.downloadClientIds.every(availableClientIds.contains)) {
-        showToast('索引器绑定的下载器已失效，请重新选择');
+        showToast(l10n.indexerDownloadersInvalid);
         return;
       }
     }
@@ -179,7 +186,9 @@ class _IndexerSettingsSectionState
       setState(() {
         _isSaving = false;
       });
-      showToast(apiErrorMessage(error, fallback: '保存索引器配置失败'));
+      showToast(
+        apiErrorMessage(error, fallback: l10n.indexerSaveFailed),
+      );
     }
   }
 
@@ -195,7 +204,12 @@ class _IndexerSettingsSectionState
     if (!mounted || result == null) {
       return;
     }
-    showToast(result.healthy ? 'Torznab 连通正常' : 'Torznab 连通性测试失败');
+    final l10n = AppLocalizations.of(context);
+    showToast(
+      result.healthy
+          ? l10n.indexerConnectionHealthy
+          : l10n.indexerConnectionTestFailed,
+    );
   }
 
   Future<void> _createIndexer() async {
@@ -205,7 +219,7 @@ class _IndexerSettingsSectionState
     final result = await showDialog<IndexerEntryDto>(
       context: context,
       builder: (dialogContext) => IndexerEntryDialog(
-        title: '新增索引器',
+        title: AppLocalizations.of(context).indexerAdd,
         downloadClients: _currentDownloadClients,
       ),
     );
@@ -214,7 +228,7 @@ class _IndexerSettingsSectionState
     }
     await _saveIndexers(
       List<IndexerEntryDto>.from(_indexers)..add(result),
-      successToast: '索引器已创建',
+      successToast: AppLocalizations.of(context).indexerCreated,
     );
   }
 
@@ -225,7 +239,7 @@ class _IndexerSettingsSectionState
     final result = await showDialog<IndexerEntryDto>(
       context: context,
       builder: (dialogContext) => IndexerEntryDialog(
-        title: '编辑索引器',
+        title: AppLocalizations.of(context).indexerEditTitle,
         downloadClients: _currentDownloadClients,
         initialEntry: _indexers[index],
       ),
@@ -235,7 +249,7 @@ class _IndexerSettingsSectionState
     }
     await _saveIndexers(
       List<IndexerEntryDto>.from(_indexers)..[index] = result,
-      successToast: '索引器已更新',
+      successToast: AppLocalizations.of(context).indexerUpdated,
     );
   }
 
@@ -246,9 +260,9 @@ class _IndexerSettingsSectionState
       dialogKey: const Key('configuration-indexer-delete-dialog'),
       confirmKey: const Key('configuration-indexer-delete-confirm-button'),
       cancelKey: const Key('configuration-indexer-delete-cancel-button'),
-      title: '删除索引器',
-      message: '确认删除索引器"${entry.name}"？删除后，该索引器将无法继续把资源请求投递到当前下载器。',
-      confirmLabel: '删除',
+      title: AppLocalizations.of(context).indexerDeleteTitle,
+      message: AppLocalizations.of(context).indexerDeleteMessage(entry.name),
+      confirmLabel: AppLocalizations.of(context).commonDelete,
       danger: true,
     );
     if (!confirmed || !mounted) {
@@ -256,7 +270,7 @@ class _IndexerSettingsSectionState
     }
     await _saveIndexers(
       List<IndexerEntryDto>.from(_indexers)..removeAt(index),
-      successToast: '索引器已删除',
+      successToast: AppLocalizations.of(context).indexerDeleted,
     );
   }
 
@@ -287,7 +301,7 @@ class _IndexerSettingsSectionState
     }
     if (_errorMessage != null) {
       return AppSectionError(
-        title: '索引器配置加载失败',
+        title: AppLocalizations.of(context).indexerConfigLoadFailed,
         message: _errorMessage!,
         onRetry: _loadData,
       );
@@ -317,11 +331,12 @@ class _IndexerSettingsSectionState
               .toList(growable: false);
 
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppContentCard(
-          title: 'Torznab 连通性',
+          title: l10n.indexerTestPanelTitle,
           headerBottomSpacing: spacing.md,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -348,7 +363,7 @@ class _IndexerSettingsSectionState
           children: [
             Expanded(
               child: Text(
-                '索引器列表',
+                l10n.indexerListTitle,
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s12,
@@ -363,7 +378,7 @@ class _IndexerSettingsSectionState
                   ? null
                   : _createIndexer,
               icon: const Icon(Icons.add_rounded),
-              label: '添加',
+              label: l10n.indexerAddAction,
               size: AppButtonSize.small,
               variant: AppButtonVariant.primary,
             ),
@@ -372,7 +387,7 @@ class _IndexerSettingsSectionState
         if (downloadClients.isEmpty) ...[
           SizedBox(height: spacing.sm),
           Text(
-            '请先在下载器 Tab 创建下载器',
+            l10n.indexerCreateDownloaderHint,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -385,7 +400,11 @@ class _IndexerSettingsSectionState
         IndexerSearchField(controller: _searchController),
         SizedBox(height: spacing.md),
         if (filteredIndexers.isEmpty)
-          IndexerEmptyState(message: query.isEmpty ? '还没有配置索引站' : '没有匹配的索引站')
+          IndexerEmptyState(
+            message: query.isEmpty
+                ? l10n.indexerEmptyDesktop
+                : l10n.indexerEmptyNoMatch,
+          )
         else
           AppSettingsGroup(
             children: [
@@ -428,6 +447,7 @@ class IndexerEntryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
 
     return Padding(
       key: Key('indexer-entry-card-$index'),
@@ -477,7 +497,11 @@ class IndexerEntryCard extends StatelessWidget {
                 ),
                 SizedBox(height: spacing.xs),
                 Text(
-                  'API Key: ${entry.hasApiKey ? '已配置' : '未配置'}',
+                  l10n.indexerApiKeyLine(
+                    entry.hasApiKey
+                        ? l10n.indexerConfigured
+                        : l10n.indexerNotConfigured,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: resolveAppTextStyle(
@@ -489,7 +513,7 @@ class IndexerEntryCard extends StatelessWidget {
                 ),
                 SizedBox(height: spacing.xs),
                 Text(
-                  '下载器: ${entry.downloadClientNames}',
+                  l10n.indexerDownloaderLine(entry.downloadClientNames),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: resolveAppTextStyle(
@@ -577,7 +601,7 @@ class _IndexerEntryDialogState extends ConsumerState<IndexerEntryDialog> {
     }
     final selectedDownloadClients = _selectedDownloadClients();
     if (selectedDownloadClients.isEmpty) {
-      showToast('请至少选择一个仍可用的下载器');
+      showToast(AppLocalizations.of(context).indexerSelectDownloader);
       return;
     }
     Navigator.of(context).pop(
@@ -611,6 +635,7 @@ class _IndexerEntryDialogState extends ConsumerState<IndexerEntryDialog> {
   Widget build(BuildContext context) {
     final isEditing = widget.initialEntry != null;
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
 
     return AppDesktopDialog(
       insetPadding: EdgeInsets.symmetric(
@@ -659,14 +684,14 @@ class _IndexerEntryDialogState extends ConsumerState<IndexerEntryDialog> {
                 Expanded(
                   child: AppButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    label: '取消',
+                    label: l10n.commonCancel,
                   ),
                 ),
                 SizedBox(width: context.appSpacing.md),
                 Expanded(
                   child: AppButton(
                     onPressed: widget.downloadClients.isEmpty ? null : _submit,
-                    label: isEditing ? '保存' : '保存',
+                    label: l10n.commonSave,
                     variant: AppButtonVariant.primary,
                   ),
                 ),
@@ -688,7 +713,7 @@ class IndexerSearchField extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppTextField(
       controller: controller,
-      hintText: '搜索已添加的索引器...',
+      hintText: AppLocalizations.of(context).indexerSearchHint,
       prefix: Icon(
         Icons.search_rounded,
         size: context.appComponentTokens.iconSizeSm,

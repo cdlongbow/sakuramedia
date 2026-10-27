@@ -1,8 +1,16 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+
+/// 测试树的本地化 delegate：ARB 文案 + material_ui 的 Material/Cupertino 文案。
+const List<LocalizationsDelegate<dynamic>> _testLocalizationsDelegates =
+    <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      ...GlobalMaterialLocalizations.delegates,
+    ];
 
 void main() {
   testWidgets('app empty state renders only message text by default', (
@@ -10,6 +18,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: const Scaffold(body: AppEmptyState(message: '暂无数据')),
       ),
@@ -25,6 +36,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: const Scaffold(
           body: AppEmptyState(message: '加载失败', icon: Icons.error_outline),
@@ -42,6 +56,9 @@ void main() {
     var tapped = 0;
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: Scaffold(
           body: AppEmptyState(
@@ -67,6 +84,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: const Scaffold(
           body: AppEmptyState(title: '缩略图加载失败', message: '网络异常,请重试'),
@@ -83,6 +103,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: Scaffold(
           body: AppEmptyState(
@@ -96,5 +119,25 @@ void main() {
 
     expect(find.text('刷新'), findsOneWidget);
     expect(find.text('重试'), findsNothing);
+  });
+
+  testWidgets('app empty state default retry label follows the app locale', (
+    WidgetTester tester,
+  ) async {
+    for (final entry in const {'zh': '重试', 'en': 'Retry'}.entries) {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: Locale(entry.key),
+          localizationsDelegates: _testLocalizationsDelegates,
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          theme: sakuraThemeData,
+          home: Scaffold(
+            body: AppEmptyState(message: 'empty', onRetry: () {}),
+          ),
+        ),
+      );
+
+      expect(find.text(entry.value), findsOneWidget, reason: entry.key);
+    }
   });
 }

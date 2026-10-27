@@ -17,6 +17,7 @@ import 'package:sakuramedia/features/configuration/presentation/pages/desktop/co
 import 'package:sakuramedia/features/configuration/presentation/providers/download_clients_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/configuration_tab_request_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/media_provider_catalog_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_router.dart';
 import 'package:sakuramedia/routes/desktop_top_bar_config.dart';
@@ -2219,6 +2220,12 @@ void main() {
         child: OKToast(
           child: MaterialApp.router(
             theme: sakuraThemeData,
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             routerConfig: router,
           ),
         ),
@@ -2327,7 +2334,16 @@ Future<void> _pumpPage(
           ),
       ],
       child: OKToast(
-        child: MaterialApp(theme: sakuraThemeData, home: home),
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          home: home,
+        ),
       ),
     ),
   );

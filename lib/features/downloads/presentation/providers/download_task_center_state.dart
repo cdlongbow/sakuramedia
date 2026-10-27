@@ -101,9 +101,6 @@ class DownloadTaskCenterState {
 
   bool isTaskPending(int taskId) => pendingActionTaskIds.contains(taskId);
 
-  String clientNameOf(int clientId) =>
-      clientNames[clientId] ?? '客户端 #$clientId';
-
   DownloadTaskCenterState copyWith({
     PagedListState<DownloadTaskRowState>? paged,
     DownloadTaskFilterState? filter,

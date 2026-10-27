@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_sort_menu_button.dart';
 
 /// 女优列表的排序入口适配器。
@@ -28,12 +29,13 @@ class ActorSortMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final searching = filterState.isSearching;
     final relevance = filterState.usesRelevanceSort;
     return AppSortMenuButton<ActorSortField>(
       fields: ActorSortField.values,
       selectedField: filterState.sortField,
-      fieldLabelBuilder: (value) => value.label,
+      fieldLabelBuilder: (value) => value.label(AppLocalizations.of(context)),
       onFieldChanged: (value) =>
           onChanged(filterState.copyWith(sortField: value!)),
       selectedDirection: filterState.sortDirection,
@@ -41,8 +43,13 @@ class ActorSortMenuButton extends StatelessWidget {
           onChanged(filterState.copyWith(sortDirection: value)),
       useDrawer: useDrawer,
       enabled: !searching,
-      triggerLabel: relevance ? '相关度' : null,
-      tooltip: relevance ? '搜索时按相关度排序' : (searching ? '搜索中暂不可调整排序' : '排序'),
+      triggerLabel: relevance ? l10n.widgetActorSortRelevance : null,
+      tooltip:
+          relevance
+              ? l10n.widgetActorSortRelevanceTooltip
+              : (searching
+                  ? l10n.widgetActorSortDisabledWhileSearching
+                  : l10n.widgetActorSort),
       triggerKey: triggerKey,
       panelKey: panelKey,
       drawerKey: drawerKey,

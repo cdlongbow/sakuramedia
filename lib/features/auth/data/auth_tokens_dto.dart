@@ -1,16 +1,23 @@
 import 'package:sakuramedia/core/session/session_token_payload.dart';
 
 class AuthUserDto {
-  const AuthUserDto({required this.username});
+  const AuthUserDto({required this.username, this.language});
 
   final String username;
+  final String? language;
 
   factory AuthUserDto.fromJson(Map<String, dynamic> json) {
-    return AuthUserDto(username: json['username'] as String? ?? '');
+    return AuthUserDto(
+      username: json['username'] as String? ?? '',
+      language: json['language'] as String?,
+    );
   }
 
   Map<String, dynamic> toJson() {
-    return <String, dynamic>{'username': username};
+    return <String, dynamic>{
+      'username': username,
+      if (language != null) 'language': language,
+    };
   }
 }
 

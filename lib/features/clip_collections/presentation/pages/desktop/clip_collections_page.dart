@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/clip_collections/presentation/providers/cli
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_overview_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
@@ -73,6 +74,7 @@ class _DesktopClipCollectionsPageState
 
     final async = ref.watch(clipCollectionsOverviewProvider);
     final notifier = ref.read(clipCollectionsOverviewProvider.notifier);
+    final l10n = AppLocalizations.of(context);
 
     return AppPageRefreshScope(
       onRefresh: notifier.refresh,
@@ -84,7 +86,7 @@ class _DesktopClipCollectionsPageState
             Row(
               children: [
                 Text(
-                  '切片合集',
+                  l10n.clipCollectionPageTitle,
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s18,
@@ -95,7 +97,7 @@ class _DesktopClipCollectionsPageState
                 const Spacer(),
                 AppTextButton(
                   key: const Key('clip-collections-create-button'),
-                  label: '新建合集',
+                  label: l10n.clipCollectionCreate,
                   size: AppTextButtonSize.small,
                   onPressed: _createCollection,
                 ),
@@ -105,7 +107,7 @@ class _DesktopClipCollectionsPageState
             AppSearchField(
               fieldKey: const Key('clip-collections-search-field'),
               controller: _searchController,
-              hintText: '搜索合集',
+              hintText: l10n.clipCollectionSearchHint,
               onChanged: (value) =>
                   setState(() => _keyword = value.trim().toLowerCase()),
               clearKey: const Key('clip-collections-search-clear'),
@@ -123,16 +125,20 @@ class _DesktopClipCollectionsPageState
     AsyncValue<List<ClipCollectionDto>> async,
   ) {
     final isLoading = async.isLoading && async.value == null;
+    final l10n = AppLocalizations.of(context);
     if (!isLoading && async.hasError && async.value == null) {
       return AppEmptyState(
-        message: apiErrorMessage(async.error!, fallback: '合集暂时无法加载，请稍后重试'),
+        message: apiErrorMessage(
+          async.error!,
+          fallback: l10n.clipCollectionLoadFailed,
+        ),
       );
     }
     final allCollections = isLoading
         ? clipCollectionPlaceholders(count: 8)
         : async.value ?? const <ClipCollectionDto>[];
     if (allCollections.isEmpty) {
-      return const AppEmptyState(message: '还没有合集，点右上角「新建合集」开始吧');
+      return AppEmptyState(message: l10n.clipCollectionEmptyDesktop);
     }
     final collections = isLoading || _keyword.isEmpty
         ? allCollections
@@ -143,7 +149,7 @@ class _DesktopClipCollectionsPageState
               )
               .toList(growable: false);
     if (collections.isEmpty) {
-      return const AppEmptyState(message: '没有匹配的合集');
+      return AppEmptyState(message: l10n.clipCollectionNoMatch);
     }
 
     final spacing = context.appSpacing;
@@ -183,7 +189,7 @@ class _DesktopClipCollectionsPageState
     ref
         .read(clipCollectionsOverviewProvider.notifier)
         .insertCollection(created);
-    showToast('已创建合集');
+    showToast(AppLocalizations.of(context).clipCollectionCreatedToast);
   }
 
   Future<void> _editCollection(ClipCollectionDto collection) async {
@@ -197,19 +203,20 @@ class _DesktopClipCollectionsPageState
     ref
         .read(clipCollectionsOverviewProvider.notifier)
         .replaceCollection(updated);
-    showToast('已保存');
+    showToast(AppLocalizations.of(context).commonSaved);
   }
 
   Future<void> _deleteCollection(ClipCollectionDto collection) async {
+    final l10n = AppLocalizations.of(context);
     final name = collection.name.trim().isEmpty
-        ? '该合集'
+        ? l10n.clipCollectionUnnamed
         : '“${collection.name.trim()}”';
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除合集',
-      message: '确认删除$name？只会删除合集本身，合集内的切片不会被删除。',
+      title: l10n.clipCollectionDeleteTitle,
+      message: l10n.clipCollectionDeleteMessage(name),
       danger: true,
-      confirmLabel: '删除',
+      confirmLabel: l10n.commonDelete,
       confirmKey: const Key('clip-collection-delete-confirm-button'),
     );
     if (!mounted || !confirmed) {
@@ -223,10 +230,12 @@ class _DesktopClipCollectionsPageState
           .read(clipCollectionsOverviewProvider.notifier)
           .removeCollection(collection.id);
       if (mounted) {
-        showToast('已删除合集');
+        showToast(l10n.clipCollectionDeletedToast);
       }
     } catch (error) {
-      showToast(apiErrorMessage(error, fallback: '删除失败，请重试'));
+      showToast(
+        apiErrorMessage(error, fallback: l10n.clipCollectionDeleteFailed),
+      );
     }
   }
 }

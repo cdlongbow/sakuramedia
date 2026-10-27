@@ -26,378 +26,386 @@ import 'package:sakuramedia/features/subscriptions/presentation/pages/desktop/mo
 import 'package:sakuramedia/features/rankings/presentation/pages/mobile/rankings_page.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_list_page.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/pornbox_page.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/routes/app_route_spec.dart';
 
 export 'app_route_paths.dart';
 
-const List<_NavSeed> _mobileNavSeeds = [
+/// 导航文案解析器：按当前语言求值。
+///
+/// seed 只描述结构（分组 / slug / 图标 / 文案），文案一律来自 ARB。切语言时
+/// 重新求值即可，不需要另维护一张按语言分表的常量副本；直接引用生成的
+/// getter 也让 key 拼写错误在编译期暴露，而不是渲染出裸 key。
+typedef _NavTextResolver = String Function(AppLocalizations l10n);
+
+final List<_NavSeed> _mobileNavSeeds = [
   _NavSeed(
     id: 'overview',
-    label: '概览',
+    label: (l10n) => l10n.routeOverviewTitle,
     icon: Icons.pix_outlined,
     items: [
       _NavItemSeed(
         slug: 'overview',
-        label: '概览',
+        label: (l10n) => l10n.routeOverviewTitle,
         icon: Icons.pix_outlined,
         activeIcon: Icons.pix,
-        description: '移动端首页骨架与后续动态入口。',
+        description: (l10n) => l10n.routeNavMobileOverviewDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'movies',
-    label: '影片',
+    label: (l10n) => l10n.routeMoviesTitle,
     icon: Icons.movie_outlined,
     items: [
       _NavItemSeed(
         slug: 'library/movies',
-        label: '影片',
+        label: (l10n) => l10n.routeMoviesTitle,
         icon: Icons.movie_outlined,
         activeIcon: Icons.movie,
-        description: '移动端影片列表与后续详情入口。',
+        description: (l10n) => l10n.routeNavMobileMoviesDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'actors',
-    label: '女优',
+    label: (l10n) => l10n.routeActorsTitle,
     icon: Icons.face_4_outlined,
     items: [
       _NavItemSeed(
         slug: 'library/actors',
-        label: '女优',
+        label: (l10n) => l10n.routeActorsTitle,
         icon: Icons.face_4_outlined,
         activeIcon: Icons.face_4,
-        description: '移动端女优列表与后续详情入口。',
+        description: (l10n) => l10n.routeNavMobileActorsDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'rankings',
-    label: '榜单',
+    label: (l10n) => l10n.routeRankingsBoardTitle,
     icon: Icons.local_fire_department_outlined,
     items: [
       _NavItemSeed(
         slug: 'rankings',
-        label: '榜单',
+        label: (l10n) => l10n.routeRankingsBoardTitle,
         icon: Icons.local_fire_department_outlined,
         activeIcon: Icons.local_fire_department,
-        description: '移动端榜单骨架与后续推荐入口。',
+        description: (l10n) => l10n.routeNavMobileRankingsDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'pornbox',
-    label: 'PornBox',
+    label: (l10n) => l10n.routeVideosTitle,
     icon: Icons.video_library_outlined,
     items: [
       _NavItemSeed(
         slug: 'pornbox',
-        label: 'PornBox',
+        label: (l10n) => l10n.routeVideosTitle,
         icon: Icons.video_library_outlined,
         activeIcon: Icons.video_library,
-        description: '移动端 PornBox 视频列表、合集与播放入口。',
+        description: (l10n) => l10n.routeNavMobileVideosDescription,
       ),
     ],
   ),
 ];
 
-const List<_NavSeed> _desktopNavSeeds = [
+final List<_NavSeed> _desktopNavSeeds = [
   _NavSeed(
     id: 'overview',
-    label: '概览',
+    label: (l10n) => l10n.routeOverviewTitle,
     icon: Icons.space_dashboard_outlined,
     items: [
       _NavItemSeed(
         slug: 'overview',
-        label: '概览',
+        label: (l10n) => l10n.routeOverviewTitle,
         icon: Icons.space_dashboard_outlined,
-        description: '桌面工作台总览、待办与快捷入口的统一落点。',
+        description: (l10n) => l10n.routeNavOverviewDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'discover',
-    label: '发现',
+    label: (l10n) => l10n.routeDiscoverTitle,
     icon: Icons.travel_explore_outlined,
-    section: '浏览',
+    section: (l10n) => l10n.routeNavBrowseSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'library/discover',
-        label: '发现',
+        label: (l10n) => l10n.routeDiscoverTitle,
         icon: Icons.travel_explore_outlined,
-        description: '每日推荐影片与推荐时刻的统一发现入口。',
+        description: (l10n) => l10n.routeNavDiscoverDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'movies',
-    label: '影片',
+    label: (l10n) => l10n.routeMoviesTitle,
     icon: Icons.movie_creation_outlined,
-    section: '浏览',
+    section: (l10n) => l10n.routeNavBrowseSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'library/movies',
-        label: '影片',
+        label: (l10n) => l10n.routeMoviesTitle,
         icon: Icons.movie_creation_outlined,
-        description: '影片资料、筛选面板与详情浏览的统一入口。',
+        description: (l10n) => l10n.routeNavMoviesDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'actors',
-    label: '女优',
+    label: (l10n) => l10n.routeActorsTitle,
     icon: Icons.face_retouching_natural_outlined,
-    section: '浏览',
+    section: (l10n) => l10n.routeNavBrowseSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'library/actors',
-        label: '女优',
+        label: (l10n) => l10n.routeActorsTitle,
         icon: Icons.face_retouching_natural_outlined,
-        description: '演员资料、筛选面板与后续详情工作流的统一入口。',
+        description: (l10n) => l10n.routeNavActorsDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'tags',
-    label: '标签',
+    label: (l10n) => l10n.routeTagsTitle,
     icon: Icons.sell_outlined,
-    section: '浏览',
+    section: (l10n) => l10n.routeNavBrowseSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'library/tags',
-        label: '标签',
+        label: (l10n) => l10n.routeTagsTitle,
         icon: Icons.sell_outlined,
-        description: '按标签多选组合筛选影片的统一入口。',
+        description: (l10n) => l10n.routeNavTagsDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'moments',
-    label: '时刻',
+    label: (l10n) => l10n.routeMomentsTitle,
     icon: Icons.auto_awesome_motion_outlined,
-    section: '浏览',
+    section: (l10n) => l10n.routeNavBrowseSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'library/moments',
-        label: '时刻',
+        label: (l10n) => l10n.routeMomentsTitle,
         icon: Icons.auto_awesome_motion_outlined,
-        description: '全局时刻列表、预览和快速跳播的统一入口。',
+        description: (l10n) => l10n.routeNavMomentsDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'clips',
-    label: '切片',
+    label: (l10n) => l10n.routeClipsTitle,
     icon: Icons.content_cut_outlined,
-    section: '浏览',
+    section: (l10n) => l10n.routeNavBrowseSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'library/clips',
-        label: '切片',
+        label: (l10n) => l10n.routeClipsTitle,
         icon: Icons.content_cut_outlined,
-        description: '圈选生成的切片与切片合集的统一入口：浏览、悬停预览、加入合集与连播。',
+        description: (l10n) => l10n.routeNavClipsDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'playlists',
-    label: '播放列表',
+    label: (l10n) => l10n.routePlaylistsTitle,
     icon: Icons.playlist_play_outlined,
-    section: '浏览',
+    section: (l10n) => l10n.routeNavBrowseSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'library/playlists',
-        label: '播放列表',
+        label: (l10n) => l10n.routePlaylistsTitle,
         icon: Icons.playlist_play_outlined,
-        description: '播放列表浏览、维护与影片归档的统一入口。',
+        description: (l10n) => l10n.routeNavPlaylistsDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'favorites',
-    label: '我的收藏',
+    label: (l10n) => l10n.routeFavoritesTitle,
     icon: Icons.favorite_border_rounded,
-    section: '浏览',
+    section: (l10n) => l10n.routeNavBrowseSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'library/favorites',
-        label: '我的收藏',
+        label: (l10n) => l10n.routeFavoritesTitle,
         icon: Icons.favorite_border_rounded,
         activeIcon: Icons.favorite_rounded,
-        description: '影片详情里手动收藏的影片列表。',
+        description: (l10n) => l10n.routeNavFavoritesDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'recently-played',
-    label: '最近播放',
+    label: (l10n) => l10n.routeRecentlyPlayedTitle,
     icon: Icons.play_circle_outline_rounded,
-    section: '浏览',
+    section: (l10n) => l10n.routeNavBrowseSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'library/recently-played',
-        label: '最近播放',
+        label: (l10n) => l10n.routeRecentlyPlayedTitle,
         icon: Icons.play_circle_outline_rounded,
-        description: '按播放时间倒序查看最近看过的影片。',
+        description: (l10n) => l10n.routeNavRecentlyPlayedDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'recent-views',
-    label: '最近浏览',
+    label: (l10n) => l10n.routeRecentViewsTitle,
     icon: Icons.visibility_outlined,
-    section: '浏览',
+    section: (l10n) => l10n.routeNavBrowseSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'library/recent-views',
-        label: '最近浏览',
+        label: (l10n) => l10n.routeRecentViewsTitle,
         icon: Icons.visibility_outlined,
         activeIcon: Icons.visibility,
-        description: '最近浏览过的影片与女优。',
+        description: (l10n) => l10n.routeNavRecentViewsDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'ratings',
-    label: '我的评分',
+    label: (l10n) => l10n.routeRatingsTitle,
     icon: Icons.star_outline_rounded,
-    section: '浏览',
+    section: (l10n) => l10n.routeNavBrowseSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'library/ratings',
-        label: '我的评分',
+        label: (l10n) => l10n.routeRatingsTitle,
         icon: Icons.star_outline_rounded,
         activeIcon: Icons.star_rounded,
-        description: '已评分影片、总分排序与评分维度维护的统一入口。',
+        description: (l10n) => l10n.routeNavRatingsDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'videos',
-    label: 'PornBox',
+    label: (l10n) => l10n.routeVideosTitle,
     icon: Icons.video_library_outlined,
-    section: '浏览',
+    section: (l10n) => l10n.routeNavBrowseSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'library/videos',
-        label: 'PornBox',
+        label: (l10n) => l10n.routeVideosTitle,
         icon: Icons.video_library_outlined,
-        description: 'PornBox 视频的列表、合集、详情与播放统一入口。',
+        description: (l10n) => l10n.routeNavVideosDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'rankings',
-    label: '排行榜',
+    label: (l10n) => l10n.routeRankingsTitle,
     icon: Icons.local_fire_department_outlined,
-    section: '浏览',
+    section: (l10n) => l10n.routeNavBrowseSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'library/rankings',
-        label: '排行榜',
+        label: (l10n) => l10n.routeRankingsTitle,
         icon: Icons.local_fire_department_outlined,
-        description: '来源榜单聚合、周期切换与影片热榜浏览入口。',
+        description: (l10n) => l10n.routeNavRankingsDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'media',
-    label: '媒体管理',
+    label: (l10n) => l10n.routeMediaManagementTitle,
     icon: Icons.video_settings_outlined,
-    section: '管理',
+    section: (l10n) => l10n.routeNavManageSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'system/media',
-        label: '媒体管理',
+        label: (l10n) => l10n.routeMediaManagementTitle,
         icon: Icons.video_settings_outlined,
-        description: '媒体文件浏览、失效巡检与删除的统一入口。',
+        description: (l10n) => l10n.routeNavMediaManagementDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'media-import',
-    label: '资源导入',
+    label: (l10n) => l10n.routeMediaImportTitle,
     icon: Icons.drive_folder_upload_outlined,
-    section: '管理',
+    section: (l10n) => l10n.routeNavManageSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'system/media-import',
-        label: '资源导入',
+        label: (l10n) => l10n.routeMediaImportTitle,
         icon: Icons.drive_folder_upload_outlined,
-        description: '导入 JAV 与普通视频，并在任务中心查看进度和结果。',
+        description: (l10n) => l10n.routeNavMediaImportDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'download-tasks',
-    label: '下载任务',
+    label: (l10n) => l10n.routeDownloadTasksTitle,
     icon: Icons.download_for_offline_outlined,
-    section: '管理',
+    section: (l10n) => l10n.routeNavManageSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'system/download-tasks',
-        label: '下载任务',
+        label: (l10n) => l10n.routeDownloadTasksTitle,
         icon: Icons.download_for_offline_outlined,
-        description: '查看下载进度、导入状态，并手动提交磁力链接或种子文件。',
+        description: (l10n) => l10n.routeNavDownloadTasksDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'activity',
-    label: '任务中心',
+    label: (l10n) => l10n.routeTaskCenterTitle,
     icon: Icons.bolt_outlined,
-    section: '管理',
+    section: (l10n) => l10n.routeNavManageSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'system/activity',
-        label: '任务中心',
+        label: (l10n) => l10n.routeTaskCenterTitle,
         icon: Icons.bolt_outlined,
-        description: '后台任务与元数据任务的统一入口，所有操作回执的落点。',
+        description: (l10n) => l10n.routeNavTaskCenterDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'movie-subscriptions',
-    label: '订阅管理',
+    label: (l10n) => l10n.routeSubscriptionManagementTitle,
     icon: Icons.bookmark_added_outlined,
-    section: '管理',
+    section: (l10n) => l10n.routeNavManageSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'system/movie-subscriptions',
-        label: '订阅管理',
+        label: (l10n) => l10n.routeSubscriptionManagementTitle,
         icon: Icons.bookmark_added_outlined,
-        description: '订阅影片的资源查询进展：缺资源、已放弃、查询出错的集中处理台。',
+        description: (l10n) => l10n.routeNavSubscriptionManagementDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'notifications',
-    label: '通知',
+    label: (l10n) => l10n.routeNotificationsTitle,
     icon: Icons.notifications_none_outlined,
-    section: '管理',
+    section: (l10n) => l10n.routeNavManageSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'system/notifications',
-        label: '通知',
+        label: (l10n) => l10n.routeNotificationsTitle,
         icon: Icons.notifications_none_outlined,
-        description: '后台通知消息中心，展示即自动已读。',
+        description: (l10n) => l10n.routeNavNotificationsDescription,
       ),
     ],
   ),
   _NavSeed(
     id: 'configuration',
-    label: '系统设置',
+    label: (l10n) => l10n.routeConfigurationTitle,
     icon: Icons.settings_suggest_outlined,
-    section: '管理',
+    section: (l10n) => l10n.routeNavManageSectionLabel,
     items: [
       _NavItemSeed(
         slug: 'system/configuration',
-        label: '系统设置',
+        label: (l10n) => l10n.routeConfigurationTitle,
         icon: Icons.settings_suggest_outlined,
-        description: '媒体库、下载器、索引器、账号安全等系统配置的统一入口。',
+        description: (l10n) => l10n.routeNavConfigurationDescription,
       ),
     ],
   ),
@@ -443,7 +451,11 @@ final Map<String, WidgetBuilder> _mobileRouteBuilders = <String, WidgetBuilder>{
   mobilePornboxPath: (_) => const MobilePornboxPage(),
 };
 
-List<AppNavGroup> navGroupsForPlatform(AppPlatform platform) {
+/// 导航分组（侧边栏 / 底栏），文案按 [l10n] 当前语言渲染。
+List<AppNavGroup> navGroupsForPlatform(
+  AppPlatform platform, {
+  required AppLocalizations l10n,
+}) {
   final prefix = switch (platform) {
     AppPlatform.desktop => '/desktop',
     AppPlatform.mobile => '/mobile',
@@ -475,18 +487,18 @@ List<AppNavGroup> navGroupsForPlatform(AppPlatform platform) {
       .map(
         (seed) => AppNavGroup(
           id: seed.id,
-          label: seed.label,
+          label: seed.label(l10n),
           icon: seed.icon,
           isCollapsible: false,
-          sectionLabel: seed.section,
+          sectionLabel: seed.section?.call(l10n),
           items: seed.items
               .map(
                 (seedItem) => item(
                   slug: seedItem.slug,
-                  label: seedItem.label,
+                  label: seedItem.label(l10n),
                   icon: seedItem.icon,
                   activeIcon: seedItem.activeIcon,
-                  description: seedItem.description,
+                  description: seedItem.description(l10n),
                 ),
               )
               .toList(growable: false),
@@ -495,26 +507,37 @@ List<AppNavGroup> navGroupsForPlatform(AppPlatform platform) {
       .toList(growable: false);
 }
 
+/// 路由规格只描述结构（名称 / 路径 / 布局 / 构造器），不含文案；
+/// 文案在 [navGroupsForPlatform] 与顶栏配置里按当前语言解析。
 List<AppRouteSpec> routeSpecsForPlatform(AppPlatform platform) {
   final routeBuilders = switch (platform) {
     AppPlatform.desktop => _desktopRouteBuilders,
     AppPlatform.mobile => _mobileRouteBuilders,
   };
 
-  return navGroupsForPlatform(platform)
+  final prefix = switch (platform) {
+    AppPlatform.desktop => '/desktop',
+    AppPlatform.mobile => '/mobile',
+  };
+
+  final seeds = switch (platform) {
+    AppPlatform.desktop => _desktopNavSeeds,
+    AppPlatform.mobile => _mobileNavSeeds,
+  };
+
+  return seeds
       .expand(
-        (group) => group.items.map(
-          (item) => AppRouteSpec(
+        (seed) => seed.items.map((seedItem) {
+          final path = '$prefix/${seedItem.slug}';
+          return AppRouteSpec(
             platform: platform,
-            name: item.name,
-            path: item.path,
-            title: item.label,
-            description: item.description,
-            groupId: group.id,
+            name: '${platform.name}-${seedItem.slug}',
+            path: path,
+            groupId: seed.id,
             layout: AppShellLayout.standard,
-            builder: (context) => routeBuilders[item.path]!(context),
-          ),
-        ),
+            builder: (context) => routeBuilders[path]!(context),
+          );
+        }),
       )
       .toList(growable: false);
 }
@@ -524,10 +547,11 @@ List<AppRouteSpec> get desktopRouteSpecs =>
 List<AppRouteSpec> get mobileRouteSpecs =>
     routeSpecsForPlatform(AppPlatform.mobile);
 
-List<AppNavGroup> get desktopNavGroups =>
-    navGroupsForPlatform(AppPlatform.desktop);
-List<AppNavGroup> get mobileNavGroups =>
-    navGroupsForPlatform(AppPlatform.mobile);
+List<AppNavGroup> desktopNavGroups(AppLocalizations l10n) =>
+    navGroupsForPlatform(AppPlatform.desktop, l10n: l10n);
+
+List<AppNavGroup> mobileNavGroups(AppLocalizations l10n) =>
+    navGroupsForPlatform(AppPlatform.mobile, l10n: l10n);
 
 class _NavSeed {
   const _NavSeed({
@@ -539,12 +563,12 @@ class _NavSeed {
   });
 
   final String id;
-  final String label;
+  final _NavTextResolver label;
   final IconData icon;
   final List<_NavItemSeed> items;
 
   /// 侧边栏分区标题；`null` 表示该组前不渲染分区标题。
-  final String? section;
+  final _NavTextResolver? section;
 }
 
 class _NavItemSeed {
@@ -557,9 +581,9 @@ class _NavItemSeed {
   });
 
   final String slug;
-  final String label;
+  final _NavTextResolver label;
   final IconData icon;
-  final String description;
+  final _NavTextResolver description;
 
   /// 选中态使用的实心图标；`null` 时回退到 [icon]。
   final IconData? activeIcon;

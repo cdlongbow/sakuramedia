@@ -17,10 +17,12 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_player_
 import 'package:sakuramedia/features/movies/presentation/providers/movie_player_scope.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_player_state.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_action_support.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/media/video/player_app_fullscreen.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_playback_info.dart';
@@ -245,11 +247,14 @@ class _MoviePlayerContentState extends ConsumerState<MoviePlayerContent>
     if (media == null) {
       return null;
     }
+    final l10n = AppLocalizations.of(context);
     return MoviePlayerMediaInfo(
       sourceLabel: media.providerKey?.trim().isNotEmpty == true
           ? media.providerKey!.trim()
           : '--',
-      libraryLabel: media.libraryId == null ? '--' : '媒体库 ${media.libraryId}',
+      libraryLabel: media.libraryId == null
+          ? '--'
+          : l10n.moviePageMediaLibraryLabel(media.libraryId!),
       fileSizeLabel: media.fileSizeBytes > 0
           ? formatFileSize(media.fileSizeBytes)
           : '--',
@@ -323,7 +328,7 @@ class _MoviePlayerContentState extends ConsumerState<MoviePlayerContent>
     if (!mounted || created == null) {
       return;
     }
-    showToast('切片已生成');
+    showToast(AppLocalizations.of(context).moviePageClipCreated);
     // 退出圈选模式并清空已选点。
     _controller.toggleClipSelectionMode();
   }
@@ -356,6 +361,7 @@ class _MoviePlayerContentState extends ConsumerState<MoviePlayerContent>
       globalPosition: globalPosition,
       items: buildImageActionMenuItems(
         buildMediaThumbnailActionDescriptors(
+          l10n: AppLocalizations.of(context),
           showSearchSimilar: ref.read(imageSearchEnabledProvider),
           thumbnail: thumbnail,
           point: point,

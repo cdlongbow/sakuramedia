@@ -3,15 +3,16 @@ import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
+import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
-import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
-import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_subscription_batch_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/parsed_movie_number_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations_en.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
 
@@ -610,6 +611,30 @@ void main() {
     expect(updates.last.message, '在线搜索已完成');
     expect(updates.last.success, isTrue);
     expect(updates.last.results.single.movieNumber, 'ABP-123');
+  });
+
+  test('searchOnlineMoviesStream localizes progress messages', () async {
+    adapter.enqueueSse(
+      method: 'POST',
+      path: '/movies/metadata-imports',
+      chunks: <String>[
+        'event: search_started\n'
+            'data: {"movie_number":"ABP-123"}\n\n',
+        'event: completed\n'
+            'data: {"success":true,"movies":[],"failed_items":[],"stats":{"total":0,"created_count":0,"already_exists_count":0,"failed_count":0}}\n\n',
+      ],
+    );
+
+    final englishApi = MoviesApi(
+      apiClient: apiClient,
+      l10n: () => AppLocalizationsEn(),
+    );
+    final updates = await englishApi
+        .searchOnlineMoviesStream(movieNumber: 'ABP-123')
+        .toList();
+
+    expect(updates.first.message, 'Searching external sources for movies...');
+    expect(updates.last.message, 'Online search complete');
   });
 
   test(

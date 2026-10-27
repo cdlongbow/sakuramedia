@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/image_search/data/image_search_result_item_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_cover_hover_info.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
@@ -92,6 +93,7 @@ class ImageSearchResultCard extends StatelessWidget {
 
   /// 悬停展开内容：单行「番号 + 相似度」，下方一整行动作按钮。
   Widget _buildHoverInfo(BuildContext context, String scoreText) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
     final searchSimilar = onSearchSimilar;
     final saveToLocal = onSaveToLocal;
@@ -105,35 +107,38 @@ class ImageSearchResultCard extends StatelessWidget {
           icon: Icons.play_arrow_rounded,
           onTap: play,
           primary: true,
-          tooltip: '播放',
+          tooltip: l10n.imageSearchPlay,
         ),
       if (searchSimilar != null)
         AppCoverHoverActionButton(
           key: Key('image-search-result-card-search-similar-$resultImageId'),
           icon: Icons.image_search_outlined,
           onTap: searchSimilar,
-          tooltip: '相似图片',
+          tooltip: l10n.imageSearchSimilarAction,
         ),
       if (saveToLocal != null)
         AppCoverHoverActionButton(
           key: Key('image-search-result-card-save-$resultImageId'),
           icon: Icons.download_outlined,
           onTap: saveToLocal,
-          tooltip: '保存到本地',
+          tooltip: l10n.imageSearchSaveToLocal,
         ),
       if (movieDetail != null)
         AppCoverHoverActionButton(
           key: Key('image-search-result-card-movie-$resultImageId'),
           icon: Icons.info_outline_rounded,
           onTap: movieDetail,
-          tooltip: '影片详情',
+          tooltip: l10n.imageSearchMovieDetail,
         ),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        AppCoverHoverInfoRow(label: item.movieNumber, meta: '相似 $scoreText'),
+        AppCoverHoverInfoRow(
+          label: item.movieNumber,
+          meta: l10n.imageSearchSimilarityLabel(scoreText),
+        ),
         if (actions.isNotEmpty) ...[
           SizedBox(height: spacing.sm),
           AppCoverHoverActionBar(actions: actions),

@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_overview_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_target_picker.dart';
 
@@ -19,6 +20,7 @@ Future<ClipCollectionDto?> showPickClipCollectionDialog(
       PickClipCollectionPresentation.dialog,
   int? excludedCollectionId,
 }) {
+  final l10n = AppLocalizations.of(context);
   return showCollectionTargetPicker<ClipCollectionDto>(
     context: context,
     variant: _variantOf(presentation),
@@ -27,7 +29,8 @@ Future<ClipCollectionDto?> showPickClipCollectionDialog(
     watchCollections: (ref) => ref.watch(clipCollectionsOverviewProvider),
     idOf: (collection) => collection.id,
     nameOf: (collection) => collection.name,
-    countTextOf: (collection) => '${collection.clipCount} 个切片',
+    countTextOf: (collection) =>
+        l10n.clipCollectionClipCount(collection.clipCount),
     excludedCollectionId: excludedCollectionId,
     onCreate: (context, isDrawer) => showCreateClipCollectionDialog(
       context,

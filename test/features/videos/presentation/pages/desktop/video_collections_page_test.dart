@@ -7,6 +7,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_collections_page.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../../../../support/fake_http_client_adapter.dart';
@@ -81,6 +82,12 @@ void main() {
         child: OKToast(
           child: MaterialApp(
             theme: sakuraDesktopThemeData,
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             home: const Scaffold(body: DesktopVideoCollectionsPage()),
           ),
         ),

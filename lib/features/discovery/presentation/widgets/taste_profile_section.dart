@@ -6,6 +6,7 @@ import 'package:sakuramedia/features/discovery/data/taste_profile_dto.dart';
 import 'package:sakuramedia/features/discovery/presentation/providers/taste_profile_provider.dart';
 import 'package:sakuramedia/features/discovery/presentation/widgets/taste_tag_pill.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_inline_error_banner.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
@@ -29,6 +30,7 @@ class TasteProfileSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final profileAsync = ref.watch(tasteProfileProvider);
 
     final profile = profileAsync.value;
@@ -39,7 +41,7 @@ class TasteProfileSection extends ConsumerWidget {
       if (profileAsync.hasError) {
         return AppInlineErrorBanner(
           key: const Key('taste-profile-error'),
-          message: '观影偏好加载失败，请稍后重试',
+          message: AppLocalizations.of(context).errorTasteProfileLoadFailed,
           retryKey: const Key('taste-profile-retry'),
           onRetry: () async {
             await ref.read(tasteProfileProvider.notifier).refresh();
@@ -63,7 +65,10 @@ class TasteProfileSection extends ConsumerWidget {
       sampleMovieCount: profile.sampleMovieCount,
       tags: profile.tags.take(8).toList(growable: false),
       actresses: actresses.take(6).toList(growable: false),
-      actressTitle: hasRecommendations ? '你可能想关注' : '常看女优',
+      actressTitle:
+          hasRecommendations
+              ? l10n.discoveryTasteSuggestedActors
+              : l10n.discoveryTasteFrequentActors,
       onTagTap: onTagTap,
       onActorTap: onActorTap,
       onFollowTap: (entry) => toggleActorSubscriptionWithFeedback(
@@ -100,7 +105,7 @@ class TasteProfileSection extends ConsumerWidget {
                   TasteProfileActressDto(actor: actor, matchedMovieCount: 0),
             )
             .toList(growable: false),
-        actressTitle: '你可能想关注',
+        actressTitle: AppLocalizations.of(context).discoveryTasteSuggestedActors,
         onTagTap: null,
         onActorTap: null,
         onFollowTap: null,
@@ -163,7 +168,7 @@ class _TastePanelContent extends StatelessWidget {
     }
 
     return TastePanel(
-      title: '观影偏好',
+      title: AppLocalizations.of(context).discoveryTasteTitle,
       icon: Icons.auto_awesome_rounded,
       sampleMovieCount: sampleMovieCount,
       child: body,
@@ -183,7 +188,9 @@ class _TasteTagsBlock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const TasteSectionLabel(label: '常看标签'),
+        TasteSectionLabel(
+          label: AppLocalizations.of(context).discoveryTasteFrequentTags,
+        ),
         SizedBox(height: context.appSpacing.sm),
         Wrap(
           spacing: tokens.movieDetailPillGap,

@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_summary_list_content.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
@@ -19,16 +20,14 @@ class DesktopRecentlySubscribedMoviesPage extends StatelessWidget {
       contentKey: const Key('desktop-recently-subscribed-movies-page'),
       sectionSpacing: context.appSpacing.lg,
       registerPageRefresh: true,
-      emptyMessage: '暂无订阅影片',
+      emptyMessage: AppLocalizations.of(context).overviewNoSubscribedMovies,
       showHeader: false,
       onMovieTap: (context, movieNumber) => context.pushDesktopMovieDetail(
         movieNumber: movieNumber,
         fallbackPath: desktopRecentlySubscribedMoviesPath,
       ),
-      bodyBuilder: (context, scrollController, sliver, _) => CustomScrollView(
-        controller: scrollController,
-        slivers: [sliver],
-      ),
+      bodyBuilder: (context, scrollController, sliver, _) =>
+          CustomScrollView(controller: scrollController, slivers: [sliver]),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/features/activity/data/activity_notification_dto.dart';
 import 'package:sakuramedia/features/activity/presentation/activity_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
@@ -16,6 +17,7 @@ class NotificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
+    final l10n = AppLocalizations.of(context);
     return SizedBox(
       width: double.infinity,
       child: Container(
@@ -72,11 +74,15 @@ class NotificationCard extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 AppBadge(
-                  label: labelForNotificationCategory(notification.category),
+                  label: labelForNotificationCategory(
+                    notification.category,
+                    l10n,
+                  ),
                   tone: notificationCategoryTone(notification.category),
                 ),
                 Text(
-                  formatUpdatedAtLabel(notification.createdAt) ?? '时间未知',
+                  formatUpdatedAtLabel(notification.createdAt) ??
+                      l10n.activityTimeUnknown,
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s12,
@@ -113,6 +119,7 @@ class NotificationFilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final layoutTokens = context.appLayoutTokens;
     final filterTextStyle = resolveAppTextStyle(
       context,
@@ -133,11 +140,14 @@ class NotificationFilterBar extends StatelessWidget {
             size: AppSelectFieldSize.compact,
             textStyle: filterTextStyle,
             items: <DropdownMenuItem<String?>>[
-              const DropdownMenuItem<String?>(value: null, child: Text('全部')),
+              DropdownMenuItem<String?>(
+                value: null,
+                child: Text(l10n.activityAll),
+              ),
               ..._categories.map(
                 (value) => DropdownMenuItem<String?>(
                   value: value,
-                  child: Text(labelForNotificationCategory(value)),
+                  child: Text(labelForNotificationCategory(value, l10n)),
                 ),
               ),
             ],
@@ -159,12 +169,12 @@ AppBadgeTone notificationCategoryTone(String category) {
   };
 }
 
-String labelForNotificationCategory(String value) {
+String labelForNotificationCategory(String value, AppLocalizations l10n) {
   return switch (value) {
-    'info' => '信息',
-    'warning' => '警告',
-    'error' => '错误',
-    'reminder' => '提醒',
+    'info' => l10n.activityNotificationCategoryInfo,
+    'warning' => l10n.activityNotificationCategoryWarning,
+    'error' => l10n.activityNotificationCategoryError,
+    'reminder' => l10n.activityNotificationCategoryReminder,
     _ => value,
   };
 }

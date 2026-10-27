@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/pornbox_page.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_summary_card.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 
@@ -60,6 +61,12 @@ void main() {
         child: OKToast(
           child: MaterialApp(
             theme: sakuraMobileThemeData,
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             home: const Scaffold(body: MobilePornboxPage()),
           ),
         ),

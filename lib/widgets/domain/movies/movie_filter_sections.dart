@@ -5,6 +5,7 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_interaction_f
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_interaction_filter_options_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
@@ -54,6 +55,7 @@ class MovieFilterSectionGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final resolvedYearOptions =
         yearOptions ?? buildDefaultMovieFilterYearOptions();
     return Column(
@@ -61,7 +63,7 @@ class MovieFilterSectionGroup extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         MovieFilterChoiceSection<MovieStatusFilter>(
-          title: '状态筛选',
+          title: l10n.widgetMovieFilterStatusTitle,
           options: MovieStatusFilter.values,
           selectedValue: filterState.status,
           labelBuilder: (value) => value.label,
@@ -69,17 +71,17 @@ class MovieFilterSectionGroup extends StatelessWidget {
         ),
         SizedBox(height: context.appSpacing.lg),
         MovieFilterChoiceSection<PlaylistResolutionFilter?>(
-          title: '分辨率',
+          title: l10n.widgetMovieFilterResolutionTitle,
           options: const [null, ...PlaylistResolutionFilter.values],
           selectedValue: filterState.resolution,
-          labelBuilder: (value) => value?.label ?? '全部',
+          labelBuilder: (value) => value?.label ?? l10n.widgetMovieFilterAll,
           enabled: filterState.status == MovieStatusFilter.playable,
           onSelected: (value) =>
               onChanged(filterState.copyWith(resolution: value)),
         ),
         SizedBox(height: context.appSpacing.lg),
         MovieFilterChoiceSection<MovieCollectionTypeFilter>(
-          title: '合集类型',
+          title: l10n.widgetMovieFilterCollectionTypeTitle,
           options: MovieCollectionTypeFilter.values,
           selectedValue: filterState.collectionType,
           labelBuilder: (value) => value.label,
@@ -88,7 +90,7 @@ class MovieFilterSectionGroup extends StatelessWidget {
         ),
         SizedBox(height: context.appSpacing.lg),
         MovieFilterChoiceSection<MovieNumberSourceFilter>(
-          title: '番号来源',
+          title: l10n.widgetMovieFilterNumberSourceTitle,
           options: MovieNumberSourceFilter.values,
           selectedValue: filterState.numberSource,
           labelBuilder: (value) => value.label,
@@ -276,6 +278,7 @@ class MovieInteractionRangeFilterSectionGroup extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final options = ref.watch(movieInteractionFilterOptionsProvider);
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -285,7 +288,7 @@ class MovieInteractionRangeFilterSectionGroup extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '互动数',
+              l10n.widgetMovieFilterInteractionTitle,
               key: const Key('movie-filter-interaction-group-title'),
               style: resolveAppTextStyle(
                 context,
@@ -297,7 +300,7 @@ class MovieInteractionRangeFilterSectionGroup extends ConsumerWidget {
             if (!filter.isDefault)
               AppTextButton(
                 key: const Key('movie-filter-interaction-clear'),
-                label: '清空',
+                label: l10n.widgetMovieFilterClear,
                 size: AppTextButtonSize.xSmall,
                 onPressed: () => onChanged(filter.clear()),
               ),
@@ -315,7 +318,7 @@ class MovieInteractionRangeFilterSectionGroup extends ConsumerWidget {
           ),
           error: (_, _) => _buildStatus(
             context,
-            '互动数范围加载失败',
+            l10n.widgetMovieFilterInteractionLoadFailed,
             onRetry: () =>
                 ref.invalidate(movieInteractionFilterOptionsProvider),
           ),
@@ -349,7 +352,10 @@ class MovieInteractionRangeFilterSectionGroup extends ConsumerWidget {
       );
     }
     if (children.isEmpty) {
-      return _buildStatus(context, '暂无可用的互动数范围');
+      return _buildStatus(
+        context,
+        AppLocalizations.of(context).widgetMovieFilterInteractionEmpty,
+      );
     }
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -363,6 +369,7 @@ class MovieInteractionRangeFilterSectionGroup extends ConsumerWidget {
     String message, {
     VoidCallback? onRetry,
   }) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -378,7 +385,7 @@ class MovieInteractionRangeFilterSectionGroup extends ConsumerWidget {
         if (onRetry != null) ...[
           SizedBox(width: context.appSpacing.sm),
           AppTextButton(
-            label: '重试',
+            label: l10n.commonRetry,
             size: AppTextButtonSize.xSmall,
             onPressed: onRetry,
           ),
@@ -445,6 +452,7 @@ class _MovieInteractionRangeFilterSectionState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final min = widget.metric.minFromSlider(_values.start);
     final max = widget.metric.maxFromSlider(_values.end, widget.maxValue);
     final colorScheme = Theme.of(context).colorScheme;
@@ -455,7 +463,7 @@ class _MovieInteractionRangeFilterSectionState
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              widget.metric.label,
+              widget.metric.localizedLabel(l10n),
               key: Key('movie-filter-${widget.metric.apiValue}-section-title'),
               style: resolveAppTextStyle(
                 context,
@@ -465,7 +473,7 @@ class _MovieInteractionRangeFilterSectionState
               ),
             ),
             Text(
-              movieInteractionRangeLabel(widget.metric, min, max),
+              movieInteractionRangeLabel(widget.metric, min, max, l10n: l10n),
               key: Key('movie-filter-${widget.metric.apiValue}-range-label'),
               style: resolveAppTextStyle(
                 context,
@@ -597,6 +605,7 @@ class _MovieActorAgeRangeFilterSectionState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final actorAgeMin = movieActorAgeMinFromSlider(_values.start.round());
     final actorAgeMax = movieActorAgeMaxFromSlider(_values.end.round());
     final colorScheme = Theme.of(context).colorScheme;
@@ -607,7 +616,7 @@ class _MovieActorAgeRangeFilterSectionState
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '出演年龄',
+              l10n.widgetMovieFilterActorAgeTitle,
               key: const Key('movie-filter-actor-age-section-title'),
               style: resolveAppTextStyle(
                 context,
@@ -793,11 +802,12 @@ class _MovieYearFilterSectionState extends State<MovieYearFilterSection> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '发行年份',
+          l10n.widgetMovieFilterYearTitle,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s14,
@@ -837,7 +847,7 @@ class _MovieYearFilterSectionState extends State<MovieYearFilterSection> {
               ),
               SizedBox(width: context.appSpacing.sm),
               AppTextButton(
-                label: '重试',
+                label: l10n.commonRetry,
                 size: AppTextButtonSize.xSmall,
                 onPressed: widget.onRetry,
               ),
@@ -862,8 +872,9 @@ class _MovieYearFilterSectionState extends State<MovieYearFilterSection> {
     required List<MovieFilterYearOption> options,
     required bool interactive,
   }) {
+    final l10n = AppLocalizations.of(context);
     final choices = <_MovieYearChoice>[
-      const _MovieYearChoice(value: null, label: '全部年份'),
+      _MovieYearChoice(value: null, label: l10n.widgetMovieFilterAllYears),
       for (final option in options)
         _MovieYearChoice(value: option.year, label: option.label),
     ];
@@ -906,7 +917,9 @@ class _MovieYearFilterSectionState extends State<MovieYearFilterSection> {
           SizedBox(height: context.appSpacing.sm),
           AppTextButton(
             key: const Key('movie-filter-year-expand-toggle'),
-            label: _isExpanded ? '收起年份' : '展开全部年份',
+            label: _isExpanded
+                ? l10n.widgetMovieFilterCollapseYears
+                : l10n.widgetMovieFilterExpandAllYears,
             size: AppTextButtonSize.xSmall,
             trailingIcon: Icon(
               _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:sakuramedia/app/app_window_fullscreen.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 
 /// 带右侧缩略图面板的播放页共用的「应用内全屏」状态。
 ///
@@ -66,7 +67,10 @@ class PlayerAppFullscreenButton extends StatelessWidget {
     final icon = Icon(
       scope.isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
     );
-    final tooltip = scope.isFullscreen ? '退出全屏' : '全屏';
+    final l10n = appL10n(context);
+    final tooltip = scope.isFullscreen
+        ? l10n.baseExitFullscreen
+        : l10n.baseEnterFullscreen;
     if (useTouchOptimizedControls) {
       return MaterialCustomButton(
         onPressed: scope.onToggle,

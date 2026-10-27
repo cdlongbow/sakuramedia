@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_subscription_events_provider.dart';
 import 'package:sakuramedia/features/discovery/data/taste_profile_dto.dart';
@@ -39,7 +40,12 @@ class TasteProfile extends _$TasteProfile
         state = next;
       }
       return state.hasError
-          ? apiErrorMessage(state.error!, fallback: '观影偏好加载失败，请稍后重试')
+          ? ref.apiErrorMessage(
+              state.error!,
+              fallback: ref
+                  .read(appLocalizationsProvider)
+                  .errorTasteProfileLoadFailed,
+            )
           : null;
     }
     try {
@@ -49,7 +55,12 @@ class TasteProfile extends _$TasteProfile
       }
       return null;
     } catch (error) {
-      return apiErrorMessage(error, fallback: '观影偏好加载失败，请稍后重试');
+      return ref.apiErrorMessage(
+        error,
+        fallback: ref
+            .read(appLocalizationsProvider)
+            .errorTasteProfileLoadFailed,
+      );
     }
   }
 

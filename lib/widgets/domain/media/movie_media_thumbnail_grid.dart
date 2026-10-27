@@ -7,6 +7,7 @@ import 'package:sakuramedia/core/media/app_image_provider.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
@@ -647,7 +648,7 @@ class _MovieMediaThumbnailGridState extends State<MovieMediaThumbnailGrid> {
     if (widget.errorMessage != null) {
       return AppEmptyState(
         icon: Icons.broken_image_outlined,
-        title: '缩略图加载失败',
+        title: AppLocalizations.of(context).widgetMediaThumbnailLoadFailedTitle,
         message: widget.errorMessage!,
         onRetry: widget.onRetry,
         retryKey: Key('${widget.keyPrefix}-thumbnail-retry'),
@@ -656,9 +657,9 @@ class _MovieMediaThumbnailGridState extends State<MovieMediaThumbnailGrid> {
     if (widget.thumbnails.isEmpty) {
       return Center(
         child: AppEmptyState(
-          message: '暂时还没有可用缩略图，可稍后重新加载。',
+          message: AppLocalizations.of(context).widgetMediaThumbnailEmpty,
           onRetry: widget.onRetry,
-          retryLabel: '重新加载',
+          retryLabel: AppLocalizations.of(context).widgetMediaThumbnailReload,
           retryKey: Key('${widget.keyPrefix}-thumbnail-empty-reload'),
         ),
       );
@@ -804,7 +805,11 @@ class _MovieMediaThumbnailGridState extends State<MovieMediaThumbnailGrid> {
                 Positioned(
                   top: 4,
                   left: 4,
-                  child: _ClipEndpointBadge(label: isClipStart ? '起' : '终'),
+                  child: _ClipEndpointBadge(
+                    label: isClipStart
+                        ? AppLocalizations.of(context).widgetMediaClipStartBadge
+                        : AppLocalizations.of(context).widgetMediaClipEndBadge,
+                  ),
                 ),
               ],
             )

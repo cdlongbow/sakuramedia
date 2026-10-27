@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 
 class AppPagedLoadMoreFooter extends StatelessWidget {
   const AppPagedLoadMoreFooter({
@@ -15,6 +16,7 @@ class AppPagedLoadMoreFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final spacing = context.appSpacing;
     final colors = context.appColors;
     final componentTokens = context.appComponentTokens;
@@ -81,7 +83,7 @@ class AppPagedLoadMoreFooter extends StatelessWidget {
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: const Text('重试'),
+                child: Text(l10n.commonRetry),
               ),
             ],
           ),

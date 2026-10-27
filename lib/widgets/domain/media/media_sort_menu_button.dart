@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/media/presentation/media_browse_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_sort_menu_button.dart';
 
 /// 媒体浏览列表的排序入口适配器。
@@ -38,7 +39,7 @@ class MediaSortMenuButton extends StatelessWidget {
       onDirectionChanged: (value) =>
           onChanged(filterState.copyWith(sortDirection: value)),
       allowDefaultOption: true,
-      defaultOptionLabel: '默认排序',
+      defaultOptionLabel: AppLocalizations.of(context).widgetMediaSortDefault,
       directionVisibleWhen: (field) => field != null,
       useDrawer: useDrawer,
       triggerKey: triggerKey,

@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 
 /// 移动端 section 级错误态卡片。
 ///
@@ -24,6 +25,7 @@ class AppMobileSectionError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final spacing = context.appSpacing;
     final colors = context.appColors;
 
@@ -54,7 +56,7 @@ class AppMobileSectionError extends StatelessWidget {
             width: double.infinity,
             child: AppButton(
               key: retryButtonKey,
-              label: '重试',
+              label: l10n.commonRetry,
               variant: AppButtonVariant.primary,
               onPressed: () => onRetry(),
             ),

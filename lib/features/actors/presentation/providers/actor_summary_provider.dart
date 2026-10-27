@@ -14,6 +14,7 @@ import 'package:sakuramedia/features/actors/presentation/providers/actor_summary
 import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 
 part 'actor_summary_provider.g.dart';
 
@@ -40,10 +41,12 @@ class ActorSummary extends _$ActorSummary
   int get pageSize => 24;
 
   @override
-  String get initialLoadErrorText => '女优列表加载失败，请稍后重试';
+  String get initialLoadErrorText =>
+      ref.read(appLocalizationsProvider).errorActorListLoadFailed;
 
   @override
-  String get loadMoreErrorText => '加载更多失败，请点击重试';
+  String get loadMoreErrorText =>
+      ref.read(appLocalizationsProvider).errorLoadMoreFailed;
 
   @override
   ActorFilterState get initialFilter => ActorFilterState.initial;
@@ -155,6 +158,7 @@ class ActorSummary extends _$ActorSummary
       isSubscribed: actor.isSubscribed,
       subscribeActor: ref.read(actorsApiProvider).subscribeActor,
       unsubscribeActor: ref.read(actorsApiProvider).unsubscribeActor,
+      l10n: ref.read(appLocalizationsProvider),
     );
     if (isDisposed) {
       return const ActorSubscriptionToggleResult.ignored();

@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/features/account/presentation/providers/account_api_provider.dart';
 import 'package:sakuramedia/features/account/presentation/providers/account_profile_state.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/session_scoped_invalidation.dart';
@@ -42,7 +44,12 @@ class AccountProfile extends _$AccountProfile {
     } catch (error) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: apiErrorMessage(error, fallback: '账号资料加载失败，请稍后重试'),
+        errorMessage: ref.apiErrorMessage(
+          error,
+          fallback: ref
+              .read(appLocalizationsProvider)
+              .errorAccountProfileLoadFailed,
+        ),
       );
     }
   }
@@ -58,25 +65,31 @@ class AccountProfile extends _$AccountProfile {
     }
 
     final normalized = username.trim();
+    final l10n = ref.read(appLocalizationsProvider);
     if (normalized.isEmpty) {
-      state = state.copyWith(errorMessage: '请输入用户名');
+      state = state.copyWith(errorMessage: l10n.errorUsernameRequired);
       return false;
     }
     if (normalized == (state.account?.username.trim() ?? '')) {
-      state = state.copyWith(errorMessage: '用户名未变化');
+      state = state.copyWith(errorMessage: l10n.errorUsernameUnchanged);
       return false;
     }
 
     state = state.copyWith(isSaving: true, errorMessage: null);
     try {
-      final updated =
-          await ref.read(accountApiProvider).updateUsername(normalized);
+      final updated = await ref
+          .read(accountApiProvider)
+          .updateUsername(normalized);
       state = state.copyWith(account: updated, isSaving: false);
       return true;
     } catch (error) {
       state = state.copyWith(
         isSaving: false,
-        errorMessage: accountProfileErrorMessage(error, fallback: '修改用户名失败'),
+        errorMessage: accountProfileErrorMessage(
+          l10n,
+          error,
+          fallback: l10n.errorChangeUsernameFailed,
+        ),
       );
       return false;
     }
@@ -84,9 +97,13 @@ class AccountProfile extends _$AccountProfile {
 }
 
 /// 把账号资料相关的错误翻译成用户可读文案，特化 `username_conflict`。
-String accountProfileErrorMessage(Object error, {required String fallback}) {
+String accountProfileErrorMessage(
+  AppLocalizations l10n,
+  Object error, {
+  required String fallback,
+}) {
   if (error is ApiException && error.error?.code == 'username_conflict') {
-    return '用户名已存在，请换一个名称';
+    return l10n.errorUsernameExists;
   }
-  return apiErrorMessage(error, fallback: fallback);
+  return apiErrorMessage(error, fallback: fallback, l10n: l10n);
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -118,6 +119,7 @@ class _ClipCollectionEditDialogState
 
   Widget _buildForm(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Form(
       key: _formKey,
       child: Column(
@@ -125,7 +127,9 @@ class _ClipCollectionEditDialogState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            widget.isEditing ? '编辑合集' : '新建合集',
+            widget.isEditing
+                ? l10n.clipCollectionEdit
+                : l10n.clipCollectionCreate,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s14,
@@ -137,17 +141,19 @@ class _ClipCollectionEditDialogState
           AppTextField(
             fieldKey: const Key('clip-collection-name-field'),
             controller: _nameController,
-            hintText: '例如：年度精选',
+            hintText: l10n.clipCollectionNameHint,
             enabled: !_isSubmitting,
             validator:
                 (value) =>
-                    value == null || value.trim().isEmpty ? '请输入合集名称' : null,
+                    value == null || value.trim().isEmpty
+                        ? l10n.clipCollectionNameRequired
+                        : null,
           ),
           SizedBox(height: spacing.sm),
           AppTextField(
             fieldKey: const Key('clip-collection-description-field'),
             controller: _descriptionController,
-            hintText: '描述可选',
+            hintText: l10n.clipCollectionDescriptionHint,
             enabled: !_isSubmitting,
           ),
           SizedBox(height: spacing.md),
@@ -155,7 +161,7 @@ class _ClipCollectionEditDialogState
             children: [
               Expanded(
                 child: AppButton(
-                  label: '取消',
+                  label: l10n.commonCancel,
                   onPressed:
                       _isSubmitting ? null : () => Navigator.of(context).pop(),
                 ),
@@ -164,7 +170,9 @@ class _ClipCollectionEditDialogState
               Expanded(
                 child: AppButton(
                   key: const Key('clip-collection-submit-button'),
-                  label: widget.isEditing ? '保存' : '创建',
+                  label: widget.isEditing
+                      ? l10n.commonSave
+                      : l10n.clipCollectionCreateAction,
                   variant: AppButtonVariant.primary,
                   isLoading: _isSubmitting,
                   onPressed: _submit,
@@ -205,7 +213,12 @@ class _ClipCollectionEditDialogState
       Navigator.of(context).pop(result);
     } catch (error) {
       showToast(
-        apiErrorMessage(error, fallback: widget.isEditing ? '保存失败' : '创建合集失败'),
+        apiErrorMessage(
+          error,
+          fallback: widget.isEditing
+              ? AppLocalizations.of(context).clipCollectionSaveFailed
+              : AppLocalizations.of(context).clipCollectionCreateFailed,
+        ),
       );
       if (mounted) {
         setState(() => _isSubmitting = false);

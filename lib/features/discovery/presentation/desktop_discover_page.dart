@@ -21,6 +21,7 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_summary
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
@@ -47,7 +48,6 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
   static const int _previewPageSize = 12;
   static const _followScope = MovieSummaryScope.subscribedActorsLatest(
     pageSize: _previewPageSize,
-    initialLoadErrorText: '女优上新加载失败，请稍后重试',
   );
 
   MovieCardHoverFeatureActions get _hoverFeatureActions =>
@@ -132,6 +132,7 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
     BuildContext context,
     AsyncValue<MovieSummaryState> followAsync,
   ) {
+    final l10n = AppLocalizations.of(context);
     final follow = followAsync.value;
     final paged = follow?.paged;
     final isLoading = followAsync.isLoading && follow == null;
@@ -139,10 +140,10 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AppSectionHeader(
-          title: '女优上新',
-          trailingText: '${paged?.total ?? 0} 部',
+          title: l10n.discoveryActressReleaseTitle,
+          trailingText: l10n.sharedMovieCount(paged?.total ?? 0),
           actionKey: const Key('desktop-discover-load-more-follow'),
-          actionLabel: '更多',
+          actionLabel: l10n.sharedMore,
           onActionTap: () => context.push(desktopFollowPath),
         ),
         SizedBox(height: context.appSpacing.md),
@@ -153,7 +154,7 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
                 ? movieListItemPlaceholders(count: _previewPageSize)
                 : paged?.items.take(_previewPageSize).toList() ?? const [],
             errorMessage: followAsync.hasError && follow == null
-                ? _followScope.initialLoadErrorText
+                ? l10n.discoveryActressReleaseLoadFailed
                 : null,
             onMovieTap: (movie) => _openMovieDetail(movie.movieNumber),
             onMovieMenuRequest: (movie, globalPosition) =>
@@ -170,7 +171,7 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
             onMovieBlacklist: _hoverFeatureActions.blacklist,
             isMovieSubscriptionUpdating: (movie) =>
                 follow?.isSubscriptionUpdating(movie.movieNumber) ?? false,
-            emptyMessage: '暂无女优上新，先订阅感兴趣的女优，等定时任务同步后展示',
+            emptyMessage: l10n.discoveryActressReleaseEmpty,
           ),
         ),
       ],
@@ -181,19 +182,22 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
     BuildContext context,
     DiscoveryPreviewState<HotActressReleaseMovieDto> hotActress,
   ) {
+    final l10n = AppLocalizations.of(context);
     final actressNames = <String, String>{
       for (final item in hotActress.items)
         if (item.hotActressName.trim().isNotEmpty)
-          item.movie.movieNumber: '热门：${item.hotActressName.trim()}',
+          item.movie.movieNumber: l10n.discoveryHotActressBadge(
+            item.hotActressName.trim(),
+          ),
     };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AppSectionHeader(
-          title: '热门新片',
-          trailingText: '${hotActress.total} 部',
+          title: l10n.discoveryHotNewTitle,
+          trailingText: l10n.sharedMovieCount(hotActress.total),
           actionKey: const Key('desktop-discover-load-more-hot-actress'),
-          actionLabel: '更多',
+          actionLabel: l10n.sharedMore,
           onActionTap: () => context.push(desktopHotActressReleasesPath),
         ),
         SizedBox(height: context.appSpacing.md),
@@ -220,7 +224,7 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
             onMovieBlacklist: _hoverFeatureActions.blacklist,
             secondaryLabelForMovie: (movie) => actressNames[movie.movieNumber],
             useDefaultSubscriptionActions: true,
-            emptyMessage: '暂无热门新片，待更多影片积累热度后展示',
+            emptyMessage: l10n.discoveryHotNewEmpty,
           ),
         ),
       ],
@@ -231,14 +235,15 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
     BuildContext context,
     DiscoveryPreviewState<DailyRecommendationMovieDto> daily,
   ) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AppSectionHeader(
-          title: '今日推荐',
-          trailingText: '${daily.total} 部',
+          title: l10n.discoveryDailyTitle,
+          trailingText: l10n.sharedMovieCount(daily.total),
           actionKey: const Key('desktop-discover-load-more-daily'),
-          actionLabel: '更多',
+          actionLabel: l10n.sharedMore,
           onActionTap: () => context.push(desktopDiscoverMoviesPath),
         ),
         SizedBox(height: context.appSpacing.md),
@@ -251,6 +256,7 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
     BuildContext context,
     DiscoveryPreviewState<DailyRecommendationMovieDto> daily,
   ) {
+    final l10n = AppLocalizations.of(context);
     if (daily.errorMessage != null) {
       return DiscoveryRetryEmptyState(
         message: daily.errorMessage!,
@@ -268,7 +274,7 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
                   .take(_previewPageSize)
                   .map((item) => item.movie)
                   .toList(growable: false),
-        emptyMessage: '暂无每日推荐，去搜索看看吧',
+        emptyMessage: l10n.discoveryDailyEmpty,
         onMovieTap: (movie) => _openMovieDetail(movie.movieNumber),
         onMovieMenuRequest: (movie, globalPosition) =>
             requestMovieCollectionMenu(
@@ -287,14 +293,15 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
     BuildContext context,
     DiscoveryPreviewState<MomentRecommendationDto> moment,
   ) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AppSectionHeader(
-          title: '推荐时刻',
-          trailingText: '${moment.total} 个',
+          title: l10n.discoveryMomentTitle,
+          trailingText: l10n.sharedMomentCount(moment.total),
           actionKey: const Key('desktop-discover-load-more-moments'),
-          actionLabel: '更多',
+          actionLabel: l10n.sharedMore,
           onActionTap: () => context.push(desktopDiscoverMomentsPath),
         ),
         SizedBox(height: context.appSpacing.md),
@@ -327,7 +334,9 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
       );
     }
     if (moment.items.isEmpty) {
-      return const AppEmptyState(message: '暂无推荐时刻，播放时添加标记，等定时任务处理后展示');
+      return AppEmptyState(
+        message: AppLocalizations.of(context).discoveryMomentEmpty,
+      );
     }
     return MomentRail(
       items: moment.items

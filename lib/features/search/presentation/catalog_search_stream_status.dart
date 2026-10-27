@@ -1,5 +1,3 @@
-import 'package:sakuramedia/features/search/data/catalog_search_stream_stats.dart';
-
 class CatalogSearchStreamStatus {
   const CatalogSearchStreamStatus({
     required this.message,
@@ -7,7 +5,7 @@ class CatalogSearchStreamStatus {
     required this.isFailure,
     this.current,
     this.total,
-    this.stats,
+    this.statsLabel,
   });
 
   final String message;
@@ -15,20 +13,14 @@ class CatalogSearchStreamStatus {
   final bool isFailure;
   final int? current;
   final int? total;
-  final CatalogSearchStreamStats? stats;
+
+  /// 统计摘要文案；由 provider 按当前语言渲染后写入。
+  final String? statsLabel;
 
   String? get progressLabel {
     if (current == null || total == null) {
       return null;
     }
     return '$current / $total';
-  }
-
-  String? get statsLabel {
-    final value = stats;
-    if (value == null) {
-      return null;
-    }
-    return '共 ${value.total} 条，新增 ${value.createdCount}，已存在 ${value.alreadyExistsCount}，失败 ${value.failedCount}';
   }
 }

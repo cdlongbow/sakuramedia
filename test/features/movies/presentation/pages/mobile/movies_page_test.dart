@@ -13,6 +13,7 @@ import 'package:sakuramedia/features/movies/presentation/controllers/listing/mov
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movies_page.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../../../../support/test_api_bundle.dart';
@@ -53,6 +54,12 @@ void main() {
         overrides: bundle.riverpodOverrides(),
         child: OKToast(
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraThemeData.copyWith(platform: platform),
             home: const Scaffold(body: MobileMoviesPage()),
           ),

@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_grid.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_card_wiring.dart';
 
@@ -18,7 +19,7 @@ class MovieSummaryGrid extends ConsumerWidget {
     this.useDefaultSubscriptionActions = false,
     this.secondaryLabelForMovie,
     this.trailingLabelForMovie,
-    this.emptyMessage = '当前没有可展示的影片数据。',
+    this.emptyMessage,
     this.selectionMode = false,
     this.isMovieSelected,
     this.onMovieSelectedChanged,
@@ -44,7 +45,9 @@ class MovieSummaryGrid extends ConsumerWidget {
 
   /// 收起态番号行右侧文案（如「总分 4.0」）；null 时不显示。
   final String? Function(MovieListItemDto movie)? trailingLabelForMovie;
-  final String emptyMessage;
+
+  /// 空态文案；为 `null` 时使用当前语言的默认文案。
+  final String? emptyMessage;
 
   /// 选择模式开关：向 [MovieSummaryCard] 透传，卡片进入多选态。
   final bool selectionMode;
@@ -66,11 +69,12 @@ class MovieSummaryGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return AppAdaptiveCardGrid<MovieListItemDto>(
       gridKey: const Key('movie-summary-grid'),
       items: items,
       errorMessage: errorMessage,
-      emptyMessage: emptyMessage,
+      emptyMessage: emptyMessage ?? l10n.widgetMovieEmptyList,
       itemBuilder: (context, movie, index) => _wiring.build(
         context,
         ref,
@@ -100,7 +104,7 @@ class MovieSummarySliver extends ConsumerWidget {
     this.useDefaultSubscriptionActions = false,
     this.secondaryLabelForMovie,
     this.trailingLabelForMovie,
-    this.emptyMessage = '当前没有可展示的影片数据。',
+    this.emptyMessage,
     this.selectionMode = false,
     this.isMovieSelected,
     this.onMovieSelectedChanged,
@@ -126,7 +130,9 @@ class MovieSummarySliver extends ConsumerWidget {
 
   /// 收起态番号行右侧文案（如「总分 4.0」）；null 时不显示。
   final String? Function(MovieListItemDto movie)? trailingLabelForMovie;
-  final String emptyMessage;
+
+  /// 空态文案；为 `null` 时使用当前语言的默认文案。
+  final String? emptyMessage;
 
   final bool selectionMode;
   final bool Function(MovieListItemDto movie)? isMovieSelected;
@@ -147,11 +153,12 @@ class MovieSummarySliver extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return AppAdaptiveCardSliver<MovieListItemDto>(
       gridKey: const Key('movie-summary-grid'),
       items: items,
       errorMessage: errorMessage,
-      emptyMessage: emptyMessage,
+      emptyMessage: emptyMessage ?? l10n.widgetMovieEmptyList,
       itemBuilder: (context, movie, index) => _wiring.build(
         context,
         ref,

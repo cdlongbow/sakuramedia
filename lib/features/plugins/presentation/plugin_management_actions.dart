@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/plugins/presentation/plugin_zip_picker.dart
 import 'package:sakuramedia/features/plugins/presentation/providers/plugin_market_provider.dart';
 import 'package:sakuramedia/features/plugins/presentation/providers/plugins_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/restart_messages.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 
@@ -22,6 +23,8 @@ class PluginManagementActions {
   final BuildContext context;
   final WidgetRef ref;
 
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+
   bool get _isMobile => AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
 
   AppConfirmVariant get _confirmVariant =>
@@ -30,7 +33,7 @@ class PluginManagementActions {
   Future<void> install() async {
     PluginZipFile? file;
     try {
-      file = await pickPluginZip();
+      file = await pickPluginZip(l10n: _l10n);
     } on PluginZipPickerException catch (error) {
       if (context.mounted) {
         showToast(error.message);
@@ -43,9 +46,9 @@ class PluginManagementActions {
 
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '安装插件',
-      message: '将安装「${file.fileName}」。若已存在同名插件，会替换其代码并保留 data/ 运行数据。',
-      confirmLabel: '安装',
+      title: _l10n.pluginInstallTitle,
+      message: _l10n.pluginInstallMessage(file.fileName),
+      confirmLabel: _l10n.pluginInstallConfirm,
       dialogKey: const Key('plugins-install-confirm-dialog'),
       confirmKey: const Key('plugins-install-confirm-button'),
       cancelKey: const Key('plugins-install-cancel-button'),
@@ -63,12 +66,17 @@ class PluginManagementActions {
       }
       showToast(
         refreshed
-            ? buildRestartRequiredMessage('插件已安装')
-            : '插件已安装，但列表刷新失败，请稍后重试',
+            ? buildRestartRequiredMessage(
+                _l10n.pluginInstalled,
+                l10n: _l10n,
+              )
+            : _l10n.pluginInstalledRefreshFailed,
       );
     } catch (error) {
       if (context.mounted) {
-        showToast(apiErrorMessage(error, fallback: '安装插件失败'));
+        showToast(
+          apiErrorMessage(error, fallback: _l10n.pluginInstallFailed),
+        );
       }
     }
   }
@@ -79,11 +87,16 @@ class PluginManagementActions {
           .read(pluginsProvider.notifier)
           .setEnabled(plugin.pluginId, enabled);
       if (context.mounted) {
-        showToast(buildRestartRequiredMessage(enabled ? '插件已启用' : '插件已停用'));
+        showToast(
+          buildRestartRequiredMessage(
+            enabled ? _l10n.pluginEnabled : _l10n.pluginDisabled,
+            l10n: _l10n,
+          ),
+        );
       }
     } catch (error) {
       if (context.mounted) {
-        showToast(apiErrorMessage(error, fallback: '插件启停失败'));
+        showToast(apiErrorMessage(error, fallback: _l10n.pluginToggleFailed));
       }
     }
   }
@@ -96,11 +109,15 @@ class PluginManagementActions {
       return;
     }
     if (!allChecksSucceeded) {
-      showToast('部分插件的更新检查失败，请稍后重试');
+      showToast(_l10n.pluginUpdateCheckPartialFailed);
       return;
     }
     final updateCount = ref.read(pluginsProvider).value?.updates.length ?? 0;
-    showToast(updateCount == 0 ? '未发现可用更新' : '发现 $updateCount 个插件更新');
+    showToast(
+      updateCount == 0
+          ? _l10n.pluginNoUpdates
+          : _l10n.pluginUpdatesFound(updateCount),
+    );
   }
 
   Future<void> upgrade(
@@ -110,11 +127,13 @@ class PluginManagementActions {
     final notes = update.notes.trim();
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '更新插件',
-      message:
-          '将「${plugin.displayName}」从 v${plugin.version} 更新到 v${update.version}。'
-          '更新完成后，需手动重启容器才会生效。',
-      confirmLabel: '更新',
+      title: _l10n.pluginUpgradeTitle,
+      message: _l10n.pluginUpgradeMessage(
+        plugin.displayName,
+        plugin.version,
+        update.version,
+      ),
+      confirmLabel: _l10n.pluginUpgradeConfirm,
       dialogKey: Key('plugin-upgrade-confirm-dialog-${plugin.pluginId}'),
       confirmKey: Key('plugin-upgrade-confirm-button-${plugin.pluginId}'),
       cancelKey: Key('plugin-upgrade-cancel-button-${plugin.pluginId}'),
@@ -126,7 +145,7 @@ class PluginManagementActions {
               ),
               child: SingleChildScrollView(
                 child: Text(
-                  '更新内容\n$notes',
+                  _l10n.pluginUpgradeNotes(notes),
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s12,
@@ -138,20 +157,21 @@ class PluginManagementActions {
       variant: _confirmVariant,
       onConfirm: () =>
           ref.read(pluginsProvider.notifier).upgrade(plugin.pluginId),
-      failureFallback: '更新插件失败',
+      failureFallback: _l10n.pluginUpgradeFailed,
     );
     if (confirmed && context.mounted) {
-      showToast(buildRestartRequiredMessage('插件已更新'));
+      showToast(
+        buildRestartRequiredMessage(_l10n.pluginUpgraded, l10n: _l10n),
+      );
     }
   }
 
   Future<void> remove(PluginSummaryDto plugin) async {
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除插件',
-      message:
-          '确认删除「${plugin.displayName}」的插件代码？运行数据（data/）会保留，可在重新安装同一插件后继续使用；仍被媒体库使用的存储插件无法删除。',
-      confirmLabel: '删除',
+      title: _l10n.pluginDeleteTitle,
+      message: _l10n.pluginDeleteMessage(plugin.displayName),
+      confirmLabel: _l10n.commonDelete,
       danger: true,
       dialogKey: const Key('plugins-delete-confirm-dialog'),
       confirmKey: const Key('plugins-delete-confirm-button'),
@@ -159,10 +179,12 @@ class PluginManagementActions {
       variant: _confirmVariant,
       onConfirm: () =>
           ref.read(pluginsProvider.notifier).remove(plugin.pluginId),
-      failureFallback: '删除插件失败',
+      failureFallback: _l10n.pluginDeleteFailed,
     );
     if (confirmed && context.mounted) {
-      showToast(buildRestartRequiredMessage('插件已删除'));
+      showToast(
+        buildRestartRequiredMessage(_l10n.pluginDeleted, l10n: _l10n),
+      );
     }
   }
 
@@ -184,11 +206,15 @@ class PluginManagementActions {
     }
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '安装插件',
+      title: _l10n.pluginInstallTitle,
       message:
-          '将从 ${plugin.repo} 下载 v${release.version} 安装包并安装「${plugin.displayName}」。'
-          '${plugin.official ? '' : '这是社区插件，未经官方审计，请确认来源可信。'}',
-      confirmLabel: '安装',
+          _l10n.pluginMarketInstallMessage(
+            plugin.repo,
+            release.version,
+            plugin.displayName,
+          ) +
+          (plugin.official ? '' : _l10n.pluginCommunityWarning),
+      confirmLabel: _l10n.pluginInstallConfirm,
       dialogKey: Key('plugin-market-install-confirm-dialog-${plugin.pluginId}'),
       confirmKey: Key(
         'plugin-market-install-confirm-button-${plugin.pluginId}',
@@ -202,11 +228,15 @@ class PluginManagementActions {
     try {
       await ref.read(pluginMarketProvider.notifier).install(plugin);
       if (context.mounted) {
-        showToast(buildRestartRequiredMessage('插件已安装'));
+        showToast(
+          buildRestartRequiredMessage(_l10n.pluginInstalled, l10n: _l10n),
+        );
       }
     } catch (error) {
       if (context.mounted) {
-        showToast(apiErrorMessage(error, fallback: '安装插件失败'));
+        showToast(
+          apiErrorMessage(error, fallback: _l10n.pluginInstallFailed),
+        );
       }
     }
   }
@@ -222,11 +252,13 @@ class PluginManagementActions {
     }
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '更新插件',
-      message:
-          '将「${plugin.displayName}」从 v$installedVersion 更新到 v${release.version}。'
-          '更新完成后，需手动重启容器才会生效。',
-      confirmLabel: '更新',
+      title: _l10n.pluginUpgradeTitle,
+      message: _l10n.pluginUpgradeMessage(
+        plugin.displayName,
+        installedVersion,
+        release.version,
+      ),
+      confirmLabel: _l10n.pluginUpgradeConfirm,
       dialogKey: Key('plugin-market-upgrade-confirm-dialog-${plugin.pluginId}'),
       confirmKey: Key(
         'plugin-market-upgrade-confirm-button-${plugin.pluginId}',
@@ -240,11 +272,15 @@ class PluginManagementActions {
     try {
       await ref.read(pluginMarketProvider.notifier).upgrade(plugin);
       if (context.mounted) {
-        showToast(buildRestartRequiredMessage('插件已更新'));
+        showToast(
+          buildRestartRequiredMessage(_l10n.pluginUpgraded, l10n: _l10n),
+        );
       }
     } catch (error) {
       if (context.mounted) {
-        showToast(apiErrorMessage(error, fallback: '更新插件失败'));
+        showToast(
+          apiErrorMessage(error, fallback: _l10n.pluginUpgradeFailed),
+        );
       }
     }
   }
@@ -257,7 +293,7 @@ class PluginManagementActions {
     }
     final copied = await copyTextToClipboard(url);
     if (context.mounted) {
-      showToast(copied ? '项目主页已复制' : '复制失败');
+      showToast(copied ? _l10n.pluginHomepageCopied : _l10n.pluginCopyFailed);
     }
   }
 

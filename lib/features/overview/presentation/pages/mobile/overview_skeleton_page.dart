@@ -24,6 +24,8 @@ import 'package:sakuramedia/features/recent_views/presentation/providers/recent_
 import 'package:sakuramedia/features/recent_views/presentation/widgets/recent_views_section.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
@@ -147,6 +149,7 @@ class _MobileOverviewHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     final componentTokens = context.appComponentTokens;
+    final l10n = AppLocalizations.of(context);
 
     return Padding(
       padding: EdgeInsets.only(top: spacing.xs),
@@ -160,8 +163,8 @@ class _MobileOverviewHeader extends StatelessWidget {
                 return Center(
                   child: AppIconButton(
                     key: const Key('mobile-overview-menu-button'),
-                    tooltip: '打开菜单',
-                    semanticLabel: '打开菜单',
+                    tooltip: l10n.overviewOpenMenu,
+                    semanticLabel: l10n.overviewOpenMenu,
                     // compact 的命中区只有 28dp,低于触控最小目标,手指略偏就落空
                     // (「有时点不动」)。regular = 20 + md*2 = 44dp,图标视觉不变。
                     size: AppIconButtonSize.regular,
@@ -177,15 +180,15 @@ class _MobileOverviewHeader extends StatelessWidget {
               },
             ),
             SizedBox(width: spacing.xs),
-            const Expanded(
+            Expanded(
               child: AppTabBar(
                 variant: AppTabBarVariant.mobileTop,
-                key: Key('mobile-overview-tabs'),
+                key: const Key('mobile-overview-tabs'),
                 tabs: [
-                  Tab(text: '我的'),
-                  Tab(text: '切片'),
-                  Tab(text: '发现'),
-                  Tab(text: '时刻'),
+                  Tab(text: l10n.overviewTabMine),
+                  Tab(text: l10n.overviewTabClips),
+                  Tab(text: l10n.overviewTabDiscover),
+                  Tab(text: l10n.overviewTabMoments),
                 ],
               ),
             ),
@@ -207,7 +210,8 @@ class _MobileOverviewMyTab extends ConsumerStatefulWidget {
 class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
   static const int _latestMoviePageSize = 12;
   static const int _recentlySubscribedPreviewCount = 12;
-  static const _recentlySubscribedScope = MovieSummaryScope.recentlySubscribed();
+  static const _recentlySubscribedScope =
+      MovieSummaryScope.recentlySubscribed();
 
   late final TextEditingController _searchController;
   late final PlaylistsOverviewScope _playlistsScope;
@@ -256,7 +260,9 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
       }
       setState(() {
         _latestMovies = const <MovieListItemDto>[];
-        _latestMoviesErrorMessage = '最近添加影片加载失败，请稍后重试';
+        _latestMoviesErrorMessage = ref
+            .read(appLocalizationsProvider)
+            .overviewLatestMoviesLoadFailed;
       });
     } finally {
       if (mounted) {
@@ -276,6 +282,7 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
 
     return AppAdaptiveRefreshScrollView(
       onRefresh: _handleRefresh,
@@ -297,7 +304,7 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
                   'mobile-overview-my-search-text-image',
                 ),
                 controller: _searchController,
-                hintText: '如 SSNI-888、三上悠亚',
+                hintText: l10n.overviewSearchHint,
                 showImageSearchButton: ref.watch(imageSearchEnabledProvider),
                 showTextImageSearchButton: ref.watch(
                   imageSearchEnabledProvider,
@@ -309,8 +316,8 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
               ),
               SizedBox(height: spacing.sm),
               AppSectionHeader(
-                title: '最近添加',
-                actionLabel: '更多',
+                title: l10n.overviewRecentlyAdded,
+                actionLabel: l10n.overviewMore,
                 actionSize: AppTextButtonSize.xSmall,
                 actionKey: const Key('mobile-overview-latest-more'),
                 onActionTap: () =>
@@ -323,7 +330,7 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
               _buildRecentViewsSection(),
               SizedBox(height: spacing.sm),
               Text(
-                '播放列表',
+                l10n.overviewPlaylists,
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s14,
@@ -355,7 +362,7 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
       ]);
     } catch (_) {
       if (mounted) {
-        showToast('刷新失败');
+        showToast(AppLocalizations.of(context).overviewRefreshFailed);
       }
     }
   }
@@ -384,7 +391,7 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
             : _latestMovies,
         errorMessage: _latestMoviesErrorMessage,
         onErrorRetry: _loadLatestMovies,
-        emptyMessage: '暂无入库影片，去搜索看看吧',
+        emptyMessage: AppLocalizations.of(context).overviewNoLatestMovies,
         onMovieTap: (movie) => MobileMovieDetailRouteData(
           movieNumber: movie.movieNumber,
         ).push(context),
@@ -400,8 +407,8 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AppSectionHeader(
-          title: '最近订阅',
-          actionLabel: '更多',
+          title: AppLocalizations.of(context).overviewRecentlySubscribed,
+          actionLabel: AppLocalizations.of(context).overviewMore,
           actionSize: AppTextButtonSize.xSmall,
           actionKey: const Key('mobile-overview-recently-subscribed-more'),
           onActionTap: () =>
@@ -417,13 +424,15 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
                     count: _recentlySubscribedPreviewCount,
                   )
                 : summary?.paged.items
-                      .take(_recentlySubscribedPreviewCount)
-                      .toList() ??
+                          .take(_recentlySubscribedPreviewCount)
+                          .toList() ??
                       const <MovieListItemDto>[],
             errorMessage: async.hasError && summary == null
                 ? _recentlySubscribedScope.initialLoadErrorText
                 : null,
-            emptyMessage: '暂无订阅影片',
+            emptyMessage: AppLocalizations.of(
+              context,
+            ).overviewNoSubscribedMovies,
             onMovieTap: (movie) => MobileMovieDetailRouteData(
               movieNumber: movie.movieNumber,
             ).push(context),
@@ -455,17 +464,21 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
           return _buildPlaylistsSkeleton();
         }
         if (async.hasError && state == null) {
+          final l10n = AppLocalizations.of(context);
           return AppEmptyState(
             message: apiErrorMessage(
               async.error!,
-              fallback: '播放列表暂时无法加载，请稍后重试',
+              fallback: l10n.overviewPlaylistsLoadFailed,
+              l10n: l10n,
             ),
           );
         }
         final PlaylistsOverviewState effective =
             state ?? const PlaylistsOverviewState();
         if (effective.playlists.isEmpty) {
-          return const AppEmptyState(message: '暂无播放列表');
+          return AppEmptyState(
+            message: AppLocalizations.of(context).overviewNoPlaylists,
+          );
         }
 
         final playlists = effective.playlists;
@@ -567,7 +580,7 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
       }
     } catch (_) {
       if (mounted) {
-        showToast('选择图片失败');
+        showToast(ref.read(appLocalizationsProvider).overviewImagePickFailed);
       }
     }
   }

@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/discovery/data/taste_profile_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_avatar.dart';
@@ -89,7 +90,9 @@ class TasteActressCard extends StatelessWidget {
                   ),
                   SizedBox(height: spacing.xs / 2),
                   Text(
-                    '关联 ${entry.matchedMovieCount} 部',
+                    AppLocalizations.of(
+                      context,
+                    ).widgetTasteMatchedMovies(entry.matchedMovieCount),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: resolveAppTextStyle(
@@ -116,7 +119,9 @@ class TasteActressCard extends StatelessWidget {
 
     return AppInteractiveSurface(
       onTap: onTap,
-      semanticLabel: '查看女优「${actor.displayName}」',
+      semanticLabel: AppLocalizations.of(
+        context,
+      ).widgetTasteOpenActor(actor.displayName),
       child: card,
     );
   }

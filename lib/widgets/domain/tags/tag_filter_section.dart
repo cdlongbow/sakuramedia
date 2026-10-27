@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_provider.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/domain/tags/tag_selector_panel.dart';
 
 /// 把标签选择接进筛选面板的「标签」分节。
@@ -12,18 +13,21 @@ import 'package:sakuramedia/widgets/domain/tags/tag_selector_panel.dart';
 /// 第一次打开时才加载（scope 用 `preload: false`）。筛选面板里走精简形态：
 /// 搜索框默认收起、标签收起态只展示前 5 个、展开后显示全部。
 class TagFilterSection extends ConsumerWidget {
-  const TagFilterSection({super.key, required this.scope, this.title = '标签'});
+  const TagFilterSection({super.key, required this.scope, this.title});
 
   final TagSelectionScope scope;
-  final String title;
+
+  /// 分节标题；为 `null` 时使用当前语言的默认文案。
+  final String? title;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final selection = ref.watch(tagSelectionProvider(scope));
     final notifier = ref.read(tagSelectionProvider(scope).notifier);
     return TagSelectorPanel(
       selection: selection,
-      title: title,
+      title: title ?? l10n.widgetTagFilterTitle,
       collapsibleSearch: true,
       collapsedTagCount: 5,
       showTagCounts: false,

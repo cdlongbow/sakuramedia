@@ -20,6 +20,7 @@ import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
@@ -50,6 +51,7 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final provider = multiVersionMoviesProvider(
       includeVr: includeVr.value,
       includeFc2: includeFc2.value,
@@ -79,9 +81,9 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
       if (deleting.value || selected.isEmpty) return;
       final confirmed = await showAppConfirmDialog(
         context,
-        title: '批量删除影片版本',
-        message: '将删除选中的 ${selected.length} 个版本及对应文件，每部影片至少保留一个版本。确认继续？',
-        confirmLabel: '删除',
+        title: l10n.mediaListVersionsBatchDeleteTitle,
+        message: l10n.mediaListVersionsBatchDeleteMessage(selected.length),
+        confirmLabel: l10n.commonDelete,
         danger: true,
         dialogKey: Key('$keyPrefix-versions-batch-confirm-dialog'),
         confirmKey: Key('$keyPrefix-versions-batch-confirm'),
@@ -98,7 +100,7 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
             (group) => group.mediaItems.every((item) => ids.contains(item.id)),
           )) {
         exitSelection();
-        showToast('影片版本已变化，请重新选择，至少保留一个版本');
+        showToast(l10n.mediaListVersionsChanged);
         return;
       }
       deleting.value = true;
@@ -115,7 +117,7 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
 
     final deleteButton = AppButton(
       key: Key('$keyPrefix-versions-batch-delete'),
-      label: '删除已选',
+      label: l10n.mediaListBatchDeleteSelected,
       icon: const Icon(Icons.delete_outline_rounded),
       variant: AppButtonVariant.danger,
       size: mobile ? AppButtonSize.medium : AppButtonSize.small,
@@ -135,9 +137,9 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
       final remaining = group.mediaCount - 1;
       final confirmed = await showAppConfirmDialog(
         context,
-        title: '删除影片版本',
-        message: '确认删除“${item.fileName}”及对应文件？删除后保留 $remaining 个版本。',
-        confirmLabel: '删除',
+        title: l10n.mediaListVersionsDeleteTitle,
+        message: l10n.mediaListVersionsDeleteMessage(item.fileName, remaining),
+        confirmLabel: l10n.commonDelete,
         danger: true,
         dialogKey: Key('$keyPrefix-version-delete-dialog-${item.id}'),
         confirmKey: Key('$keyPrefix-version-delete-confirm-${item.id}'),
@@ -146,9 +148,9 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
           await ref.read(provider.notifier).deleteVersion(item);
           if (scrollController.hasClients) scrollController.jumpTo(0);
         },
-        failureFallback: '删除影片版本失败',
+        failureFallback: l10n.mediaListVersionsDeleteFailed,
       );
-      if (confirmed && context.mounted) showToast('影片版本已删除');
+      if (confirmed && context.mounted) showToast(l10n.mediaListVersionsDeleted);
     }
 
     Widget filterOptions(BuildContext context) => HookBuilder(
@@ -160,8 +162,8 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
           runSpacing: spacing.sm,
           children: [
             for (final filter in [
-              (label: '包含 VR', state: includeVr, key: 'vr'),
-              (label: '包含 FC2', state: includeFc2, key: 'fc2'),
+              (label: l10n.mediaListVersionsIncludeVr, state: includeVr, key: 'vr'),
+              (label: l10n.mediaListVersionsIncludeFc2, state: includeFc2, key: 'fc2'),
             ])
               AppTextButton(
                 key: Key('$keyPrefix-versions-include-${filter.key}'),
@@ -198,9 +200,9 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
       return MediaFileGroupCard(
         key: Key('$keyPrefix-version-group-${group.movieNumber}'),
         items: group.mediaItems,
-        countLabel: '${group.mediaCount} 个版本',
+        countLabel: l10n.mediaListVersionsCount(group.mediaCount),
         headerKey: Key('$keyPrefix-version-movie-${group.movieNumber}'),
-        deleteLabel: '删除此版本',
+        deleteLabel: l10n.mediaListVersionsDeleteItem,
         keyPrefix: '$keyPrefix-version',
         mobile: mobile,
         onOpen: () => onOpenMovieDetail(context, group.movieNumber),
@@ -217,9 +219,9 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
     final content = AppFixedHeaderLayout(
       header: selectionMode.value
           ? AppSelectionHeaderToolbar(
-              countLabel: '已选 ${selected.length} 个',
+              countLabel: l10n.mediaListSelectedCopies(selected.length),
               countKey: Key('$keyPrefix-versions-selected-count'),
-              selectAllLabel: '清空',
+              selectAllLabel: l10n.mediaListClearSelection,
               selectAllKey: Key('$keyPrefix-versions-clear-selection'),
               onToggleAll: deleting.value || selected.isEmpty
                   ? null
@@ -231,7 +233,7 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
           : AppListHeader(
               filterButtonKey: Key('$keyPrefix-versions-filter'),
               filterLabel: !includeVr.value && !includeFc2.value
-                  ? '筛选'
+                  ? l10n.mediaListFilterTooltip
                   : [
                       if (includeVr.value) 'VR',
                       if (includeFc2.value) 'FC2',
@@ -253,7 +255,9 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
               informationSlots: [
                 AppListHeaderInfo(
                   key: Key('$keyPrefix-versions-total'),
-                  label: '共 ${asyncState.value?.total ?? 0} 部',
+                  label: l10n.mediaListTotalMovies(
+                    asyncState.value?.total ?? 0,
+                  ),
                 ),
               ],
               actionSlots: [
@@ -265,7 +269,7 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
                 ),
                 AppIconButton(
                   key: Key('$keyPrefix-versions-refresh'),
-                  tooltip: '刷新',
+                  tooltip: l10n.commonRefresh,
                   icon: const Icon(Icons.refresh_rounded),
                   onPressed: asyncState.isLoading ? null : refresh,
                 ),
@@ -280,7 +284,7 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
               child: Padding(
                 padding: EdgeInsets.only(bottom: spacing.md),
                 child: Text(
-                  '请选择要删除的版本，每部影片至少保留一个',
+                  l10n.mediaListVersionsSelectionHint,
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s12,
@@ -297,8 +301,8 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
             asyncState: asyncState,
             pagedOf: (state) => state,
             itemSpacing: spacing.lg,
-            initialErrorMessage: '多版本影片加载失败，请稍后重试',
-            emptyMessage: '暂无多版本影片',
+            initialErrorMessage: l10n.errorMultiVersionMovieLoadFailed,
+            emptyMessage: l10n.mediaListVersionsEmpty,
             // loading 用占位分组渲染真实组卡，由 [AppSkeletonizer] 灰化。
             skeletonBuilder: (context) {
               final placeholders = multiVersionMoviePlaceholders();

@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -42,45 +43,46 @@ class ClipActionsPanel extends StatelessWidget {
   }
 
   List<MediaPreviewActionItem> _buildActions(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return <MediaPreviewActionItem>[
       MediaPreviewActionItem(
         key: Key('$keyPrefix-action-play'),
-        label: '播放',
+        label: l10n.widgetClipActionPlay,
         icon: Icons.play_circle_outline_rounded,
         onTap: () => _run(context, onPlay),
       ),
       if (onOpenMovie != null)
         MediaPreviewActionItem(
           key: Key('$keyPrefix-action-movie'),
-          label: '影片',
+          label: l10n.widgetClipActionMovie,
           icon: Icons.movie_outlined,
           onTap: () => _run(context, onOpenMovie!),
         ),
       if (onAddToCollection != null)
         MediaPreviewActionItem(
           key: Key('$keyPrefix-action-add-to-collection'),
-          label: '加入合集',
+          label: l10n.widgetClipActionAddToCollection,
           icon: Icons.playlist_add_rounded,
           onTap: () => _run(context, onAddToCollection!),
         ),
       if (onRename != null)
         MediaPreviewActionItem(
           key: Key('$keyPrefix-action-rename'),
-          label: '重命名',
+          label: l10n.widgetClipActionRename,
           icon: Icons.edit_outlined,
           onTap: () => _run(context, onRename!),
         ),
       if (onRemoveFromCollection != null)
         MediaPreviewActionItem(
           key: Key('$keyPrefix-action-remove-from-collection'),
-          label: '移出合集',
+          label: l10n.widgetClipActionRemoveFromCollection,
           icon: Icons.playlist_remove_rounded,
           onTap: () => _run(context, onRemoveFromCollection!),
         ),
       if (onDelete != null)
         MediaPreviewActionItem(
           key: Key('$keyPrefix-action-delete'),
-          label: '删除',
+          label: l10n.commonDelete,
           icon: Icons.delete_outline_rounded,
           onTap: () => _run(context, onDelete!),
         ),

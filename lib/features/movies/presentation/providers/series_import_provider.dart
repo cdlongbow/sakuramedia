@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/movies/data/dto/series_import/movie_search_stream_update.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/series_import_state.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 
 part 'series_import_provider.g.dart';
 
@@ -23,7 +23,11 @@ class SeriesImport extends _$SeriesImport {
       unawaited(_subscription?.cancel());
       _subscription = null;
     });
-    return const SeriesImportState();
+    return SeriesImportState(
+      statusMessage: ref
+          .read(appLocalizationsProvider)
+          .movieProviderSeriesImportReady,
+    );
   }
 
   Future<void> startImport() async {
@@ -36,7 +40,9 @@ class SeriesImport extends _$SeriesImport {
       isCompleted: false,
       hasFailed: false,
       hasNewMovies: false,
-      statusMessage: '正在连接服务器...',
+      statusMessage: ref
+          .read(appLocalizationsProvider)
+          .movieProviderSeriesImportConnecting,
       current: null,
       total: null,
       stats: null,
@@ -55,7 +61,10 @@ class SeriesImport extends _$SeriesImport {
             state = state.copyWith(
               isRunning: false,
               hasFailed: true,
-              errorMessage: apiErrorMessage(error, fallback: '导入失败，请稍后重试'),
+              errorMessage: ref.apiErrorMessage(
+                error,
+                fallback: ref.read(appLocalizationsProvider).errorImportFailed,
+              ),
             );
           },
           onDone: () {
@@ -66,7 +75,9 @@ class SeriesImport extends _$SeriesImport {
               state = state.copyWith(
                 isRunning: false,
                 hasFailed: true,
-                errorMessage: '连接意外断开，请重试',
+                errorMessage: ref
+                    .read(appLocalizationsProvider)
+                    .movieProviderSeriesImportDisconnected,
               );
             }
           },
@@ -91,20 +102,21 @@ class SeriesImport extends _$SeriesImport {
         isCompleted: true,
         hasNewMovies: stats != null && stats.createdCount > 0,
         hasFailed: update.success == false,
-        errorMessage:
-            update.success == false
-                ? _resolveFailureMessage(update.reason)
-                : null,
+        errorMessage: update.success == false
+            ? _resolveFailureMessage(update.reason)
+            : null,
       );
     }
     state = next;
   }
 
   String _resolveFailureMessage(String? reason) {
+    final l10n = ref.read(appLocalizationsProvider);
     return switch (reason) {
-      'series_not_found' => '库内系列不存在',
-      'javdb_series_not_found' => '未能在 JAVDB 找到匹配的系列，请确认系列名称',
-      _ => '导入失败，请稍后重试',
+      'series_not_found' => l10n.movieProviderSeriesImportSeriesNotFound,
+      'javdb_series_not_found' =>
+        l10n.movieProviderSeriesImportJavdbSeriesNotFound,
+      _ => l10n.errorImportFailed,
     };
   }
 

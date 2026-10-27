@@ -17,6 +17,7 @@ import 'package:sakuramedia/features/shared/presentation/providers/batch_operati
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
@@ -52,6 +53,7 @@ class _InvalidMediaSectionState extends ConsumerState<InvalidMediaSection>
     with MultiSelectStateMixin<InvalidMediaSection, int> {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final content = AppFixedHeaderLayout(
       header: _InvalidMediaHeader(
         mobile: widget.mobile,
@@ -102,7 +104,7 @@ class _InvalidMediaSectionState extends ConsumerState<InvalidMediaSection>
         Expanded(child: content),
         AppSelectionBottomBar(
           leading: Text(
-            '已选 $selectedCount 项',
+            l10n.mediaListSelectedItems(selectedCount),
             key: const Key('invalid-media-bottom-selection-count'),
             style: resolveAppTextStyle(
               context,
@@ -114,7 +116,7 @@ class _InvalidMediaSectionState extends ConsumerState<InvalidMediaSection>
           actions: [
             AppButton(
               key: const Key('invalid-media-batch-delete-button'),
-              label: '删除',
+              label: l10n.commonDelete,
               variant: AppButtonVariant.danger,
               icon: const Icon(Icons.delete_outline_rounded),
               onPressed: selectedCount == 0 || submitting
@@ -129,16 +131,15 @@ class _InvalidMediaSectionState extends ConsumerState<InvalidMediaSection>
 
   Future<void> _batchDelete(List<int> mediaIds) async {
     if (mediaIds.isEmpty) return;
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showAppConfirmDialog(
       context,
       dialogKey: const Key('invalid-media-batch-delete-dialog'),
       confirmKey: const Key('invalid-media-batch-delete-confirm-button'),
       cancelKey: const Key('invalid-media-batch-delete-cancel-button'),
-      title: '批量删除失效媒体',
-      message:
-          '将删除已选 ${mediaIds.length} 条失效媒体记录及对应文件，且不可恢复。'
-          '缩略图会保留，供同一文件重新入库时复用。确认要继续吗？',
-      confirmLabel: '删除',
+      title: l10n.mediaListInvalidBatchDeleteTitle,
+      message: l10n.mediaListInvalidBatchDeleteMessage(mediaIds.length),
+      confirmLabel: l10n.commonDelete,
       danger: true,
     );
     if (!confirmed || !mounted) return;
@@ -175,6 +176,7 @@ class _InvalidMediaHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final state = ref.watch(
       invalidMediaProvider.select(
         (asyncState) => (
@@ -195,13 +197,15 @@ class _InvalidMediaHeader extends ConsumerWidget {
     if (mobile && selectionMode) {
       return AppListHeader.selection(
         key: const Key('invalid-media-selection-header'),
-        selectionLabel: '已选 $selectedCount 项',
+        selectionLabel: l10n.mediaListSelectedItems(selectedCount),
         selectionExitButtonKey: const Key('invalid-media-exit-selection-button'),
         onExitSelection: onExitSelection,
         actionSlots: [
           AppTextButton(
             key: const Key('invalid-media-select-all-button'),
-            label: allSelected ? '取消全选本页' : '全选本页',
+            label: allSelected
+                ? l10n.mediaListClearSelectAllLoaded
+                : l10n.mediaListSelectAllLoaded,
             size: AppTextButtonSize.small,
             onPressed: loadedIds.isEmpty
                 ? null
@@ -220,14 +224,16 @@ class _InvalidMediaHeader extends ConsumerWidget {
         countKey: const Key('invalid-media-selection-count'),
         selectAllKey: const Key('invalid-media-select-all-button'),
         exitKey: const Key('invalid-media-exit-selection-button'),
-        countLabel: '已选 $selectedCount 条',
-        selectAllLabel: allSelected ? '取消全选本页' : '全选本页',
+        countLabel: l10n.mediaListSelectedRecords(selectedCount),
+        selectAllLabel: allSelected
+            ? l10n.mediaListClearSelectAllLoaded
+            : l10n.mediaListSelectAllLoaded,
         onToggleAll: loadedIds.isEmpty ? null : () => onToggleAll(loadedIds),
         onExit: onExitSelection,
         actions: [
           AppButton(
             key: const Key('invalid-media-batch-delete-button'),
-            label: '批量删除（$selectedCount）',
+            label: l10n.mediaListBatchDelete(selectedCount),
             variant: AppButtonVariant.danger,
             size: AppButtonSize.small,
             icon: const Icon(Icons.delete_outline_rounded),
@@ -240,7 +246,7 @@ class _InvalidMediaHeader extends ConsumerWidget {
     }
 
     final description = Text(
-      '巡检标记为失效的媒体会出现在这里。确认是真实丢失的文件，可删除记录，jav影片会再次自动下载新的资源。',
+      l10n.mediaListInvalidDescription,
       key: const Key('invalid-media-section-description'),
       maxLines: mobile ? 2 : 1,
       overflow: TextOverflow.ellipsis,
@@ -251,10 +257,12 @@ class _InvalidMediaHeader extends ConsumerWidget {
         tone: AppTextTone.muted,
       ),
     );
-    final totalText = '共 ${state.total} 条失效媒体';
+    final totalText = l10n.mediaListTotalInvalidItems(state.total);
     final refreshButton = AppIconButton(
       key: const Key('invalid-media-refresh-button'),
-      tooltip: state.isInitialLoading ? '刷新中' : '刷新',
+      tooltip: state.isInitialLoading
+          ? l10n.mediaListRefreshing
+          : l10n.commonRefresh,
       icon: const Icon(Icons.refresh_rounded),
       onPressed: state.isInitialLoading
           ? null
@@ -309,6 +317,7 @@ class _InvalidMediaBodySliver extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     // loadMore 的 loading / 失败只影响页脚：这里清成中立值，翻页状态翻转
     // 不重建列表 sliver（页脚由 [PagedLoadMoreFooterSliver] 展示）。
     final asyncPaged = ref.watch(
@@ -325,8 +334,8 @@ class _InvalidMediaBodySliver extends ConsumerWidget {
       asyncState: asyncPaged,
       pagedOf: (state) => state,
       itemSpacing: context.appSpacing.md,
-      initialErrorMessage: '失效媒体加载失败，请稍后重试',
-      emptyMessage: '当前没有失效媒体',
+      initialErrorMessage: l10n.errorInvalidMediaLoadFailed,
+      emptyMessage: l10n.mediaListInvalidEmpty,
       // loading 用占位媒体渲染真实行，由 [AppSkeletonizer] 灰化。
       skeletonBuilder: (context) {
         final placeholders = invalidMediaPlaceholders();
@@ -390,13 +399,12 @@ class _InvalidMediaRowConsumer extends ConsumerWidget {
     BuildContext context,
     InvalidMediaDto item,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除失效媒体',
-      message:
-          '确认删除“${item.displayTitle}”的这条失效媒体记录及对应文件？'
-          '该操作不可恢复，缩略图会保留用于同文件复用。',
-      confirmLabel: '删除',
+      title: l10n.mediaListInvalidDeleteTitle,
+      message: l10n.mediaListInvalidDeleteMessage(item.displayTitle(l10n: l10n)),
+      confirmLabel: l10n.commonDelete,
       danger: true,
       dialogKey: const Key('invalid-media-delete-confirm-dialog'),
       confirmKey: const Key('invalid-media-delete-confirm-button'),
@@ -407,10 +415,16 @@ class _InvalidMediaRowConsumer extends ConsumerWidget {
       await ref
           .read(invalidMediaProvider.notifier)
           .deleteInvalidMedia(mediaId: item.id);
-      if (context.mounted) showToast('失效媒体已删除');
+      if (context.mounted) showToast(l10n.mediaListInvalidDeleted);
     } catch (error) {
       if (context.mounted) {
-        showToast(apiErrorMessage(error, fallback: '删除失效媒体失败'));
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: l10n.mediaListInvalidDeleteFailed,
+            l10n: l10n,
+          ),
+        );
       }
     }
   }

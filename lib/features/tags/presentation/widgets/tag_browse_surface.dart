@@ -8,7 +8,9 @@ import 'package:sakuramedia/features/tags/data/tag_list_item_dto.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_provider.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_state.dart';
+import 'package:sakuramedia/features/tags/presentation/tag_match_mode_label.dart';
 import 'package:sakuramedia/features/tags/presentation/tag_placeholders.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
@@ -113,10 +115,11 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
 
   Widget _buildHero(BuildContext context, TagSelectionState selection) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Column(
       children: <Widget>[
         Text(
-          '按标签发现',
+          l10n.tagBrowseTitle,
           textAlign: TextAlign.center,
           style: resolveAppTextStyle(
             context,
@@ -127,7 +130,7 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
         ),
         SizedBox(height: spacing.sm),
         Text(
-          '选择一个或多个标签，组合你想看的',
+          l10n.tagBrowseSubtitle,
           textAlign: TextAlign.center,
           style: resolveAppTextStyle(
             context,
@@ -147,7 +150,7 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
               controller: _searchController,
               focusNode: _searchFocusNode,
               enabled: selection.hasLoadedOnce,
-              hintText: '搜索标签',
+              hintText: l10n.tagSearchHint,
               prefix: Icon(
                 Icons.search_rounded,
                 size: context.appComponentTokens.iconSizeSm,
@@ -194,7 +197,7 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
       );
     }
     if (selection.allTags.isEmpty) {
-      return const AppEmptyState(message: '暂无标签');
+      return AppEmptyState(message: AppLocalizations.of(context).tagEmpty);
     }
     if (_isSearching) {
       return _buildSearchResults(
@@ -207,6 +210,7 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
 
     final popularTags = _popularTags(selection.allTags, tasteTags);
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -214,8 +218,8 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
           _buildSectionHeader(
             context,
             icon: Icons.auto_awesome_rounded,
-            label: '为你',
-            trailing: '根据常看标签',
+            label: l10n.tagForYou,
+            trailing: l10n.tagForYouSubtitle,
           ),
           SizedBox(height: spacing.md),
           _buildCloudWrap(
@@ -229,8 +233,8 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
         ],
         _buildSectionHeader(
           context,
-          label: '热门标签',
-          trailing: '${popularTags.length} 个',
+          label: l10n.tagPopular,
+          trailing: l10n.tagCountLabel(popularTags.length),
         ),
         SizedBox(height: spacing.md),
         _buildCloudWrap(
@@ -244,7 +248,7 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
             selection.allTags.length) ...<Widget>[
           SizedBox(height: spacing.xl),
           Text(
-            '搜索可找到全部 ${selection.allTags.length} 个标签',
+            l10n.tagSearchFindsAll(selection.allTags.length),
             textAlign: TextAlign.center,
             style: resolveAppTextStyle(
               context,
@@ -262,7 +266,10 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _buildSectionHeader(context, label: '热门标签'),
+        _buildSectionHeader(
+          context,
+          label: AppLocalizations.of(context).tagPopular,
+        ),
         SizedBox(height: context.appSpacing.md),
         AppSkeletonizer(
           key: const Key('tags-browse-skeleton'),
@@ -286,18 +293,19 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
     required TagSelection notifier,
   }) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final visible = results.take(_searchResultLimit).toList(growable: false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         _buildSectionHeader(
           context,
-          label: '搜索结果',
-          trailing: '${results.length} 个',
+          label: l10n.tagSearchResults,
+          trailing: l10n.tagCountLabel(results.length),
         ),
         SizedBox(height: spacing.md),
         if (results.isEmpty)
-          const AppEmptyState(message: '没有找到匹配的标签')
+          AppEmptyState(message: l10n.tagNoMatch)
         else
           Wrap(
             spacing: spacing.sm,
@@ -316,7 +324,7 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
         if (results.length > _searchResultLimit) ...<Widget>[
           SizedBox(height: spacing.md),
           Text(
-            '只显示前 $_searchResultLimit 个，继续输入以缩小范围',
+            l10n.tagResultLimitHint(_searchResultLimit),
             textAlign: TextAlign.center,
             style: resolveAppTextStyle(
               context,
@@ -336,13 +344,14 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
     TagSelection notifier,
   ) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Wrap(
       spacing: spacing.sm,
       runSpacing: spacing.sm,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: <Widget>[
         Text(
-          '已选',
+          l10n.tagSelected,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -361,7 +370,7 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
           ),
         AppTextButton(
           key: const Key('tags-browse-clear'),
-          label: '清空',
+          label: l10n.tagClear,
           size: AppTextButtonSize.xSmall,
           onPressed: notifier.clear,
         ),
@@ -465,6 +474,7 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
     TagSelectionState selection,
     TagSelection notifier,
   ) {
+    final l10n = AppLocalizations.of(context);
     return DecoratedBox(
       key: const Key('tags-browse-action-bar'),
       decoration: BoxDecoration(
@@ -483,7 +493,7 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Text(
-                  '已选 ${selection.selectedCount} 个标签',
+                  l10n.tagSelectedCount(selection.selectedCount),
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s12,
@@ -502,7 +512,7 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
                 SizedBox(width: context.appSpacing.lg),
                 AppButton(
                   key: const Key('tags-browse-confirm'),
-                  label: '查看影片',
+                  label: l10n.tagViewMovies,
                   variant: AppButtonVariant.primary,
                   borderRadius: context.appRadius.pillBorder,
                   trailingIcon: const Icon(Icons.arrow_forward_rounded),
@@ -512,7 +522,7 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
                   SizedBox(width: context.appSpacing.sm),
                   AppTextButton(
                     key: const Key('tags-browse-cancel'),
-                    label: '取消',
+                    label: l10n.commonCancel,
                     size: AppTextButtonSize.xSmall,
                     onPressed: widget.onCancel,
                   ),
@@ -531,6 +541,7 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
     TagSelection notifier,
   ) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return DecoratedBox(
       key: const Key('tags-browse-action-bar'),
       decoration: BoxDecoration(
@@ -552,7 +563,7 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
               Row(
                 children: <Widget>[
                   Text(
-                    '已选 ${selection.selectedCount} 个标签',
+                    l10n.tagSelectedCount(selection.selectedCount),
                     style: resolveAppTextStyle(
                       context,
                       size: AppTextSize.s12,
@@ -571,7 +582,7 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
                     SizedBox(width: spacing.sm),
                     AppTextButton(
                       key: const Key('tags-browse-cancel'),
-                      label: '取消',
+                      label: l10n.commonCancel,
                       size: AppTextButtonSize.xSmall,
                       onPressed: widget.onCancel,
                     ),
@@ -583,7 +594,7 @@ class _TagBrowseSurfaceState extends ConsumerState<TagBrowseSurface> {
                 width: double.infinity,
                 child: AppButton(
                   key: const Key('tags-browse-confirm'),
-                  label: '查看影片',
+                  label: l10n.tagViewMovies,
                   variant: AppButtonVariant.primary,
                   size: AppButtonSize.large,
                   borderRadius: context.appRadius.pillBorder,
@@ -693,7 +704,7 @@ class _TagCloudItem extends StatelessWidget {
         : AppTextTone.secondary;
     return AppInteractiveSurface(
       onTap: onTap,
-      semanticLabel: '标签「${tag.name}」',
+      semanticLabel: AppLocalizations.of(context).tagSemanticLabel(tag.name),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
         padding: EdgeInsets.symmetric(
@@ -751,12 +762,13 @@ class _MatchModeToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         if (!mobile) ...<Widget>[
           Text(
-            '匹配',
+            l10n.tagMatch,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s10,
@@ -768,7 +780,7 @@ class _MatchModeToggle extends StatelessWidget {
         ],
         AppTextButton(
           key: const Key('tags-browse-match-or'),
-          label: TagMatchMode.or.label,
+          label: tagMatchModeLabel(TagMatchMode.or, l10n),
           size: AppTextButtonSize.xSmall,
           isSelected: selection.matchMode == TagMatchMode.or,
           onPressed: () => notifier.setMatchMode(TagMatchMode.or),
@@ -776,7 +788,7 @@ class _MatchModeToggle extends StatelessWidget {
         SizedBox(width: spacing.xs),
         AppTextButton(
           key: const Key('tags-browse-match-and'),
-          label: TagMatchMode.and.label,
+          label: tagMatchModeLabel(TagMatchMode.and, l10n),
           size: AppTextButtonSize.xSmall,
           isSelected: selection.matchMode == TagMatchMode.and,
           onPressed: () => notifier.setMatchMode(TagMatchMode.and),

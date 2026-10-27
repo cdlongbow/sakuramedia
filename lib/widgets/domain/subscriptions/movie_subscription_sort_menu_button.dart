@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/movie_subscription_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_sort_menu_button.dart';
 
 /// 订阅管理列表的排序入口适配器。
@@ -31,7 +32,7 @@ class MovieSubscriptionSortMenuButton extends StatelessWidget {
     return AppSortMenuButton<MovieSubscriptionSortField>(
       fields: MovieSubscriptionSortField.values,
       selectedField: filterState.sortField,
-      fieldLabelBuilder: (value) => value.label,
+      fieldLabelBuilder: (value) => value.label(AppLocalizations.of(context)),
       onFieldChanged: (value) => onChanged(filterState.withSortField(value!)),
       selectedDirection: filterState.sortDirection,
       onDirectionChanged: (value) =>

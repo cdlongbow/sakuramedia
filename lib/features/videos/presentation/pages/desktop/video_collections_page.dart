@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/videos/presentation/providers/video_collect
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/video_placeholders.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -67,12 +68,13 @@ class _DesktopVideoCollectionsPageState
     WidgetRef ref,
     VideoCollectionDto collection,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除合集',
-      message: '确定删除合集「${collection.name}」吗？合集内的视频不会被删除。',
+      title: l10n.videoDeleteCollectionTitle,
+      message: l10n.videoDeleteCollectionConfirmMessage(collection.name),
       danger: true,
-      confirmLabel: '删除',
+      confirmLabel: l10n.commonDelete,
     );
     if (!confirmed) {
       return;
@@ -83,11 +85,11 @@ class _DesktopVideoCollectionsPageState
           .deleteCollection(collection.id);
       await ref.read(videoCollectionsOverviewProvider.notifier).refresh();
       if (context.mounted) {
-        showToast('已删除');
+        showToast(l10n.videoCollectionDeleted);
       }
     } catch (_) {
       if (context.mounted) {
-        showToast('删除失败，请稍后重试');
+        showToast(l10n.videoDeleteFailedLater);
       }
     }
   }
@@ -96,6 +98,7 @@ class _DesktopVideoCollectionsPageState
   Widget build(BuildContext context) {
     final async = ref.watch(videoCollectionsOverviewProvider);
     final notifier = ref.read(videoCollectionsOverviewProvider.notifier);
+    final l10n = AppLocalizations.of(context);
 
     return AppPageRefreshScope(
       onRefresh: notifier.refresh,
@@ -114,7 +117,7 @@ class _DesktopVideoCollectionsPageState
                     child: AppSearchField(
                       fieldKey: const Key('video-collections-search-field'),
                       controller: _searchController,
-                      hintText: '搜索合集',
+                      hintText: l10n.videoSearchCollections,
                       onChanged: (value) => setState(
                         () => _keyword = value.trim().toLowerCase(),
                       ),
@@ -124,7 +127,7 @@ class _DesktopVideoCollectionsPageState
                   SizedBox(width: context.appSpacing.md),
                   AppButton(
                     key: const Key('video-collections-create-button'),
-                    label: '新建合集',
+                    label: l10n.videoNewCollection,
                     variant: AppButtonVariant.primary,
                     onPressed: () => _create(context, ref),
                   ),
@@ -144,11 +147,12 @@ class _DesktopVideoCollectionsPageState
     WidgetRef ref,
     AsyncValue<List<VideoCollectionDto>> async,
   ) {
+    final l10n = AppLocalizations.of(context);
     final isLoading = async.isLoading && async.value == null;
     if (!isLoading && async.hasError && async.value == null) {
       return SliverToBoxAdapter(
         child: AppEmptyState(
-          message: apiErrorMessage(async.error!, fallback: '合集加载失败，请稍后重试'),
+          message: apiErrorMessage(async.error!, fallback: l10n.videoCollectionsLoadFailed),
         ),
       );
     }
@@ -156,8 +160,8 @@ class _DesktopVideoCollectionsPageState
         ? videoCollectionPlaceholders(count: 4)
         : async.value ?? const <VideoCollectionDto>[];
     if (allCollections.isEmpty) {
-      return const SliverToBoxAdapter(
-        child: AppEmptyState(message: '暂无合集，点击「新建合集」创建'),
+      return SliverToBoxAdapter(
+        child: AppEmptyState(message: l10n.videoCollectionsEmpty),
       );
     }
     final collections = isLoading || _keyword.isEmpty
@@ -169,8 +173,8 @@ class _DesktopVideoCollectionsPageState
               )
               .toList(growable: false);
     if (collections.isEmpty) {
-      return const SliverToBoxAdapter(
-        child: AppEmptyState(message: '没有匹配的合集'),
+      return SliverToBoxAdapter(
+        child: AppEmptyState(message: l10n.videoCollectionsNoMatch),
       );
     }
     return AppSkeletonizer.sliver(

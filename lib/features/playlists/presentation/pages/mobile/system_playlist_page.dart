@@ -5,6 +5,7 @@ import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
 import 'package:sakuramedia/features/playlists/presentation/pages/mobile/playlist_detail_page.dart';
 import 'package:sakuramedia/features/playlists/presentation/pages/shared/playlist_detail_content.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/system_playlist_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 
 /// 系统播放列表（收藏 / 最近播放）的移动端入口页。
@@ -23,13 +24,14 @@ class MobileSystemPlaylistPage extends ConsumerWidget {
     }
 
     if (playlist == null) {
+      final l10n = AppLocalizations.of(context);
       return AppEmptyState(
         icon: _emptyIcon,
         message: async.hasError
-            ? apiErrorMessage(async.error!, fallback: '播放列表暂时无法加载，请稍后重试')
+            ? apiErrorMessage(async.error!, fallback: l10n.playlistLoadFailed)
             : kind == PlaylistKind.favorites
-            ? '收藏列表尚未初始化'
-            : '还没有观看记录',
+            ? l10n.playlistFavoritesNotReady
+            : l10n.playlistNoWatchHistory,
         onRetry: async.hasError
             ? () => ref.invalidate(systemPlaylistProvider(kind))
             : null,

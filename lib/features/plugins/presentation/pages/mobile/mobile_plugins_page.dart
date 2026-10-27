@@ -6,6 +6,7 @@ import 'package:sakuramedia/features/plugins/presentation/pages/shared/plugin_se
 import 'package:sakuramedia/features/plugins/presentation/plugin_management_actions.dart';
 import 'package:sakuramedia/features/plugins/presentation/plugin_placeholders.dart';
 import 'package:sakuramedia/features/plugins/presentation/providers/plugins_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
@@ -74,6 +75,7 @@ class _MobilePluginsPageState extends ConsumerState<MobilePluginsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final asyncPlugins = ref.watch(pluginsProvider);
     final state = asyncPlugins.value;
     final busy =
@@ -107,16 +109,16 @@ class _MobilePluginsPageState extends ConsumerState<MobilePluginsPage> {
                         AppNoticeCard(
                           key: const Key('mobile-plugins-restart-notice'),
                           leadingIcon: Icons.info_outline_rounded,
-                          title: '插件管理',
-                          description: '安装、更新、启停、删除或配置修改后，需重启容器才会生效。',
+                          title: l10n.pluginsManagementTitle,
+                          description: l10n.pluginsManageNotice,
                           stats: [
                             AppNoticeStat(
-                              label: '已安装',
+                              label: l10n.pluginsTabInstalled,
                               value: '${state?.plugins.length ?? 0}',
                               valueSize: AppTextSize.s18,
                             ),
                             AppNoticeStat(
-                              label: '可更新',
+                              label: l10n.pluginsUpdatableStat,
                               value: '${state?.updates.length ?? 0}',
                               valueSize: AppTextSize.s18,
                             ),
@@ -130,7 +132,7 @@ class _MobilePluginsPageState extends ConsumerState<MobilePluginsPage> {
                                 key: const Key(
                                   'mobile-plugins-check-updates-button',
                                 ),
-                                label: '检查更新',
+                                label: l10n.pluginsCheckUpdates,
                                 icon: const Icon(Icons.system_update_outlined),
                                 isLoading: state?.isCheckingUpdates == true,
                                 onPressed:
@@ -145,10 +147,12 @@ class _MobilePluginsPageState extends ConsumerState<MobilePluginsPage> {
                             Expanded(
                               child: Text(
                                 state == null
-                                    ? '正在加载插件列表'
+                                    ? l10n.pluginsLoadingList
                                     : state.updates.isEmpty
-                                    ? '检查插件 Release 更新'
-                                    : '发现 ${state.updates.length} 个更新',
+                                    ? l10n.pluginsCheckReleaseUpdates
+                                    : l10n.pluginsUpdatesFound(
+                                        state.updates.length,
+                                      ),
                                 textAlign: TextAlign.end,
                                 style: resolveAppTextStyle(
                                   context,
@@ -211,10 +215,10 @@ class _MobilePluginsPageState extends ConsumerState<MobilePluginsPage> {
                         else if (asyncPlugins.hasError)
                           AppMobileSectionError(
                             key: const Key('mobile-plugins-error-state'),
-                            title: '插件加载失败',
+                            title: l10n.pluginsLoadFailed,
                             message: apiErrorMessage(
                               asyncPlugins.error!,
-                              fallback: '插件加载失败，请稍后重试。',
+                              fallback: l10n.pluginsLoadFailedFallback,
                             ),
                             onRetry: _actions.refresh,
                             retryButtonKey: const Key(
@@ -244,7 +248,7 @@ class _MobilePluginsPageState extends ConsumerState<MobilePluginsPage> {
                 Expanded(
                   child: AppButton(
                     key: const Key('mobile-plugins-market-button'),
-                    label: '插件市场',
+                    label: l10n.pluginsMarket,
                     variant: AppButtonVariant.secondary,
                     icon: const Icon(Icons.storefront_outlined),
                     onPressed: () =>
@@ -257,7 +261,7 @@ class _MobilePluginsPageState extends ConsumerState<MobilePluginsPage> {
                 Expanded(
                   child: AppButton(
                     key: const Key('mobile-plugins-install-button'),
-                    label: '安装插件',
+                    label: l10n.pluginInstallTitle,
                     variant: AppButtonVariant.primary,
                     icon: const Icon(Icons.upload_file_outlined),
                     isLoading: state?.isInstalling == true,
@@ -281,6 +285,7 @@ class _MobilePluginsEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: context.appSpacing.md,
@@ -291,10 +296,10 @@ class _MobilePluginsEmptyState extends StatelessWidget {
         borderRadius: context.appRadius.lgBorder,
         border: Border.all(color: context.appColors.borderSubtle),
       ),
-      child: const AppEmptyState(
+      child: AppEmptyState(
         icon: Icons.extension_outlined,
-        title: '还没有安装插件',
-        message: '点击下方「安装插件」上传 zip 插件包，安装后需重启容器才生效。',
+        title: l10n.pluginsEmptyTitle,
+        message: l10n.pluginsEmptyMessageMobile,
       ),
     );
   }
@@ -322,6 +327,7 @@ class _MobilePluginCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final disabled = busy || installing || checkingUpdates;
     final statusTone = plugin.enabled
         ? AppBadgeTone.success
@@ -382,22 +388,26 @@ class _MobilePluginCard extends StatelessWidget {
                                   ),
                                 ),
                                 AppBadge(
-                                  label: plugin.enabled ? '已启用' : '已停用',
+                                  label: plugin.enabled
+                                      ? l10n.pluginsEnabled
+                                      : l10n.pluginsDisabled,
                                   tone: statusTone,
                                   size: AppBadgeSize.compact,
                                 ),
                                 if (plugin.loadStatus == 'error')
                                   Tooltip(
-                                    message: plugin.loadError ?? '插件加载失败',
-                                    child: const AppBadge(
-                                      label: '加载失败',
+                                    message:
+                                        plugin.loadError ??
+                                        l10n.pluginsLoadErrorTooltip,
+                                    child: AppBadge(
+                                      label: l10n.pluginsLoadErrorBadge,
                                       tone: AppBadgeTone.error,
                                       size: AppBadgeSize.compact,
                                     ),
                                   ),
                                 if (update != null)
-                                  const AppBadge(
-                                    label: '有更新',
+                                  AppBadge(
+                                    label: l10n.pluginsUpdateAvailable,
                                     tone: AppBadgeTone.warning,
                                     size: AppBadgeSize.compact,
                                   ),
@@ -442,8 +452,8 @@ class _MobilePluginCard extends StatelessWidget {
             padding: EdgeInsets.only(top: spacing.sm, right: spacing.sm),
             child: AppIconButton(
               key: Key('mobile-plugin-more-${plugin.pluginId}'),
-              tooltip: '更多操作',
-              semanticLabel: '管理 ${plugin.displayName}',
+              tooltip: l10n.pluginsMoreActions,
+              semanticLabel: l10n.pluginsManageSemantic(plugin.displayName),
               icon: const Icon(Icons.more_horiz_rounded),
               onPressed: disabled ? null : onMore,
             ),
@@ -495,6 +505,7 @@ class _MobilePluginActionsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -511,7 +522,7 @@ class _MobilePluginActionsSheet extends StatelessWidget {
           ),
           SizedBox(height: spacing.xs),
           Text(
-            '选择要执行的插件操作',
+            l10n.pluginsActionsTitle,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -524,7 +535,7 @@ class _MobilePluginActionsSheet extends StatelessWidget {
             icon: plugin.enabled
                 ? Icons.pause_circle_outline_rounded
                 : Icons.play_circle_outline_rounded,
-            label: plugin.enabled ? '停用插件' : '启用插件',
+            label: plugin.enabled ? l10n.pluginsDisable : l10n.pluginsEnable,
             disabled: disabled,
             onTap: () => _select(context, _MobilePluginAction.toggle),
           ),
@@ -532,14 +543,14 @@ class _MobilePluginActionsSheet extends StatelessWidget {
             _MobilePluginActionRow(
               key: Key('mobile-plugin-update-${plugin.pluginId}'),
               icon: Icons.system_update_outlined,
-              label: '更新到 v${update!.version}',
+              label: l10n.pluginsUpdateTo(update!.version),
               disabled: disabled,
               onTap: () => _select(context, _MobilePluginAction.update),
             ),
           _MobilePluginActionRow(
             key: Key('mobile-plugin-delete-${plugin.pluginId}'),
             icon: Icons.delete_outline_rounded,
-            label: '删除插件',
+            label: l10n.pluginDeleteTitle,
             danger: true,
             disabled: disabled,
             onTap: () => _select(context, _MobilePluginAction.delete),

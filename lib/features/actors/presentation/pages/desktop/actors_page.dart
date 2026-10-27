@@ -16,6 +16,7 @@ import 'package:sakuramedia/features/discovery/presentation/providers/taste_prof
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
@@ -121,7 +122,7 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
     if (!mounted) {
       return;
     }
-    showActorSubscriptionFeedback(result);
+    showActorSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
   }
 
   @override
@@ -133,7 +134,7 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
     final items = paged?.items ?? const [];
     final isInitialLoading = actorsAsync.isLoading && summary == null;
     final initialErrorMessage = actorsAsync.hasError && summary == null
-        ? '女优列表加载失败，请稍后重试'
+        ? AppLocalizations.of(context).errorActorListLoadFailed
         : null;
 
     return AppPageRefreshScope(
@@ -160,7 +161,9 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
                 searchToggle: ActorListSearchToggle(
                   key: const Key('actors-search-toggle'),
                   isActive: _searchExpanded || filter.query != null,
-                  tooltip: _searchExpanded ? '收起搜索' : '搜索女优',
+                  tooltip: _searchExpanded
+                      ? AppLocalizations.of(context).actorSearchCollapseTooltip
+                      : AppLocalizations.of(context).actorSearchTooltip,
                   onTap: _toggleSearch,
                 ),
                 searchField: ActorListSearchField(
@@ -221,8 +224,10 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
                                 summary?.isSubscriptionUpdating(actor.id) ??
                                 false,
                             emptyMessage: !filter.hasActiveFilters
-                                ? '暂无女优，去搜索看看吧'
-                                : '当前筛选条件下暂无匹配女优',
+                                ? AppLocalizations.of(context).actorListEmpty
+                                : AppLocalizations.of(
+                                    context,
+                                  ).actorListEmptyFiltered,
                           ),
                         ),
                       // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
@@ -277,9 +282,10 @@ class _ActorsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppListHeader(
       filterButtonKey: const Key('actors-filter-trigger'),
-      filterLabel: filterState.triggerLabel,
+      filterLabel: filterState.triggerLabel(l10n),
       filterPanelKey: const Key('actors-filter-panel'),
       filterPanelExtraWidth: 260,
       filterPanelBuilder: (_) => ActorFilterSectionGroup(
@@ -298,7 +304,7 @@ class _ActorsHeader extends StatelessWidget {
           : <Widget>[
               AppListHeaderInfo(
                 key: const Key('actors-page-total'),
-                label: '$total 位',
+                label: l10n.actorListTotalCount(total),
               ),
             ],
       actionSlots: searchExpanded
@@ -317,7 +323,7 @@ class _ActorsHeader extends StatelessWidget {
               children: [
                 AppListHeaderInfo(
                   key: const Key('actors-page-total'),
-                  label: '$total 位',
+                  label: l10n.actorListTotalCount(total),
                 ),
                 const Spacer(),
                 ConstrainedBox(

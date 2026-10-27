@@ -3,10 +3,12 @@ import 'dart:convert';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
@@ -83,7 +85,9 @@ class _MovieSubtitleViewerContentState
       return AppEmptyState(
         key: const Key('movie-subtitle-viewer-error'),
         icon: Icons.error_outline_rounded,
-        title: '字幕内容读取失败',
+        title: AppLocalizations.of(
+          context,
+        ).movieWidgetSubtitleContentLoadFailed,
         message: errorMessage,
         onRetry: _retry,
         retryKey: const Key('movie-subtitle-viewer-retry'),
@@ -97,7 +101,9 @@ class _MovieSubtitleViewerContentState
           key: const Key('movie-subtitle-viewer-scroll'),
           padding: EdgeInsets.only(right: context.appSpacing.sm),
           child: SelectableText(
-            text.isEmpty ? '（字幕内容为空）' : text,
+            text.isEmpty
+                ? AppLocalizations.of(context).movieWidgetSubtitleContentEmpty
+                : text,
             key: const Key('movie-subtitle-viewer-text'),
             style:
                 resolveAppTextStyle(
@@ -141,7 +147,7 @@ class _MovieSubtitleViewerContentState
         return;
       }
       setState(() {
-        _errorMessage = '请稍后重试';
+        _errorMessage = ref.read(appLocalizationsProvider).errorRetryLater;
         _isLoading = false;
       });
     }

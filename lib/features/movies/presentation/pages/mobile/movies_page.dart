@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_summary
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_provider.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
@@ -93,7 +94,8 @@ class _MobileMoviesPageState extends ConsumerState<MobileMoviesPage> {
             slivers: <Widget>[sliver],
           ),
       enableRefresh: true,
-      onRefreshFailure: (_) => showToast('刷新失败'),
+      onRefreshFailure: (context) =>
+          showToast(AppLocalizations.of(context).moviePageRefreshFailed),
     );
   }
 
@@ -101,18 +103,19 @@ class _MobileMoviesPageState extends ConsumerState<MobileMoviesPage> {
     BuildContext context,
     MovieSummaryListHeaderArgs args,
   ) {
+    final l10n = AppLocalizations.of(context);
     final tagSelection = args.tagSelection;
     return AppListHeader(
       filterButtonKey: const Key('mobile-movies-filter-button'),
-      filterTooltip: '筛选',
+      filterTooltip: l10n.moviePageFilterTooltip,
       filterLabel: tagSelection?.hasSelection == true
-          ? '标签 · ${tagSelection!.selectedCount}'
+          ? l10n.moviePageTagFilterCount(tagSelection!.selectedCount)
           : args.filterState.triggerLabel,
       onFilterTap: () => _openFilterDrawer(context, args),
       informationSlots: [
         AppListHeaderInfo(
           key: const Key('mobile-movies-total'),
-          label: '${args.total} 部',
+          label: l10n.moviePageMovieCount(args.total),
         ),
       ],
       actionSlots: [

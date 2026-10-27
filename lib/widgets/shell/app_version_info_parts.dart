@@ -7,6 +7,7 @@ import 'package:sakuramedia/app/providers/external_url_provider.dart';
 import 'package:sakuramedia/config/app_release_channels.dart';
 import 'package:sakuramedia/core/platform/clipboard_copy.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 
 /// 版本信息的一行（label + 右对齐值），版本卡片与侧栏版本浮层共用。
 class AppVersionRow extends StatelessWidget {
@@ -62,10 +63,13 @@ class AppVersionUpdateNotice extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = appL10n(context);
     final details = <String>[
-      if (frontendUpdateVersion != null) '客户端 $frontendUpdateVersion',
-      if (backendUpdateVersion != null) '服务端 $backendUpdateVersion',
-      if (pluginUpdateCount > 0) '$pluginUpdateCount 个插件',
+      if (frontendUpdateVersion != null)
+        l10n.shellClientVersion(frontendUpdateVersion!),
+      if (backendUpdateVersion != null)
+        l10n.shellServerVersion(backendUpdateVersion!),
+      if (pluginUpdateCount > 0) l10n.shellPluginUpdateCount(pluginUpdateCount),
     ].join(' · ');
 
     return Container(
@@ -91,7 +95,7 @@ class AppVersionUpdateNotice extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '发现可用更新',
+                      l10n.shellUpdatesAvailable,
                       style: resolveAppTextStyle(
                         context,
                         size: AppTextSize.s12,
@@ -119,7 +123,7 @@ class AppVersionUpdateNotice extends ConsumerWidget {
             SizedBox(height: context.appSpacing.sm),
             _ReleaseLink(
               key: const Key('version-release-link-frontend'),
-              label: '客户端发布页',
+              label: l10n.shellClientReleasePage,
               onTap: () => unawaited(
                 _openRelease(context, ref, AppReleaseChannels.frontendPageUrl),
               ),
@@ -129,7 +133,7 @@ class AppVersionUpdateNotice extends ConsumerWidget {
             SizedBox(height: context.appSpacing.xs),
             _ReleaseLink(
               key: const Key('version-release-link-backend'),
-              label: '服务端发布页',
+              label: l10n.shellServerReleasePage,
               onTap: () => unawaited(
                 _openRelease(context, ref, AppReleaseChannels.backendPageUrl),
               ),
@@ -150,6 +154,7 @@ Future<void> _openRelease(
   if (uri == null) {
     return;
   }
+  final l10n = appL10n(context);
   final opened = await ref.read(externalUrlOpenerProvider)(uri);
   if (opened || !context.mounted) {
     return;
@@ -158,7 +163,9 @@ Future<void> _openRelease(
   if (!context.mounted) {
     return;
   }
-  showToast(copied ? '无法打开浏览器，链接已复制' : '无法打开浏览器');
+  showToast(
+    copied ? l10n.shellBrowserOpenFailedCopied : l10n.shellBrowserOpenFailed,
+  );
 }
 
 class _ReleaseLink extends StatelessWidget {
@@ -169,11 +176,12 @@ class _ReleaseLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final spacing = context.appSpacing;
 
     return Semantics(
       link: true,
-      label: '打开$label',
+      label: l10n.shellOpenLink(label),
       // 提示块自身有不透明底色；透明 Material 让 ink 画在底色之上，
       // 否则 hover / 点击波纹会被盖住。
       child: Material(

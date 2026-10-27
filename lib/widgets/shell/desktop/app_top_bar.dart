@@ -11,6 +11,7 @@ import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/desktop_top_bar_config.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:sakuramedia/widgets/domain/search/catalog_search_field.dart';
 import 'package:sakuramedia/widgets/shell/desktop/app_sidebar_toggle_button.dart';
 import 'package:sakuramedia/widgets/shell/window/app_window_drag_area.dart';
@@ -108,6 +109,7 @@ class AppTopBar extends ConsumerWidget {
     const rightInset = AppPageInsets.desktop;
     final backButtonSlotWidth = config.isBackEnabled ? 40.0 : 0.0;
     final titleLeadingGap = config.isBackEnabled ? spacing.sm : 0.0;
+    final l10n = appL10n(context);
 
     return Row(
       children: [
@@ -120,7 +122,7 @@ class AppTopBar extends ConsumerWidget {
             width: backButtonSlotWidth,
             child: AppIconButton(
               key: const Key('topbar-back-button'),
-              tooltip: '返回',
+              tooltip: l10n.shellBack,
               onPressed: () => _handleBack(context),
               padding: EdgeInsets.zero,
               icon: Icon(
@@ -173,6 +175,7 @@ class AppTopBar extends ConsumerWidget {
     final spacing = context.appSpacing;
     const leftInset = AppPageInsets.desktop;
     const rightInset = AppPageInsets.desktop;
+    final l10n = appL10n(context);
 
     return Row(
       children: [
@@ -182,8 +185,8 @@ class AppTopBar extends ConsumerWidget {
             width: 40.0,
             child: AppIconButton(
               key: const Key('topbar-back-button'),
-              tooltip: '返回',
-              semanticLabel: '返回',
+              tooltip: l10n.shellBack,
+              semanticLabel: l10n.shellBack,
               onPressed: () => _handleBack(context),
               padding: EdgeInsets.zero,
               icon: Icon(
@@ -308,6 +311,7 @@ class _TopBarSearchEntryState extends ConsumerState<_TopBarSearchEntry> {
   }
 
   Future<void> _pickAndOpenImageSearch() async {
+    final l10n = appL10n(context);
     try {
       final pickedFile = await pickImageSearchFile();
       if (pickedFile == null || !mounted) {
@@ -325,13 +329,14 @@ class _TopBarSearchEntryState extends ConsumerState<_TopBarSearchEntry> {
       }
     } catch (_) {
       if (mounted) {
-        showToast('选择图片失败');
+        showToast(l10n.shellImagePickFailed);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     // 收起态不订阅能力状态，避免无关重建；展开时才决定是否显示图搜后缀。
     final imageSearchEnabled =
         _expanded && ref.watch(imageSearchEnabledProvider);
@@ -339,8 +344,10 @@ class _TopBarSearchEntryState extends ConsumerState<_TopBarSearchEntry> {
       width: _topBarActionSlotWidth,
       child: AppIconButton(
         key: const Key('topbar-search-button'),
-        tooltip: _expanded ? '收起搜索' : '搜索',
-        semanticLabel: _expanded ? '收起搜索' : '搜索',
+        tooltip: _expanded ? l10n.shellCollapseSearch : l10n.baseSearchHint,
+        semanticLabel: _expanded
+            ? l10n.shellCollapseSearch
+            : l10n.baseSearchHint,
         onPressed: _toggle,
         padding: EdgeInsets.zero,
         icon: Icon(
@@ -374,7 +381,7 @@ class _TopBarSearchEntryState extends ConsumerState<_TopBarSearchEntry> {
                   ),
                   controller: _controller,
                   focusNode: _focusNode,
-                  hintText: '如 SSNI-888、三上悠亚',
+                  hintText: l10n.shellSearchHintExample,
                   // 收紧到 34 高：tightSuffix 解除后缀 48px 热区下限后，
                   // 高度 = max(后缀按钮 28, 字高 14 + 2×10)。
                   tightSuffix: true,
@@ -425,6 +432,7 @@ class _TopBarRefreshButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final tokens = context.appComponentTokens;
     final iconSize = tokens.iconSizeSm;
 
@@ -460,7 +468,7 @@ class _TopBarRefreshButton extends StatelessWidget {
       width: _topBarActionSlotWidth,
       child: AppIconButton(
         key: const Key('topbar-refresh-button'),
-        tooltip: '刷新',
+        tooltip: l10n.commonRefresh,
         onPressed: onPressed,
         padding: EdgeInsets.zero,
         icon: Icon(

@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/features/media/presentation/media_browse_filter_state.dart';
@@ -31,10 +32,12 @@ class MediaBrowse extends _$MediaBrowse
   int get pageSize => 30;
 
   @override
-  String get initialLoadErrorText => '媒体列表加载失败，请稍后重试';
+  String get initialLoadErrorText =>
+      ref.read(appLocalizationsProvider).errorMediaListLoadFailed;
 
   @override
-  String get loadMoreErrorText => '加载更多媒体失败，请点击重试';
+  String get loadMoreErrorText =>
+      ref.read(appLocalizationsProvider).errorLoadMoreMediaFailed;
 
   @override
   PagedListState<MediaListItemDto> pagedOf(MediaBrowseState s) => s.paged;

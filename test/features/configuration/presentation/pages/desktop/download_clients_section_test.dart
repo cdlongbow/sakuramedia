@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/provider_catalog_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/download_clients_section.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
 
@@ -215,6 +216,12 @@ void main() {
           child: OKToast(
             child: MaterialApp(
               theme: sakuraThemeData,
+              locale: const Locale('zh'),
+              localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+                AppLocalizations.delegate,
+                ...GlobalMaterialLocalizations.delegates,
+              ],
+              supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
               home: const Scaffold(body: DownloadClientsSection(active: true)),
             ),
           ),
@@ -243,6 +250,12 @@ Future<void> _pumpDialog(
       child: OKToast(
         child: MaterialApp(
           theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           home: Scaffold(
             body: Builder(
               builder: (context) => ElevatedButton(

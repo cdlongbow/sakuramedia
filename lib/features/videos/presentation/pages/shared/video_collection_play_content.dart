@@ -15,10 +15,13 @@ import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
 import 'package:sakuramedia/features/image_search/presentation/actions/image_search_launcher.dart';
+import 'package:sakuramedia/features/videos/presentation/video_display_title.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -112,6 +115,7 @@ class _VideoCollectionPlayContentState
   }
 
   Future<void> _load() async {
+    final l10n = AppLocalizations.of(context);
     final handoff = ref.read(collectionPlaybackHandoffProvider);
     final collectionsApi = ref.read(videoCollectionsApiProvider);
     final mediaApi = ref.read(mediaApiProvider);
@@ -163,7 +167,7 @@ class _VideoCollectionPlayContentState
       if (playUrls.isEmpty) {
         setState(() {
           _isLoading = false;
-          _errorMessage = '合集内没有可播放的视频';
+          _errorMessage = l10n.videoCollectionNoPlayable;
         });
         return;
       }
@@ -212,6 +216,7 @@ class _VideoCollectionPlayContentState
       final playbackInfoController = MediaPlaybackInfoController(
         player: player,
         readApiClient: () => ref.read(apiClientProvider),
+        l10n: AppLocalizations.of(context),
       );
       setState(() {
         _videos = playableVideos;
@@ -236,7 +241,10 @@ class _VideoCollectionPlayContentState
       }
       setState(() {
         _isLoading = false;
-        _errorMessage = apiErrorMessage(error, fallback: '合集加载失败，请稍后重试');
+        _errorMessage = apiErrorMessage(
+          error,
+          fallback: l10n.videoCollectionsLoadFailed,
+        );
       });
     }
   }
@@ -263,7 +271,10 @@ class _VideoCollectionPlayContentState
         return;
       }
       setState(() {
-        _errorMessage = apiErrorMessage(error, fallback: '合集加载失败，请稍后重试');
+        _errorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(context).videoCollectionsLoadFailed,
+        );
       });
     }
   }
@@ -309,7 +320,9 @@ class _VideoCollectionPlayContentState
                             isOpen: true,
                             itemCount: _videos.length,
                             currentIndex: currentIndex,
-                            title: '选集 · ${_videos.length}',
+                            title: AppLocalizations.of(
+                              panelContext,
+                            ).videoEpisodePanelTitle(_videos.length),
                             onClose: () => Navigator.of(panelContext).pop(),
                             itemBuilder: (_, index) =>
                                 _buildEpisodeItem(panelContext, index),
@@ -373,10 +386,11 @@ class _VideoCollectionPlayContentState
   ) async {
     if (_episodeActionsOpen || _mutatingVideoId != null) return;
     _episodeActionsOpen = true;
+    final l10n = AppLocalizations.of(panelContext);
     try {
       final action = await showVideoCollectionEpisodeActions(
         context: panelContext,
-        title: video.preferredTitle,
+        title: video.displayTitle(l10n),
         presentation: presentation,
         position: position,
       );
@@ -384,14 +398,18 @@ class _VideoCollectionPlayContentState
       if (action == VideoCollectionEpisodeAction.delete) {
         await showVideoEpisodeDeleteConfirmation(
           context: panelContext,
-          title: video.preferredTitle,
+          title: video.displayTitle(l10n),
           onConfirm: () => _removeEpisode(video.id, deleteMedia: true),
         );
       } else {
         try {
           await _removeEpisode(video.id, deleteMedia: false);
         } catch (error) {
-          if (mounted) showToast(apiErrorMessage(error, fallback: '移出失败，请重试'));
+          if (mounted) {
+            showToast(
+              apiErrorMessage(error, fallback: l10n.videoRemoveFailed),
+            );
+          }
         }
       }
     } finally {
@@ -405,6 +423,7 @@ class _VideoCollectionPlayContentState
   }
 
   Future<void> _removeEpisode(int videoId, {required bool deleteMedia}) async {
+    final l10n = AppLocalizations.of(context);
     final index = _videos.indexWhere((video) => video.id == videoId);
     if (index < 0 || _mutatingVideoId != null) return;
     final videosApi = ref.read(videosApiProvider);
@@ -439,12 +458,18 @@ class _VideoCollectionPlayContentState
           _playUrls.removeAt(index);
         },
       );
-      if (mounted) showToast(deleteMedia ? '已删除选集及关联媒体' : '已移出合集，视频仍保留');
+      if (mounted) {
+        showToast(
+          deleteMedia
+              ? l10n.videoEpisodeDeleted
+              : l10n.videoEpisodeRemoved,
+        );
+      }
     } catch (error) {
       if (!committed) rethrow;
       if (mounted) {
         await player?.stop();
-        _errorMessage = '选集已更新，播放队列更新失败，请返回合集重新播放';
+        _errorMessage = l10n.videoEpisodeQueueUpdateFailed;
         showToast(_errorMessage!);
       }
     } finally {
@@ -463,10 +488,11 @@ class _VideoCollectionPlayContentState
   }
 
   String _currentVideoTitle() {
+    final l10n = AppLocalizations.of(context);
     if (currentIndex < 0 || currentIndex >= _videos.length) {
-      return '连播';
+      return l10n.videoContinuousPlayback;
     }
-    return _videos[currentIndex].preferredTitle;
+    return _videos[currentIndex].displayTitle(l10n);
   }
 
   /// 右键/长按「整部合集」某帧 → 弹与 JAV 播放器一致的图片菜单。
@@ -499,6 +525,7 @@ class _VideoCollectionPlayContentState
       globalPosition: globalPosition,
       items: buildImageActionMenuItems(
         buildMediaThumbnailActionDescriptors(
+          l10n: AppLocalizations.of(context),
           showSearchSimilar: ref.read(imageSearchEnabledProvider),
           thumbnail: thumbnail,
           point: point,
@@ -593,9 +620,16 @@ class _VideoCollectionPlayContentState
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const AppEmptyState(message: '合集内暂无可播放视频'),
+                    AppEmptyState(
+                      message: AppLocalizations.of(
+                        context,
+                      ).videoCollectionEmptyPlayable,
+                    ),
                     SizedBox(height: context.appSpacing.lg),
-                    AppButton(label: '返回合集', onPressed: _handleBack),
+                    AppButton(
+                      label: AppLocalizations.of(context).videoBackToCollection,
+                      onPressed: _handleBack,
+                    ),
                   ],
                 ),
               ),

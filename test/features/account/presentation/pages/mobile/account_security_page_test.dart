@@ -9,6 +9,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/account/presentation/pages/mobile/account_security_page.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/routes/app_router.dart';
 import 'package:sakuramedia/theme.dart';
@@ -585,6 +586,12 @@ Future<void> _pumpStandalonePage(WidgetTester tester) async {
       child: OKToast(
         child: MaterialApp(
           theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           home: const Scaffold(body: MobileAccountSecurityPage()),
         ),
       ),
@@ -602,7 +609,16 @@ Future<void> _pumpRouterApp(
     ProviderScope(
       overrides: _bundle.riverpodOverrides(),
       child: OKToast(
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          routerConfig: router,
+        ),
       ),
     ),
   );

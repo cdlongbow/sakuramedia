@@ -5,6 +5,7 @@ import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
@@ -27,8 +28,7 @@ Future<MediaClipDto?> showCreateClipDialog(
   return showDialog<MediaClipDto>(
     context: context,
     barrierDismissible: false,
-    builder:
-        (dialogContext) => CreateClipDialog(
+    builder: (dialogContext) => CreateClipDialog(
           mediaId: mediaId,
           movieNumber: movieNumber,
           startThumbnailId: startThumbnailId,
@@ -63,18 +63,33 @@ class CreateClipDialog extends ConsumerStatefulWidget {
 
 class _CreateClipDialogState extends ConsumerState<CreateClipDialog> {
   late final TextEditingController _titleController;
+  bool _defaultTitleInitialized = false;
   bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
+    _titleController = TextEditingController();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_defaultTitleInitialized) {
+      return;
+    }
+    _defaultTitleInitialized = true;
     // 默认标题采用「番号-切片时长」格式，例如 SSNI-888-3分48秒，用户可继续编辑。
     final duration = (widget.endSeconds - widget.startSeconds).abs();
     final number = widget.movieNumber.trim();
-    final durationLabel = formatMediaDurationLabel(duration);
-    final defaultTitle =
-        number.isEmpty ? durationLabel : '$number-$durationLabel';
-    _titleController = TextEditingController(text: defaultTitle);
+    final durationLabel = formatMediaDurationLabel(
+      duration,
+      l10n: AppLocalizations.of(context),
+    );
+    final defaultTitle = number.isEmpty
+        ? durationLabel
+        : '$number-$durationLabel';
+    _titleController.text = defaultTitle;
   }
 
   @override
@@ -85,13 +100,12 @@ class _CreateClipDialogState extends ConsumerState<CreateClipDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
-    final lo =
-        widget.startSeconds < widget.endSeconds
+    final lo = widget.startSeconds < widget.endSeconds
             ? widget.startSeconds
             : widget.endSeconds;
-    final hi =
-        widget.startSeconds < widget.endSeconds
+    final hi = widget.startSeconds < widget.endSeconds
             ? widget.endSeconds
             : widget.startSeconds;
     final duration = hi - lo;
@@ -103,7 +117,7 @@ class _CreateClipDialogState extends ConsumerState<CreateClipDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '新建切片',
+            l10n.clipCreateTitle,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s16,
@@ -113,8 +127,11 @@ class _CreateClipDialogState extends ConsumerState<CreateClipDialog> {
           ),
           SizedBox(height: spacing.sm),
           Text(
-            '${formatMediaTimecode(lo)} – ${formatMediaTimecode(hi)} · '
-            '时长 ${formatMediaTimecode(duration)}',
+            l10n.clipCreateRangeLabel(
+              formatMediaTimecode(lo),
+              formatMediaTimecode(hi),
+              formatMediaTimecode(duration),
+            ),
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -126,12 +143,12 @@ class _CreateClipDialogState extends ConsumerState<CreateClipDialog> {
           AppTextField(
             fieldKey: const Key('create-clip-title-field'),
             controller: _titleController,
-            hintText: '切片标题（可选）',
+            hintText: l10n.clipCreateTitleHint,
             enabled: !_isSubmitting,
           ),
           SizedBox(height: spacing.sm),
           Text(
-            '切片由服务器同步生成，较长区间可能需要等待。',
+            l10n.clipCreateNotice,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -144,16 +161,17 @@ class _CreateClipDialogState extends ConsumerState<CreateClipDialog> {
             children: [
               Expanded(
                 child: AppButton(
-                  label: '取消',
-                  onPressed:
-                      _isSubmitting ? null : () => Navigator.of(context).pop(),
+                  label: l10n.commonCancel,
+                  onPressed: _isSubmitting
+                      ? null
+                      : () => Navigator.of(context).pop(),
                 ),
               ),
               SizedBox(width: spacing.md),
               Expanded(
                 child: AppButton(
                   key: const Key('create-clip-submit-button'),
-                  label: '创建',
+                  label: l10n.clipCreateAction,
                   variant: AppButtonVariant.primary,
                   isLoading: _isSubmitting,
                   onPressed: _submit,
@@ -170,6 +188,7 @@ class _CreateClipDialogState extends ConsumerState<CreateClipDialog> {
     if (_isSubmitting) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _isSubmitting = true;
     });
@@ -188,7 +207,7 @@ class _CreateClipDialogState extends ConsumerState<CreateClipDialog> {
       Navigator.of(context).pop(clip);
     } catch (error) {
       final isTimeout = _isTimeout(error);
-      showToast(_clipErrorMessage(error));
+      showToast(_clipErrorMessage(error, l10n));
       if (!mounted) {
         return;
       }
@@ -210,21 +229,25 @@ bool _isTimeout(Object error) {
       error.transportFailureKind == ApiTransportFailureKind.timeout;
 }
 
-String _clipErrorMessage(Object error) {
+String _clipErrorMessage(Object error, AppLocalizations l10n) {
   if (error is ApiException) {
     if (error.transportFailureKind == ApiTransportFailureKind.timeout) {
-      return '切片耗时较长，请稍后在「我的切片」查看';
+      return l10n.clipCreateTimeout;
     }
     switch (error.error?.code) {
       case 'media_clip_too_long':
-        return '区间过长（最长 15 分钟）';
+        return l10n.clipCreateRangeTooLong;
       case 'media_clip_invalid_range':
-        return '请选择不同的起止点';
+        return l10n.clipCreateInvalidRange;
       case 'media_clip_generation_failed':
-        return '切片失败，请重试';
+        return l10n.clipCreateFailed;
       case 'media_thumbnail_not_found':
-        return '缩略图已失效，请重新选择';
+        return l10n.clipCreateThumbnailExpired;
     }
   }
-  return apiErrorMessage(error, fallback: '创建切片失败，请重试');
+  return apiErrorMessage(
+    error,
+    fallback: l10n.clipCreateFailedFallback,
+    l10n: l10n,
+  );
 }

@@ -6,9 +6,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/media/media_playback_info_button.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 class _Player extends PlatformPlayer {
   _Player() : super(configuration: const PlayerConfiguration());
@@ -58,6 +61,12 @@ void main() {
         ProviderScope(
           overrides: [apiClientProvider.overrideWithValue(api)],
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraThemeData,
             home: Scaffold(body: MediaPlaybackInfoButton(player: player)),
           ),
@@ -100,6 +109,12 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             navigatorKey: navigator,
             theme: sakuraThemeData,
             home: const Scaffold(body: Text('window')),
@@ -145,6 +160,12 @@ void main() {
         ProviderScope(
           overrides: [apiClientProvider.overrideWithValue(api)],
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraThemeData,
             home: Scaffold(
               body: StatefulBuilder(
@@ -196,6 +217,7 @@ void main() {
     final infoController = MediaPlaybackInfoController(
       player: player,
       readApiClient: _Api.new,
+      l10n: AppLocalizationsZh(),
     );
     addTearDown(infoController.dispose);
     native.select('https://backend/media-clips/4/stream');
@@ -205,6 +227,12 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           home: Scaffold(
             body: Row(

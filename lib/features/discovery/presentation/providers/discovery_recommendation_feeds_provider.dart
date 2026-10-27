@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/discovery/data/daily_recommendation_movie_dto.dart';
 import 'package:sakuramedia/features/discovery/data/hot_actress_release_movie_dto.dart';
@@ -27,10 +28,12 @@ class DailyRecommendationFeed extends _$DailyRecommendationFeed
   int get pageSize => itemsPerPage;
 
   @override
-  String get initialLoadErrorText => '推荐影片加载失败，请稍后重试';
+  String get initialLoadErrorText =>
+      ref.read(appLocalizationsProvider).errorRecommendedMovieLoadFailed;
 
   @override
-  String get loadMoreErrorText => '加载更多推荐影片失败，请点击重试';
+  String get loadMoreErrorText =>
+      ref.read(appLocalizationsProvider).errorLoadMoreRecommendedMoviesFailed;
 
   @override
   PagedListState<DailyRecommendationMovieDto> pagedOf(
@@ -71,10 +74,12 @@ class HotActressReleaseFeed extends _$HotActressReleaseFeed
   int get pageSize => itemsPerPage;
 
   @override
-  String get initialLoadErrorText => '热门新片加载失败，请稍后重试';
+  String get initialLoadErrorText =>
+      ref.read(appLocalizationsProvider).errorHotNewMovieLoadFailed;
 
   @override
-  String get loadMoreErrorText => '加载更多热门新片失败，请点击重试';
+  String get loadMoreErrorText =>
+      ref.read(appLocalizationsProvider).errorLoadMoreHotNewMoviesFailed;
 
   @override
   PagedListState<HotActressReleaseMovieDto> pagedOf(
@@ -128,10 +133,12 @@ class MomentRecommendationFeed extends _$MomentRecommendationFeed
   int get pageSize => itemsPerPage;
 
   @override
-  String get initialLoadErrorText => '推荐时刻加载失败，请稍后重试';
+  String get initialLoadErrorText =>
+      ref.read(appLocalizationsProvider).errorRecommendedMomentLoadFailed;
 
   @override
-  String get loadMoreErrorText => '加载更多推荐时刻失败，请点击重试';
+  String get loadMoreErrorText =>
+      ref.read(appLocalizationsProvider).errorLoadMoreRecommendedMomentsFailed;
 
   @override
   PagedListState<MomentRecommendationDto> pagedOf(

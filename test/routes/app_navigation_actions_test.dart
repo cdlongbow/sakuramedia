@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sakuramedia/features/downloads/presentation/pages/mobile/download_tasks_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_player_page.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/desktop_navigation_route_state.dart';
 import 'package:sakuramedia/routes/desktop_routes.dart';
@@ -80,7 +81,14 @@ void main() {
     );
     addTearDown(router.dispose);
 
-    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpWidget(MaterialApp.router(
+      locale: const Locale('zh'),
+      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+      routerConfig: router));
 
     Future<void> resetToHome() async {
       router.go('/home');
@@ -195,7 +203,14 @@ void main() {
       );
       addTearDown(router.dispose);
 
-      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpWidget(MaterialApp.router(
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        routerConfig: router));
 
       actionContext.pushDesktopSearch(
         query: '',
@@ -247,7 +262,14 @@ void main() {
       );
       addTearDown(router.dispose);
 
-      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpWidget(MaterialApp.router(
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        routerConfig: router));
       final route = const DesktopMoviePlayerRouteData(movieNumber: 'ABC-001');
 
       router.go(
@@ -301,7 +323,14 @@ void main() {
     );
     addTearDown(router.dispose);
 
-    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpWidget(MaterialApp.router(
+      locale: const Locale('zh'),
+      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+      routerConfig: router));
     actionContext.goMobileDownloadTasks(movieNumber: 'SSIS-801');
     await tester.pumpAndSettle();
 
@@ -336,7 +365,14 @@ void main() {
     );
     addTearDown(router.dispose);
 
-    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpWidget(MaterialApp.router(
+      locale: const Locale('zh'),
+      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+      routerConfig: router));
     final page = const MobileDownloadTasksRouteData(
       downloadMovieNumber: 'SSIS-801',
     ).buildSubpage(routeContext, routeState);

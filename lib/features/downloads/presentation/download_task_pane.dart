@@ -36,6 +36,7 @@ import 'package:sakuramedia/widgets/base/interaction/selection/selection_check_b
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_left_cover_card.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -133,17 +134,18 @@ Widget _buildManualAddAction(
   VoidCallback onManualAdd, {
   required bool isMobile,
 }) {
+  final l10n = AppLocalizations.of(context);
   if (isMobile) {
     return AppIconButton(
       key: const Key('download-tasks-manual-add'),
-      tooltip: '手动添加下载',
+      tooltip: l10n.downloadManualAddTitle,
       icon: const Icon(Icons.add_rounded),
       onPressed: onManualAdd,
     );
   }
   return AppButton(
     key: const Key('download-tasks-manual-add'),
-    label: '手动添加',
+    label: l10n.downloadManualAddAction,
     icon: const Icon(Icons.add_rounded),
     size: AppButtonSize.small,
     variant: AppButtonVariant.primary,
@@ -188,13 +190,16 @@ class _DesktopSelectionHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final notifier = ref.read(downloadTaskCenterProvider.notifier);
     final allSelected = loadedCount > 0 && selectionCount >= loadedCount;
     return AppSelectionHeaderToolbar(
       key: const Key('download-tasks-selection-header'),
-      countLabel: '已选 $selectionCount 个',
+      countLabel: l10n.downloadSelectionCount(selectionCount),
       countKey: const Key('download-tasks-selection-count'),
-      selectAllLabel: allSelected ? '取消全选' : '全选（$loadedCount）',
+      selectAllLabel: allSelected
+          ? l10n.downloadSelectionClearAll
+          : l10n.downloadSelectionSelectAll(loadedCount),
       selectAllKey: const Key('download-tasks-select-all-button'),
       onToggleAll: loadedCount == 0 ? null : notifier.toggleSelectAllLoaded,
       exitKey: const Key('download-tasks-selection-exit'),
@@ -224,17 +229,20 @@ class _MobileSelectionHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final notifier = ref.read(downloadTaskCenterProvider.notifier);
     final allSelected = loadedCount > 0 && selectionCount >= loadedCount;
     return AppListHeader.selection(
       key: const Key('download-tasks-selection-header'),
-      selectionLabel: '已选 $selectionCount 个',
+      selectionLabel: l10n.downloadSelectionCount(selectionCount),
       selectionExitButtonKey: const Key('download-tasks-selection-exit'),
       onExitSelection: notifier.exitSelectionMode,
       actionSlots: <Widget>[
         AppTextButton(
           key: const Key('download-tasks-select-all-button'),
-          label: allSelected ? '取消全选' : '全选（$loadedCount）',
+          label: allSelected
+              ? l10n.downloadSelectionClearAll
+              : l10n.downloadSelectionSelectAll(loadedCount),
           size: AppTextButtonSize.small,
           onPressed: loadedCount == 0 ? null : notifier.toggleSelectAllLoaded,
         ),
@@ -266,12 +274,13 @@ Widget _buildBatchDeleteButton(
   int selectionCount, {
   AppButtonSize size = AppButtonSize.medium,
 }) {
+  final l10n = AppLocalizations.of(context);
   final submitting = watchBatchOperationSubmitting(ref, const [
     BatchOperationType.downloadTaskDelete,
   ]);
   return AppButton(
     key: const Key('download-tasks-batch-delete-button'),
-    label: '删除所选（$selectionCount）',
+    label: l10n.downloadSelectionDelete(selectionCount),
     size: size,
     variant: AppButtonVariant.danger,
     icon: const Icon(Icons.delete_outline_rounded),
@@ -417,9 +426,14 @@ class _DownloadTasksBodySliver extends ConsumerWidget {
       );
     }
     if (body.hasError && !body.hasValue) {
+      final l10n = AppLocalizations.of(context);
       return SliverToBoxAdapter(
         child: AppEmptyState(
-          message: apiErrorMessage(body.error!, fallback: '下载任务加载失败，请稍后重试'),
+          message: apiErrorMessage(
+            body.error!,
+            fallback: l10n.errorDownloadTaskLoadFailed,
+            l10n: l10n,
+          ),
           onRetry: () => ref.invalidate(downloadTaskCenterProvider),
         ),
       );
@@ -436,12 +450,13 @@ class _DownloadTasksBodySliver extends ConsumerWidget {
       }
       // 独立下载页默认只看「下载中」：空态必须给一个出口，否则只有已完成任务的
       // 用户会以为列表是空的。
+      final l10n = AppLocalizations.of(context);
       final hasFilter =
           body.stateFilter != DownloadTaskStateFilter.all ||
           body.hasSearchOrClientFilter;
       return SliverToBoxAdapter(
         child: AppEmptyState(
-          message: hasFilter ? '没有符合筛选条件的下载任务' : '暂无下载任务',
+          message: hasFilter ? l10n.downloadEmptyFiltered : l10n.downloadEmpty,
           icon: hasFilter ? Icons.search_off_rounded : Icons.download_outlined,
           onRetry: hasFilter
               ? () => unawaited(
@@ -454,7 +469,9 @@ class _DownloadTasksBodySliver extends ConsumerWidget {
                       ),
                 )
               : onManualAdd,
-          retryLabel: hasFilter ? '查看全部任务' : '手动添加',
+          retryLabel: hasFilter
+              ? l10n.downloadViewAllTasks
+              : l10n.downloadManualAddAction,
           retryKey: hasFilter
               ? const Key('download-empty-view-all')
               : const Key('download-empty-manual-add'),
@@ -482,6 +499,7 @@ class _DownloadTaskCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final taskId = row.task.id;
     // 行内数据独立订阅：进度 tick 只重建本行，不重建整个列表。
     // 首屏骨架的占位行在 provider 无 value 时回退到传入的 row。
@@ -502,9 +520,7 @@ class _DownloadTaskCard extends ConsumerWidget {
     final task = liveRow?.task ?? row.task;
     final clientName = ref.watch(
       downloadTaskCenterProvider.select(
-        (asyncState) =>
-            asyncState.value?.clientNameOf(task.clientId) ??
-            '客户端 #${task.clientId}',
+        (asyncState) => asyncState.value?.clientNames[task.clientId],
       ),
     );
     final colors = context.appColors;
@@ -601,7 +617,7 @@ class _DownloadTaskCard extends ConsumerWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 AppBadge(
-                  label: _labelForDownloadState(taskState),
+                  label: _labelForDownloadState(taskState, l10n),
                   tone: _toneForDownloadState(taskState),
                   size: AppBadgeSize.compact,
                 ),
@@ -617,6 +633,7 @@ class _DownloadTaskCard extends ConsumerWidget {
                       label: _shortImportLabel(
                         task.importStatus,
                         fallback: task.importStatusLabel,
+                        l10n: l10n,
                       ),
                       tone: _toneForImportStatus(task.importStatus),
                       size: AppBadgeSize.compact,
@@ -634,10 +651,16 @@ class _DownloadTaskCard extends ConsumerWidget {
                     runSpacing: context.appSpacing.xs,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Text(clientName, style: _footnoteTextStyle(context)),
+                      Text(
+                        clientName ??
+                            l10n.downloadClientFallbackName(task.clientId),
+                        style: _footnoteTextStyle(context),
+                      ),
                       if (formatUpdatedAtLabel(task.createdAt) != null)
                         Text(
-                          '创建 ${formatUpdatedAtLabel(task.createdAt)}',
+                          l10n.downloadCreatedAt(
+                            formatUpdatedAtLabel(task.createdAt)!,
+                          ),
                           style: _footnoteTextStyle(context),
                         ),
                     ],
@@ -647,7 +670,7 @@ class _DownloadTaskCard extends ConsumerWidget {
                   AppIconButton(
                     key: Key('download-task-files-${task.id}'),
                     icon: const Icon(Icons.folder_open_rounded),
-                    tooltip: '查看文件',
+                    tooltip: l10n.downloadViewFiles,
                     onPressed: () => showDownloadTaskFilesDialog(
                       context: context,
                       taskId: task.id,
@@ -661,7 +684,7 @@ class _DownloadTaskCard extends ConsumerWidget {
                   AppIconButton(
                     key: Key('download-task-retrigger-import-${task.id}'),
                     icon: const Icon(Icons.refresh_rounded),
-                    tooltip: '重新导入',
+                    tooltip: l10n.downloadRetriggerImport,
                     onPressed: isPending
                         ? null
                         : () =>
@@ -673,7 +696,9 @@ class _DownloadTaskCard extends ConsumerWidget {
                   AppIconButton(
                     key: Key('download-task-delete-${task.id}'),
                     icon: const Icon(Icons.delete_outline_rounded),
-                    tooltip: isImportRunning ? '任务正在导入，无法删除' : '删除',
+                    tooltip: isImportRunning
+                        ? l10n.downloadDeleteBlockedImporting
+                        : l10n.commonDelete,
                     onPressed: (isPending || isImportRunning)
                         ? null
                         : () => unawaited(_deleteTask(context, ref, task)),
@@ -726,13 +751,17 @@ Color _progressBarColor(BuildContext context, String state) {
 /// 导入状态短标签映射。后端 `describe_import_status` 里的完整中文（如
 /// "已导入：媒体文件全部成功入库"）在 badge 上过长；这里给出 4 字内的短版，
 /// 完整文案通过 Tooltip 保留在 hover 里。
-String _shortImportLabel(String status, {required String fallback}) {
+String _shortImportLabel(
+  String status, {
+  required String fallback,
+  required AppLocalizations l10n,
+}) {
   return switch (status) {
-    'pending' => '待导入',
-    'running' => '导入中',
-    'completed' => '已导入',
-    'failed' => '导入失败',
-    'skipped' => '已跳过',
+    'pending' => l10n.downloadImportStatusPending,
+    'running' => l10n.downloadImportStatusRunning,
+    'completed' => l10n.downloadImportStatusCompleted,
+    'failed' => l10n.downloadImportStatusFailed,
+    'skipped' => l10n.downloadImportStatusSkipped,
     _ => fallback,
   };
 }
@@ -744,10 +773,19 @@ Future<void> _triggerImport(
 ) async {
   try {
     await ref.read(downloadTaskCenterProvider.notifier).triggerImport(taskId);
-    if (context.mounted) showToast('已提交导入任务');
+    if (context.mounted) {
+      showToast(AppLocalizations.of(context).downloadImportSubmitted);
+    }
   } catch (error) {
     if (context.mounted) {
-      showToast(apiErrorMessage(error, fallback: '提交导入失败，请稍后重试'));
+      final l10n = AppLocalizations.of(context);
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: l10n.downloadImportSubmitFailed,
+          l10n: l10n,
+        ),
+      );
     }
   }
 }
@@ -786,7 +824,9 @@ class _DownloadTaskCover extends StatelessWidget {
     } else {
       content = Semantics(
         button: true,
-        label: '查看影片详情：${movieNumber ?? ''}',
+        label: AppLocalizations.of(
+          context,
+        ).downloadViewMovieDetails(movieNumber ?? ''),
         child: Material(
           color: Colors.transparent,
           child: AppInteractiveSurface(
@@ -813,13 +853,13 @@ class _DownloadTaskCover extends StatelessWidget {
   }
 }
 
-String _labelForDownloadState(String state) {
+String _labelForDownloadState(String state, AppLocalizations l10n) {
   return switch (state) {
-    'downloading' => '下载中',
-    'queued' => '排队中',
-    'completed' => '已完成',
-    'failed' => '失败',
-    _ => state.isEmpty ? '未知' : state,
+    'downloading' => l10n.downloadStateDownloading,
+    'queued' => l10n.downloadStateQueued,
+    'completed' => l10n.downloadStateCompleted,
+    'failed' => l10n.downloadStateFailed,
+    _ => state.isEmpty ? l10n.commonUnknown : state,
   };
 }
 
@@ -902,6 +942,7 @@ class _DesktopDownloadFilterBar extends HookConsumerWidget {
       return null;
     }, [filter.search]);
 
+    final l10n = AppLocalizations.of(context);
     final layoutTokens = context.appLayoutTokens;
     final filterTextStyle = resolveAppTextStyle(
       context,
@@ -926,7 +967,7 @@ class _DesktopDownloadFilterBar extends HookConsumerWidget {
           child: AppTextField(
             fieldKey: const Key('download-filter-search'),
             controller: searchController,
-            hintText: '按番号搜索',
+            hintText: l10n.downloadSearchByMovieNumber,
             textInputAction: TextInputAction.search,
             onFieldSubmitted: submitSearch,
             enabled: true,
@@ -943,7 +984,7 @@ class _DesktopDownloadFilterBar extends HookConsumerWidget {
                 .map(
                   (value) => DropdownMenuItem<DownloadTaskStateFilter>(
                     value: value,
-                    child: Text(value.label),
+                    child: Text(value.label(l10n)),
                   ),
                 )
                 .toList(growable: false),
@@ -965,7 +1006,10 @@ class _DesktopDownloadFilterBar extends HookConsumerWidget {
               size: AppSelectFieldSize.compact,
               textStyle: filterTextStyle,
               items: <DropdownMenuItem<int?>>[
-                const DropdownMenuItem<int?>(value: null, child: Text('全部客户端')),
+                DropdownMenuItem<int?>(
+                  value: null,
+                  child: Text(l10n.downloadFilterAllClients),
+                ),
                 for (final option in clientOptions)
                   DropdownMenuItem<int?>(
                     value: option.id,
@@ -997,12 +1041,13 @@ class _MobileDownloadFilterEntry extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final isSelected = !filter.isDefault;
     return Row(
       children: [
         Expanded(
           child: Text(
-            _downloadFilterSummary(filter, clientOptions),
+            _downloadFilterSummary(filter, clientOptions, l10n),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: resolveAppTextStyle(
@@ -1027,7 +1072,9 @@ class _MobileDownloadFilterEntry extends ConsumerWidget {
         SizedBox(width: context.appSpacing.sm),
         AppButton(
           key: const Key('mobile-download-filter-button'),
-          label: isSelected ? '已筛选' : '筛选',
+          label: isSelected
+              ? l10n.downloadFilterApplied
+              : l10n.downloadFilterAction,
           icon: const Icon(Icons.tune_rounded),
           size: AppButtonSize.small,
           isSelected: isSelected,
@@ -1104,6 +1151,7 @@ class _MobileDownloadFilterDrawerContentState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppMobileFilterDrawerScaffold(
       scrollViewKey: const Key('mobile-download-filter-scroll-view'),
       footer: AppFilterPanelFooter(
@@ -1117,7 +1165,7 @@ class _MobileDownloadFilterDrawerContentState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            '筛选下载任务',
+            l10n.downloadFilterTitle,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s18,
@@ -1129,8 +1177,8 @@ class _MobileDownloadFilterDrawerContentState
           AppTextField(
             fieldKey: const Key('mobile-download-filter-search'),
             controller: _searchController,
-            label: '番号',
-            hintText: '按番号搜索',
+            label: l10n.downloadMovieNumberLabel,
+            hintText: l10n.downloadSearchByMovieNumber,
             textInputAction: TextInputAction.search,
             onFieldSubmitted: (value) =>
                 _apply(_local.copyWith(search: value.trim())),
@@ -1138,13 +1186,13 @@ class _MobileDownloadFilterDrawerContentState
           SizedBox(height: context.appSpacing.md),
           AppSelectField<DownloadTaskStateFilter>(
             key: const Key('mobile-download-filter-state'),
-            label: '下载状态',
+            label: l10n.downloadStateFilterLabel,
             value: _local.stateFilter,
             items: DownloadTaskStateFilter.values
                 .map(
                   (value) => DropdownMenuItem<DownloadTaskStateFilter>(
                     value: value,
-                    child: Text(value.label),
+                    child: Text(value.label(l10n)),
                   ),
                 )
                 .toList(growable: false),
@@ -1158,10 +1206,13 @@ class _MobileDownloadFilterDrawerContentState
             SizedBox(height: context.appSpacing.md),
             AppSelectField<int?>(
               key: const Key('mobile-download-filter-client'),
-              label: '下载客户端',
+              label: l10n.downloadClientFilterLabel,
               value: _local.clientId,
               items: <DropdownMenuItem<int?>>[
-                const DropdownMenuItem<int?>(value: null, child: Text('全部客户端')),
+                DropdownMenuItem<int?>(
+                  value: null,
+                  child: Text(l10n.downloadFilterAllClients),
+                ),
                 for (final option in widget.clientOptions)
                   DropdownMenuItem<int?>(
                     value: option.id,
@@ -1180,15 +1231,18 @@ class _MobileDownloadFilterDrawerContentState
 String _downloadFilterSummary(
   DownloadTaskFilterState filter,
   List<DownloadClientOption> clientOptions,
+  AppLocalizations l10n,
 ) {
-  final values = <String>[filter.stateFilter.label];
+  final values = <String>[filter.stateFilter.label(l10n)];
   if (filter.normalizedSearch.isNotEmpty) {
     values.add(filter.normalizedSearch);
   }
   final clientId = filter.clientId;
   if (clientId != null) {
     final client = clientOptions.where((item) => item.id == clientId);
-    values.add(client.isEmpty ? '指定客户端' : client.first.name);
+    values.add(
+      client.isEmpty ? l10n.downloadFilterClientSpecified : client.first.name,
+    );
   }
   return values.join(' · ');
 }

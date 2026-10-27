@@ -49,13 +49,9 @@ class VideoItemDetailDto {
   final DateTime? updatedAt;
   final List<MovieMediaItemDto> mediaItems;
 
-  String get preferredTitle {
-    final resolved = title.trim();
-    if (resolved.isNotEmpty) {
-      return resolved;
-    }
-    return '未命名视频';
-  }
+  /// 详情标题：只做 trim。空标题的兜底文案在展示层用语言包补
+  /// （见 `videoDisplayTitle`），数据层不持有用户可见文案。
+  String get preferredTitle => title.trim();
 
   /// 详情转列表项，便于在列表/合集等位置复用已加载的概要信息。
   VideoItemListItemDto toListItem() {

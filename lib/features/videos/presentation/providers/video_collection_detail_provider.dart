@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
-import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/optimistic_patch_mixin.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
@@ -10,6 +9,7 @@ import 'package:sakuramedia/features/videos/presentation/controllers/listing/vid
 import 'package:sakuramedia/features/videos/presentation/providers/video_collection_detail_state.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_collection_sort.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 
 part 'video_collection_detail_provider.g.dart';
 
@@ -172,7 +172,12 @@ class VideoCollectionDetail extends _$VideoCollectionDetail
       state = AsyncData(
         now.copyWith(
           filterUpdate: FilterUpdateState.failed(
-            apiErrorMessage(error, fallback: '筛选结果更新失败，请重试'),
+            ref.apiErrorMessage(
+              error,
+              fallback: ref
+                  .read(appLocalizationsProvider)
+                  .errorFilterUpdateFailed,
+            ),
           ),
         ),
       );
@@ -200,7 +205,10 @@ class VideoCollectionDetail extends _$VideoCollectionDetail
         },
       );
     } catch (error) {
-      return apiErrorMessage(error, fallback: '移除失败，请重试');
+      return ref.apiErrorMessage(
+        error,
+        fallback: ref.read(appLocalizationsProvider).errorRemoveFailed,
+      );
     }
   }
 

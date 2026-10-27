@@ -1,9 +1,10 @@
 import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_subscription_mutation_mixin.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/rankings/data/ranked_movie_list_item_dto.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_board_dto.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_sort.dart';
@@ -45,10 +46,12 @@ class RankingSummary extends _$RankingSummary
   int get pageSize => 24;
 
   @override
-  String get initialLoadErrorText => '排行榜加载失败，请稍后重试';
+  String get initialLoadErrorText =>
+      ref.read(appLocalizationsProvider).errorRankingLoadFailed;
 
   @override
-  String get loadMoreErrorText => '加载更多失败，请点击重试';
+  String get loadMoreErrorText =>
+      ref.read(appLocalizationsProvider).errorLoadMoreFailed;
 
   @override
   PagedListState<RankedMovieListItemDto> pagedOf(RankingSummaryState state) =>
@@ -157,7 +160,8 @@ class RankingSummary extends _$RankingSummary
           initialErrorMessage: null,
           paged: current.paged.copyWith(
             filterUpdate: FilterUpdateState.failed(
-              filters.errorMessage ?? '排行榜筛选加载失败，请稍后重试',
+              filters.errorMessage ??
+                  ref.read(appLocalizationsProvider).errorRankingFilterLoadFailed,
             ),
           ),
         ),
@@ -247,7 +251,12 @@ class RankingSummary extends _$RankingSummary
       }
       final current = state.value;
       if (current == null) return;
-      final message = apiErrorMessage(error, fallback: '排行榜筛选加载失败，请稍后重试');
+      final message = ref.apiErrorMessage(
+        error,
+        fallback: ref
+            .read(appLocalizationsProvider)
+            .errorRankingFilterLoadFailed,
+      );
       state = AsyncData(
         current.copyWith(
           filters: current.filters.copyWith(
@@ -378,7 +387,12 @@ class RankingSummary extends _$RankingSummary
     } catch (error) {
       return previous.copyWith(
         isLoading: false,
-        errorMessage: apiErrorMessage(error, fallback: '排行榜筛选加载失败，请稍后重试'),
+        errorMessage: ref.apiErrorMessage(
+          error,
+          fallback: ref
+              .read(appLocalizationsProvider)
+              .errorRankingFilterLoadFailed,
+        ),
       );
     }
   }
@@ -437,10 +451,7 @@ class RankingSummary extends _$RankingSummary
       }
       final currentAfter = state.value ?? current;
       state = AsyncData(
-        currentAfter.copyWith(
-          paged: paged,
-          initialErrorMessage: null,
-        ),
+        currentAfter.copyWith(paged: paged, initialErrorMessage: null),
       );
     } catch (error) {
       if (isDisposed || !_filterRequests.isCurrent(requestId)) {
@@ -452,7 +463,12 @@ class RankingSummary extends _$RankingSummary
           initialErrorMessage: null,
           paged: currentAfter.paged.copyWith(
             filterUpdate: FilterUpdateState.failed(
-              apiErrorMessage(error, fallback: '筛选结果更新失败，请重试'),
+              ref.apiErrorMessage(
+                error,
+                fallback: ref
+                    .read(appLocalizationsProvider)
+                    .errorFilterUpdateFailed,
+              ),
             ),
           ),
         ),

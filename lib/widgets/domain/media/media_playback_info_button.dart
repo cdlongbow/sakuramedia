@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_mobile_drawers.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_native_stats_sampler.dart';
@@ -17,17 +18,21 @@ class MediaPlaybackInfoController {
   MediaPlaybackInfoController({
     required Player player,
     required ApiClient Function() readApiClient,
+    required AppLocalizations l10n,
   }) : _player = player,
        _readApiClient = readApiClient,
+       _l10n = l10n,
        _sampler = MoviePlayerNativeStatsSampler(
          readNativeProperty: createMediaKitNativePropertyReader(player),
          originalUrl: '',
+         l10n: l10n,
        ) {
     _attach();
   }
 
   final Player _player;
   final ApiClient Function() _readApiClient;
+  final AppLocalizations _l10n;
   final MoviePlayerNativeStatsSampler _sampler;
   final _subscriptions = <StreamSubscription<dynamic>>[];
   String? _activeUrl;
@@ -67,11 +72,11 @@ class MediaPlaybackInfoController {
     final generation = ++_generation;
     _sampler.reset();
     _sampler.updateContext(originalUrl: url);
-    _sampler.updatePlaybackModeLabel('未确认');
+    _sampler.updatePlaybackModeLabel(_l10n.widgetMediaPlaybackModeUnknown);
     final uri = Uri.tryParse(url);
     if (uri == null) return;
     if (RegExp(r'/media-clips/\d+/stream$').hasMatch(uri.path)) {
-      _sampler.updatePlaybackModeLabel('后端代理');
+      _sampler.updatePlaybackModeLabel(_l10n.widgetMediaPlaybackModeProxy);
       return;
     }
     final attemptId = uri.queryParameters['playback_attempt_id'];
@@ -92,8 +97,8 @@ class MediaPlaybackInfoController {
         );
         if (_isDisposed || generation != _generation) return;
         final label = switch (response['mode']) {
-          'direct' => '直连',
-          'proxy' => '后端代理',
+          'direct' => _l10n.widgetMediaPlaybackModeDirect,
+          'proxy' => _l10n.widgetMediaPlaybackModeProxy,
           _ => null,
         };
         if (label != null) {
@@ -162,7 +167,7 @@ class MediaPlaybackInfoButton extends StatelessWidget {
     onPressed: () => unawaited(
       showGeneralDialog<void>(
         context: context,
-        barrierLabel: '关闭播放信息',
+        barrierLabel: AppLocalizations.of(context).widgetMediaPlaybackInfoDismiss,
         barrierDismissible: true,
         barrierColor: Colors.transparent,
         pageBuilder: (_, __, ___) => _MediaPlaybackInfoDialog(player: player),
@@ -184,20 +189,21 @@ class _MediaPlaybackInfoDialog extends ConsumerStatefulWidget {
 
 class _MediaPlaybackInfoDialogState
     extends ConsumerState<_MediaPlaybackInfoDialog> {
-  late final MediaPlaybackInfoController _controller;
+  MediaPlaybackInfoController? _controller;
 
   @override
-  void initState() {
-    super.initState();
-    _controller = MediaPlaybackInfoController(
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _controller ??= MediaPlaybackInfoController(
       player: widget.player,
       readApiClient: () => ref.read(apiClientProvider),
+      l10n: AppLocalizations.of(context),
     );
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
@@ -211,7 +217,7 @@ class _MediaPlaybackInfoDialogState
           context: context,
           isOpen: true,
           onDismiss: () => Navigator.of(context).pop(),
-          infoListenable: _controller._sampler.snapshot,
+          infoListenable: _controller!._sampler.snapshot,
         ),
       ],
     ),

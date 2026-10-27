@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_detail_dto.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_detail_state.dart';
@@ -89,10 +90,11 @@ class ActorDetail extends _$ActorDetail {
   }
 
   String _messageForError(Object error) {
+    final l10n = ref.read(appLocalizationsProvider);
     if (error is ApiException &&
         (error.statusCode == 404 || error.error?.code == 'actor_not_found')) {
-      return '未找到该女优';
+      return l10n.actorDetailNotFound;
     }
-    return '女优详情暂时无法加载，请稍后重试';
+    return l10n.actorDetailLoadFailed;
   }
 }

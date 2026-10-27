@@ -18,6 +18,7 @@ import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_p
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_state.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
@@ -243,12 +244,13 @@ class _MovieSummaryListContentState
     if (onRefreshFailure != null) {
       onRefreshFailure(context);
     } else {
-      showToast('刷新失败');
+      showToast(AppLocalizations.of(context).moviePageRefreshFailed);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     // 只订阅渲染所需的字段：loadMore 的 loading/失败走独立页脚
     // （[PagedLoadMoreFooterSliver]），翻页状态翻转不重建列表本体。
     final view = ref.watch(
@@ -338,7 +340,7 @@ class _MovieSummaryListContentState
       header = AppListHeader(
         filterButtonKey: const Key('movies-filter-trigger'),
         filterLabel: hasTagSelection
-            ? '标签 · ${tagSelection!.selectedCount}'
+            ? l10n.moviePageTagFilterCount(tagSelection!.selectedCount)
             : filter.triggerLabel,
         filterPanelKey: const Key('movies-filter-panel'),
         filterPanelBuilder: (_) => MovieFilterSectionGroup(
@@ -353,7 +355,10 @@ class _MovieSummaryListContentState
           onReset: _resetFilters,
         ),
         informationSlots: [
-          AppListHeaderInfo(key: widget.totalKey, label: '${view.total} 部'),
+          AppListHeaderInfo(
+            key: widget.totalKey,
+            label: l10n.moviePageMovieCount(view.total),
+          ),
         ],
         actionSlots: [
           MovieSortMenuButton(
@@ -452,8 +457,8 @@ class _MovieSummaryListContentState
                         emptyMessage:
                             widget.emptyMessage ??
                             (!filter.hasActiveFilters
-                                ? '暂无影片，去搜索看看吧'
-                                : '当前筛选条件下暂无匹配影片'),
+                                ? l10n.moviePageEmptyNoMovies
+                                : l10n.moviePageEmptyNoMatches),
                         selectionMode: selectionMode,
                         isMovieSelected: (movie) =>
                             isSelected(movie.movieNumber),

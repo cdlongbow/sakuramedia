@@ -9,6 +9,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/downloads/download_task_files_dialog.dart';
 
 import '../../../support/test_api_bundle.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('desktop dialog lists task files with path and size', (
@@ -152,6 +153,12 @@ Widget _buildApp(TestApiBundle bundle, AppPlatform platform) {
   return ProviderScope(
     overrides: bundle.riverpodOverrides(),
     child: MaterialApp(
+      locale: const Locale('zh'),
+      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
       theme: platform == AppPlatform.mobile
           ? sakuraMobileThemeData
           : sakuraDesktopThemeData,

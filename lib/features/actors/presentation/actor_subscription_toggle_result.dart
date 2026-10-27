@@ -1,4 +1,5 @@
 import 'package:sakuramedia/core/network/api_error_message.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 typedef ActorSubscriptionWriter = Future<void> Function({required int actorId});
 
@@ -28,11 +29,14 @@ class ActorSubscriptionToggleResult {
 }
 
 /// 保持原控制器的错误文案与成功后才翻转状态的时序。
+///
+/// [l10n] 提供当前语言的失败兜底文案。
 Future<ActorSubscriptionToggleResult> toggleActorSubscription({
   required int actorId,
   required bool isSubscribed,
   required ActorSubscriptionWriter subscribeActor,
   required ActorSubscriptionWriter unsubscribeActor,
+  required AppLocalizations l10n,
 }) async {
   try {
     if (isSubscribed) {
@@ -45,7 +49,10 @@ Future<ActorSubscriptionToggleResult> toggleActorSubscription({
     return ActorSubscriptionToggleResult.failed(
       message: apiErrorMessage(
         error,
-        fallback: isSubscribed ? '取消订阅女优失败' : '订阅女优失败',
+        fallback: isSubscribed
+            ? l10n.actorUnsubscribeFailed
+            : l10n.actorSubscribeFailed,
+        l10n: l10n,
       ),
     );
   }

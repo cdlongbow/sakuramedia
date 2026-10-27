@@ -26,6 +26,7 @@ import 'package:sakuramedia/features/playlists/presentation/widgets/playlist_det
 import 'package:sakuramedia/features/playlists/presentation/widgets/playlist_filter_drawer.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/playlist_filter_sections.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
@@ -134,7 +135,10 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
 
           if (detailAsync.hasError && detailAsync.value == null) {
             return AppEmptyState(
-              message: playlistDetailErrorMessage(detailAsync.error!),
+              message: playlistDetailErrorMessage(
+                detailAsync.error!,
+                l10n: AppLocalizations.of(context),
+              ),
             );
           }
 
@@ -203,8 +207,10 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
                       movies?.isSubscriptionUpdating(movie.movieNumber) ??
                       false,
                   emptyMessage: !_filterState.hasActiveFilters
-                      ? '暂无影片数据'
-                      : '当前筛选条件下暂无匹配影片',
+                      ? AppLocalizations.of(context).playlistNoMovies
+                      : AppLocalizations.of(
+                        context,
+                      ).playlistNoMatchingMovies,
                   selectionMode: selectionMode,
                   isMovieSelected: (movie) => isSelected(movie.movieNumber),
                   onMovieSelectedChanged: (movie, _) =>
@@ -275,6 +281,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
   }
 
   Future<void> _handleRefresh() async {
+    final l10n = AppLocalizations.of(context);
     try {
       await Future.wait<void>([
         ref.read(playlistDetailProvider(widget.playlistId).notifier).refresh(),
@@ -282,7 +289,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
       ]);
     } catch (_) {
       if (mounted) {
-        showToast('刷新失败');
+        showToast(l10n.playlistRefreshFailed);
       }
     }
   }
@@ -327,15 +334,16 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
   }
 
   Future<void> _deletePlaylist(PlaylistDto playlist) async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除播放列表',
-      message: '确认删除播放列表“${playlist.name}”？该操作不可恢复。',
+      title: l10n.playlistDeleteTitle,
+      message: l10n.playlistDeleteMessage(playlist.name),
       danger: true,
-      confirmLabel: '删除',
+      confirmLabel: l10n.commonDelete,
       dialogKey: const Key('playlist-detail-delete-confirm'),
       confirmKey: const Key('playlist-detail-delete-confirm-button'),
-      failureFallback: '删除播放列表失败',
+      failureFallback: l10n.playlistDeleteFailed,
       onConfirm: () =>
           ref.read(playlistsApiProvider).deletePlaylist(playlist.id),
     );
@@ -345,7 +353,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
     ref
         .read(playlistMutationEventsProvider.notifier)
         .reportDeleted(playlist.id);
-    showToast('播放列表已删除');
+    showToast(l10n.playlistDeletedToast);
     if (context.canPop()) {
       context.pop();
       return;
@@ -361,9 +369,10 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
     PagedListState<MovieListItemDto>? paged,
   ) {
     final isMobile = AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
+    final l10n = AppLocalizations.of(context);
     return AppListHeader(
       filterButtonKey: const Key('playlist-detail-filter-trigger'),
-      filterLabel: _filterState.triggerLabel,
+      filterLabel: _filterState.triggerLabel(l10n),
       filterPanelKey: const Key('playlist-detail-filter-panel'),
       filterUpdate: paged?.filterUpdate ?? const FilterUpdateState.idle(),
       hasPreviousFilterItems: paged?.items.isNotEmpty ?? false,
@@ -384,7 +393,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
       informationSlots: [
         AppListHeaderInfo(
           key: const Key('playlist-detail-total'),
-          label: '$totalMovies 部影片',
+          label: l10n.playlistMovieCount(totalMovies),
         ),
       ],
       actionSlots: [
@@ -533,8 +542,8 @@ class _PlaylistDetailMoreButton extends StatelessWidget {
       builder: (buttonContext) => AppIconButton(
         key: const Key('playlist-detail-more-actions-button'),
         size: AppIconButtonSize.mini,
-        tooltip: '播放列表操作',
-        semanticLabel: '播放列表操作',
+        tooltip: AppLocalizations.of(context).playlistActionsTooltip,
+        semanticLabel: AppLocalizations.of(context).playlistActionsTooltip,
         borderRadius: context.appRadius.pillBorder,
         backgroundColor: colors.mediaOverlayStrong,
         borderColor: colors.mediaOverlayBorder,

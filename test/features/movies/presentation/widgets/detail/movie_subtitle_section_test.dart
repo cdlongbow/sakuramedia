@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_subtitle_section.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 void main() {
@@ -19,6 +20,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: sakuraMobileThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: MovieSubtitleSection(
             items: <MovieSubtitleItemDto>[item],
@@ -49,6 +56,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: sakuraMobileThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: const Scaffold(
           body: MovieSubtitleSection(items: <MovieSubtitleItemDto>[]),
         ),
@@ -65,6 +78,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: sakuraMobileThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: MovieSubtitleSection(
             items: <MovieSubtitleItemDto>[

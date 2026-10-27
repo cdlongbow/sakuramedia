@@ -5,6 +5,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/platform/clipboard_copy.dart';
 import 'package:sakuramedia/features/account/data/account_dto.dart';
 import 'package:sakuramedia/features/account/presentation/providers/api_keys_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
@@ -71,7 +72,10 @@ class _ApiKeyGeneratePanelState extends ConsumerState<ApiKeyGeneratePanel> {
       }
       setState(() {
         _isGenerating = false;
-        _errorMessage = apiErrorMessage(error, fallback: '生成密钥失败');
+        _errorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(context).errorApiKeyGenerateFailed,
+        );
       });
     }
   }
@@ -81,7 +85,8 @@ class _ApiKeyGeneratePanelState extends ConsumerState<ApiKeyGeneratePanel> {
     if (!mounted) {
       return;
     }
-    showToast(copied ? '已复制到剪贴板' : '复制失败，请手动选择复制');
+    final l10n = AppLocalizations.of(context);
+    showToast(copied ? l10n.apiKeyCopied : l10n.apiKeyCopyFailed);
   }
 
   @override
@@ -94,12 +99,13 @@ class _ApiKeyGeneratePanelState extends ConsumerState<ApiKeyGeneratePanel> {
 
   Widget _buildForm(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          '生成 API 密钥',
+          l10n.apiKeyGenerateTitle,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s16,
@@ -111,8 +117,8 @@ class _ApiKeyGeneratePanelState extends ConsumerState<ApiKeyGeneratePanel> {
         AppTextField(
           fieldKey: _nameFieldKey,
           controller: _nameController,
-          label: '备注名（可选）',
-          hintText: '例如：MCP server',
+          label: l10n.apiKeyNameLabel,
+          hintText: l10n.apiKeyNameHint,
           enabled: !_isGenerating,
           onFieldSubmitted: (_) => _generate(),
         ),
@@ -132,7 +138,7 @@ class _ApiKeyGeneratePanelState extends ConsumerState<ApiKeyGeneratePanel> {
           children: [
             Expanded(
               child: AppButton(
-                label: '取消',
+                label: l10n.commonCancel,
                 onPressed: _isGenerating
                     ? null
                     : () => Navigator.of(context).pop(),
@@ -142,7 +148,7 @@ class _ApiKeyGeneratePanelState extends ConsumerState<ApiKeyGeneratePanel> {
             Expanded(
               child: AppButton(
                 key: _generateSubmitKey,
-                label: '生成',
+                label: l10n.apiKeyGenerateAction,
                 variant: AppButtonVariant.primary,
                 isLoading: _isGenerating,
                 onPressed: _generate,
@@ -156,12 +162,13 @@ class _ApiKeyGeneratePanelState extends ConsumerState<ApiKeyGeneratePanel> {
 
   Widget _buildResult(BuildContext context, ApiKeyCreatedDto created) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          '密钥已生成',
+          l10n.apiKeyGeneratedTitle,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s16,
@@ -180,7 +187,7 @@ class _ApiKeyGeneratePanelState extends ConsumerState<ApiKeyGeneratePanel> {
             ),
           ),
           child: Text(
-            '此密钥仅显示一次，关闭后将无法再次查看，请立即复制保存。',
+            l10n.apiKeyOnlyOnceNotice,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -212,7 +219,7 @@ class _ApiKeyGeneratePanelState extends ConsumerState<ApiKeyGeneratePanel> {
             Expanded(
               child: AppButton(
                 key: _copyButtonKey,
-                label: '复制',
+                label: l10n.commonCopy,
                 icon: const Icon(Icons.copy_rounded),
                 onPressed: () => _copyKey(created.key),
               ),
@@ -221,7 +228,7 @@ class _ApiKeyGeneratePanelState extends ConsumerState<ApiKeyGeneratePanel> {
             Expanded(
               child: AppButton(
                 key: _doneButtonKey,
-                label: '完成',
+                label: l10n.commonDone,
                 variant: AppButtonVariant.primary,
                 onPressed: () => Navigator.of(context).pop(),
               ),

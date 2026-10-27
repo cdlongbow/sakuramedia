@@ -30,6 +30,7 @@ import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_si
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_subtitle_section.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_tag_wrap.dart';
 import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 class MovieDetailPageContent extends StatelessWidget {
   /// 正文滚动容器（[AppNoPullDownScrollView]，顶部不可下拉）的测试锚点。
@@ -248,6 +249,7 @@ class MovieDetailPageContent extends StatelessWidget {
   }
 
   Widget _buildPlaylistMembership(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final style = resolveAppTextStyle(
       context,
       size: AppTextSize.s12,
@@ -262,7 +264,7 @@ class MovieDetailPageContent extends StatelessWidget {
             runSpacing: context.appSpacing.sm,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text('已加入', style: style),
+              Text(l10n.moviePagePlaylistAdded, style: style),
               for (final playlist in movie.playlists.take(2))
                 Tooltip(
                   message: playlist.name,
@@ -293,7 +295,10 @@ class MovieDetailPageContent extends StatelessWidget {
                   ),
                 ),
               if (movie.playlists.length > 2)
-                Text('共 ${movie.playlists.length} 个', style: style),
+                Text(
+                  l10n.moviePagePlaylistTotalCount(movie.playlists.length),
+                  style: style,
+                ),
             ],
           ),
         );
@@ -307,10 +312,13 @@ class MovieDetailPageContent extends StatelessWidget {
     required BoxFit heroFit,
   }) {
     final hoverActions = movieCardHoverFeatureActions(context);
+    final l10n = AppLocalizations.of(context);
     final progress = _latestProgress;
     final watchLabel = progress == null
         ? null
-        : '上次看到 ${formatMediaTimecode(progress.lastPositionSeconds)}';
+        : l10n.moviePageWatchLabel(
+            formatMediaTimecode(progress.lastPositionSeconds),
+          );
     final watchedAt = progress?.lastWatchedAt?.toLocal();
     final mediaItems = mediaItemsOverride ?? movie.mediaItems;
     final normalizedMergePlaybackLabel = mergePlaybackLabel?.trim() ?? '';
@@ -364,7 +372,12 @@ class MovieDetailPageContent extends StatelessWidget {
                   watchLabel: watchLabel,
                   watchTooltip: watchedAt == null
                       ? watchLabel
-                      : '$watchLabel · ${DateFormat('yyyy年M月d日 HH:mm').format(watchedAt)}',
+                      : l10n.moviePageWatchLabelWithDate(
+                          watchLabel ?? '',
+                          DateFormat(
+                            l10n.moviePageWatchedAtDatePattern,
+                          ).format(watchedAt),
+                        ),
                   isSubscribed: isSubscribed,
                   onSubscriptionTap: onSubscriptionTap,
                   isSubscriptionUpdating: isSubscriptionUpdating,
@@ -375,8 +388,8 @@ class MovieDetailPageContent extends StatelessWidget {
                   isFavoriteUpdating: isFavoriteUpdating,
                   onPlaylistTap: onPlaylistTap,
                   playlistTooltip: movie.playlists.isEmpty
-                      ? '加入播放列表'
-                      : '管理播放列表',
+                      ? l10n.moviePagePlaylistAddAction
+                      : l10n.moviePagePlaylistManageAction,
                   onMoreActionsTap: onMoreActionsTap,
                   isMoreActionsUpdating: isMoreActionsUpdating,
                   isPlayLoading: isPlayLoading,
@@ -426,13 +439,13 @@ class MovieDetailPageContent extends StatelessWidget {
       ..._buildInlineMetaItems(context, movie, onSeriesTap),
       if (movie.rankings.isNotEmpty)
         MovieDetailSection(
-          title: '榜单',
+          title: l10n.moviePageSectionRankings,
           titleKey: const Key('movie-rankings-title'),
           child: MovieRankingList(rankings: movie.rankings),
         ),
       if (movie.tags.isNotEmpty)
         MovieDetailSection(
-          title: '标签',
+          title: l10n.moviePageSectionTags,
           child: MovieTagWrap(tags: movie.tags, onTagTap: onTagTap),
         ),
       MovieActorSection(
@@ -446,7 +459,7 @@ class MovieDetailPageContent extends StatelessWidget {
       ),
       if (mediaItems.isNotEmpty)
         MovieDetailSection(
-          title: '媒体源',
+          title: l10n.moviePageSectionMediaSources,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -466,7 +479,9 @@ class MovieDetailPageContent extends StatelessWidget {
           subtitleErrorMessage?.trim().isNotEmpty == true ||
           subtitleItems.isNotEmpty)
         MovieDetailSection(
-          title: subtitleItems.isEmpty ? '字幕' : '字幕 · ${subtitleItems.length}',
+          title: subtitleItems.isEmpty
+              ? l10n.moviePageSectionSubtitles
+              : l10n.moviePageSectionSubtitlesCount(subtitleItems.length),
           titleKey: const Key('movie-subtitles-title'),
           child: MovieSubtitleSection(
             items: subtitleItems,
@@ -478,7 +493,7 @@ class MovieDetailPageContent extends StatelessWidget {
         ),
       if (isClipsLoading || clipsErrorMessage != null || clips.isNotEmpty)
         MovieDetailSection(
-          title: '切片',
+          title: l10n.moviePageSectionClips,
           titleKey: const Key('movie-clips-title'),
           child: MovieClipStrip(
             clips: clips,
@@ -497,7 +512,7 @@ class MovieDetailPageContent extends StatelessWidget {
               similarMoviesErrorMessage?.trim().isNotEmpty == true ||
               similarMovies.isNotEmpty))
         MovieDetailSection(
-          title: '相似影片',
+          title: l10n.moviePageSectionSimilarMovies,
           titleKey: const Key('movie-similar-movies-title'),
           child: MovieSimilarMovieStrip(
             movies: similarMovies,
@@ -542,17 +557,18 @@ List<Widget> _buildInlineMetaItems(
   MovieDetailDto movie,
   VoidCallback? onSeriesTap,
 ) {
+  final l10n = AppLocalizations.of(context);
   final items = <_MovieInlineMetaItem>[
     _MovieInlineMetaItem(
-      label: '系列',
+      label: l10n.moviePageMetaSeries,
       value: movie.seriesName.trim(),
       onTap: movie.seriesId == null ? null : onSeriesTap,
     ),
     if (movie.metadataSourceName != null)
       _MovieInlineMetaItem(
-        label: '元数据',
+        label: l10n.moviePageMetaMetadata,
         value: movie.javdbId == null
-            ? '${movie.metadataSourceName} · 待 JavDB 收录'
+            ? l10n.moviePageMetaNotIndexed(movie.metadataSourceName!)
             : 'JavDB',
       ),
   ].where((item) => item.value.isNotEmpty).toList(growable: false);
@@ -737,6 +753,7 @@ List<MovieDetailMetaItem> _resolveMetaItems(
   MovieDetailDto movie,
 ) {
   final colors = context.appColors;
+  final l10n = AppLocalizations.of(context);
   return [
     if (movie.score > 0)
       MovieDetailMetaItem(
@@ -751,9 +768,11 @@ List<MovieDetailMetaItem> _resolveMetaItems(
         text: '${movie.commentCount}',
       ),
     if (movie.wantWatchCount > 0)
-      MovieDetailMetaItem(text: '想看 · ${movie.wantWatchCount}'),
+      MovieDetailMetaItem(
+        text: l10n.moviePageMetaWantWatch(movie.wantWatchCount),
+      ),
     if (movie.watchedCount > 0)
-      MovieDetailMetaItem(text: '看过 · ${movie.watchedCount}'),
+      MovieDetailMetaItem(text: l10n.moviePageMetaWatched(movie.watchedCount)),
     if (movie.heat > 0)
       MovieDetailMetaItem(
         icon: Icons.local_fire_department_rounded,
@@ -762,18 +781,24 @@ List<MovieDetailMetaItem> _resolveMetaItems(
       ),
     if (movie.releaseDate != null)
       MovieDetailMetaItem(
-        text: '上映 · ${DateFormat('yyyy/MM/dd').format(movie.releaseDate!)}',
+        text: l10n.moviePageMetaReleased(
+          DateFormat('yyyy/MM/dd').format(movie.releaseDate!),
+        ),
       ),
     if (movie.durationMinutes > 0)
       MovieDetailMetaItem(
         icon: Icons.schedule_outlined,
         iconColor: colors.movieDetailDurationIcon,
-        text: '${movie.durationMinutes} 分钟',
+        text: l10n.moviePageMetaDuration(movie.durationMinutes),
       ),
     if (movie.makerName.trim().isNotEmpty)
-      MovieDetailMetaItem(text: '厂商 · ${movie.makerName.trim()}'),
+      MovieDetailMetaItem(
+        text: l10n.moviePageMetaStudio(movie.makerName.trim()),
+      ),
     if (movie.directorName.trim().isNotEmpty)
-      MovieDetailMetaItem(text: '导演 · ${movie.directorName.trim()}'),
+      MovieDetailMetaItem(
+        text: l10n.moviePageMetaDirector(movie.directorName.trim()),
+      ),
   ];
 }
 
@@ -852,7 +877,10 @@ class MovieDetailErrorState extends StatelessWidget {
       children: [
         AppEmptyState(message: message),
         SizedBox(height: context.appSpacing.lg),
-        TextButton(onPressed: onRetry, child: const Text('重试')),
+        TextButton(
+          onPressed: onRetry,
+          child: Text(AppLocalizations.of(context).commonRetry),
+        ),
       ],
     );
   }

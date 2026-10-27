@@ -16,6 +16,7 @@ import 'package:sakuramedia/features/moments/presentation/moment_listing_models.
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/batch_operation_submission_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -86,7 +87,9 @@ class _MomentCollectionDetailContentState
           return AppEmptyState(
             message: apiErrorMessage(
               async.error!,
-              fallback: '合集详情暂时无法加载，请稍后重试',
+              fallback: AppLocalizations.of(
+                context,
+              ).momentErrorCollectionDetailLoadFailed,
             ),
           );
         }
@@ -159,6 +162,7 @@ class _MomentCollectionDetailContentState
     MomentCollectionDetailState state,
   ) {
     final collection = state.collection;
+    final l10n = AppLocalizations.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -180,7 +184,7 @@ class _MomentCollectionDetailContentState
           SizedBox(width: context.appSpacing.xs),
           AppIconButton(
             key: Key('$_keyPrefix-rename-button'),
-            tooltip: '编辑合集',
+            tooltip: l10n.momentCollectionEditTitle,
             onPressed: () => _editCollection(context),
             icon: Icon(
               Icons.edit_outlined,
@@ -202,22 +206,26 @@ class _MomentCollectionDetailContentState
   ) {
     final count = state.collection.pointCount;
     final hasPoints = state.points.isNotEmpty;
+    final l10n = AppLocalizations.of(context);
     return AppListHeader(
       informationSlots: [
-        AppListHeaderInfo(key: Key('$_keyPrefix-total'), label: '$count 个时刻'),
+        AppListHeaderInfo(
+          key: Key('$_keyPrefix-total'),
+          label: l10n.momentCountLabel(count),
+        ),
       ],
       actionSlots: [
         if (_isMobile)
           AppTextButton(
             key: Key('$_keyPrefix-add-moments-button'),
-            label: '添加',
+            label: l10n.momentAddAction,
             size: AppTextButtonSize.xSmall,
             onPressed: () => _addMoments(context),
           )
         else
           AppTextButton(
             key: Key('$_keyPrefix-add-moments-button'),
-            label: '添加时刻',
+            label: l10n.momentAddMomentsAction,
             size: AppTextButtonSize.small,
             onPressed: () => _addMoments(context),
           ),
@@ -229,7 +237,7 @@ class _MomentCollectionDetailContentState
         if (_isMobile)
           AppIconButton(
             key: Key('$_keyPrefix-rename-button'),
-            tooltip: '编辑合集',
+            tooltip: l10n.momentCollectionEditTitle,
             onPressed: () => _editCollection(context),
             icon: Icon(
               Icons.edit_outlined,
@@ -254,15 +262,16 @@ class _MomentCollectionDetailContentState
       BatchOperationType.momentCollectionRemove,
       BatchOperationType.mediaPointDelete,
     ]);
+    final l10n = AppLocalizations.of(context);
     if (_isMobile) {
       return AppListHeader.selection(
-        selectionLabel: '已选 $selectedCount 个',
+        selectionLabel: l10n.momentSelectedCount(selectedCount),
         selectionExitButtonKey: Key('$_keyPrefix-exit-selection-button'),
         onExitSelection: exitSelection,
         actionSlots: [
           AppButton(
             key: Key('$_keyPrefix-select-all-button'),
-            label: allSelected ? '取消全选' : '全选',
+            label: allSelected ? l10n.momentDeselectAll : l10n.momentSelectAll,
             variant: AppButtonVariant.ghost,
             size: AppButtonSize.xSmall,
             isSelected: allSelected,
@@ -272,14 +281,16 @@ class _MomentCollectionDetailContentState
       );
     }
     return AppSelectionHeaderToolbar(
-      countLabel: '已选 $selectedCount 个',
-      selectAllLabel: allSelected ? '取消全选' : '全选',
+      countLabel: l10n.momentSelectedCount(selectedCount),
+      selectAllLabel: allSelected
+          ? l10n.momentDeselectAll
+          : l10n.momentSelectAll,
       selectAllKey: Key('$_keyPrefix-select-all-button'),
       onToggleAll: () => toggleSelectAll(pointIds),
       actions: [
         AppButton(
           key: Key('$_keyPrefix-batch-remove-button'),
-          label: '从合集移除',
+          label: l10n.momentCollectionRemoveAction,
           variant: AppButtonVariant.secondary,
           size: AppButtonSize.small,
           onPressed: hasSelection && !submitting
@@ -288,7 +299,7 @@ class _MomentCollectionDetailContentState
         ),
         AppButton(
           key: Key('$_keyPrefix-batch-delete-button'),
-          label: '删除时刻',
+          label: l10n.momentDeleteTitle,
           variant: AppButtonVariant.danger,
           size: AppButtonSize.small,
           onPressed: hasSelection && !submitting
@@ -311,12 +322,13 @@ class _MomentCollectionDetailContentState
       BatchOperationType.momentCollectionRemove,
       BatchOperationType.mediaPointDelete,
     ]);
+    final l10n = AppLocalizations.of(context);
     return AppSelectionBottomBar(
       key: Key('$_keyPrefix-batch-bottom-bar'),
       actions: [
         AppButton(
           key: Key('$_keyPrefix-batch-add-collection-button'),
-          label: '加入合集',
+          label: l10n.momentAddToCollection,
           variant: AppButtonVariant.secondary,
           onPressed: hasSelection && !submitting
               ? () => _batchAddToOtherCollection(state)
@@ -324,7 +336,7 @@ class _MomentCollectionDetailContentState
         ),
         AppButton(
           key: Key('$_keyPrefix-batch-remove-button'),
-          label: '移除',
+          label: l10n.momentRemoveAction,
           variant: AppButtonVariant.secondary,
           onPressed: hasSelection && !submitting
               ? () => _batchRemove(state)
@@ -332,7 +344,7 @@ class _MomentCollectionDetailContentState
         ),
         AppButton(
           key: Key('$_keyPrefix-batch-delete-button'),
-          label: '删除',
+          label: l10n.commonDelete,
           variant: AppButtonVariant.danger,
           onPressed: hasSelection && !submitting
               ? () => _batchDelete(state)
@@ -346,8 +358,11 @@ class _MomentCollectionDetailContentState
 
   Widget _buildPoints(BuildContext context, MomentCollectionDetailState state) {
     if (state.points.isEmpty) {
+      final l10n = AppLocalizations.of(context);
       return AppEmptyState(
-        message: _isMobile ? '合集还没有时刻，点右上角「添加」加入吧' : '合集还没有时刻，去「时刻」里加入吧',
+        message: _isMobile
+            ? l10n.momentCollectionEmptyDetailMobile
+            : l10n.momentCollectionEmptyDetailDesktop,
       );
     }
     return _buildGrid(context, state);
@@ -409,12 +424,13 @@ class _MomentCollectionDetailContentState
     // 网格统一走「整卡即封面 + 桌面悬停披露」：收起态只留封面，悬停渐显信息与
     // 动作行；移动端没有 hover，收起态同样不铺文字，信息与播放入口走点击后的预览层。
     final canPlay = item.mediaId > 0;
+    final l10n = AppLocalizations.of(context);
     return CollectionMemberCard(
       key: ValueKey<int>(point.pointId),
       coverUrl: item.image?.origin,
       coverAspectRatio: 16 / 9,
-      title: item.displayLabel,
-      subtitle: item.hoverMeta,
+      title: item.localizedDisplayLabel(l10n),
+      subtitle: item.localizedHoverMeta(l10n),
       onPlay: canPlay && !_isMobile
           ? () => unawaited(
               playMomentItem(
@@ -432,13 +448,13 @@ class _MomentCollectionDetailContentState
           : () => _preview(context, item),
       menuKey: Key('$_keyPrefix-grid-menu-${point.pointId}'),
       onOpenSource: _isMobile ? null : _openMovieCallback(item),
-      openSourceLabel: '影片',
+      openSourceLabel: l10n.momentSourceMovie,
       openSourceButtonKey: Key('$_keyPrefix-grid-movie-${point.pointId}'),
       onRemove: _isMobile ? null : () => _removePoint(point),
       removeButtonKey: Key('$_keyPrefix-grid-remove-${point.pointId}'),
       onDelete: _isMobile ? null : () => _deletePoint(point),
       deleteButtonKey: Key('$_keyPrefix-grid-delete-${point.pointId}'),
-      deleteLabel: '删除时刻',
+      deleteLabel: l10n.momentDeleteTitle,
       selectionMode: selectionMode,
       onLongPress: onLongPress,
       isSelected: isSelected(point.pointId),
@@ -480,6 +496,7 @@ class _MomentCollectionDetailContentState
   }
 
   Future<void> _removePoint(MomentCollectionPointDto point) async {
+    final l10n = AppLocalizations.of(context);
     try {
       await ref.read(_providerRef.notifier).removePoint(point.pointId);
       if (!mounted) {
@@ -487,21 +504,28 @@ class _MomentCollectionDetailContentState
       }
       // 合集封面 / 计数可能变化，广播给上层合集列表（首页横滑区、全部合集页）。
       _mutationBroadcaster.reportChanged(widget.collectionId);
-      showToast('已从合集移除');
+      showToast(l10n.momentCollectionRemovedToast);
     } catch (error) {
-      showToast(apiErrorMessage(error, fallback: '移出合集失败，请重试'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: l10n.momentErrorRemoveFromCollectionFailed,
+        ),
+      );
     }
   }
 
   /// 彻底删除时刻标记本体（由后端从所有合集级联移除，不可恢复）：先确认，再走
   /// notifier 乐观删除并广播。与「移出合集」不同。
   Future<void> _deletePoint(MomentCollectionPointDto point) async {
+    final l10n = AppLocalizations.of(context);
     final item = point.toMomentListItem();
-    final label = '“${item.displayLabel}”';
     final confirmed = await _confirm(
-      title: '删除时刻',
-      message: '确认删除$label？该时刻标记会被永久删除，该操作不可恢复。',
-      confirmLabel: _isMobile ? '删除' : '确认',
+      title: l10n.momentDeleteTitle,
+      message: l10n.momentDeleteConfirmMessage(
+        item.localizedDisplayLabel(l10n),
+      ),
+      confirmLabel: _isMobile ? l10n.commonDelete : l10n.momentConfirm,
       confirmKey: Key('$_keyPrefix-delete-confirm-button'),
       drawerKey: _isMobile ? Key('$_keyPrefix-delete-drawer') : null,
       onConfirm: () =>
@@ -511,7 +535,7 @@ class _MomentCollectionDetailContentState
       return;
     }
     _mutationBroadcaster.reportChanged(widget.collectionId);
-    showToast('已删除时刻');
+    showToast(l10n.momentDeletedToast);
   }
 
   Future<void> _editCollection(BuildContext context) async {
@@ -519,6 +543,7 @@ class _MomentCollectionDetailContentState
     if (collection == null) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     final updated = await showMomentCollectionEditor(
       context,
       collection: collection,
@@ -528,7 +553,7 @@ class _MomentCollectionDetailContentState
     }
     ref.read(_providerRef.notifier).replaceCollection(updated);
     _mutationBroadcaster.reportChanged(widget.collectionId);
-    showToast('已保存');
+    showToast(l10n.commonSaved);
   }
 
   Future<void> _addMoments(BuildContext context) async {
@@ -593,10 +618,11 @@ class _MomentCollectionDetailContentState
     if (selected.isEmpty) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     final confirmed = await _confirm(
-      title: '从合集移除',
-      message: '确认从合集移除选中的 ${selected.length} 个时刻？时刻本身不会被删除。',
-      confirmLabel: _isMobile ? '移除' : '确认',
+      title: l10n.momentCollectionRemoveAction,
+      message: l10n.momentCollectionBatchRemoveMessage(selected.length),
+      confirmLabel: _isMobile ? l10n.momentRemoveAction : l10n.momentConfirm,
       confirmKey: Key('$_keyPrefix-batch-remove-confirm-button'),
       drawerKey: _isMobile ? Key('$_keyPrefix-batch-remove-drawer') : null,
     );
@@ -621,10 +647,11 @@ class _MomentCollectionDetailContentState
     if (selected.isEmpty) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     final confirmed = await _confirm(
-      title: '删除时刻',
-      message: '确认删除选中的 ${selected.length} 个时刻？该操作不可恢复。',
-      confirmLabel: _isMobile ? '删除' : '确认',
+      title: l10n.momentDeleteTitle,
+      message: l10n.momentBatchDeleteConfirmMessage(selected.length),
+      confirmLabel: _isMobile ? l10n.commonDelete : l10n.momentConfirm,
       confirmKey: Key('$_keyPrefix-batch-delete-confirm-button'),
       drawerKey: _isMobile ? Key('$_keyPrefix-batch-delete-drawer') : null,
     );
@@ -660,7 +687,7 @@ class _MomentCollectionDetailContentState
       dialogKey: drawerKey,
       confirmKey: confirmKey,
       onConfirm: onConfirm,
-      failureFallback: '删除失败，请重试',
+      failureFallback: AppLocalizations.of(context).momentErrorDeleteFailed,
     );
   }
 }

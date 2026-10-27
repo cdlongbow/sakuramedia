@@ -16,6 +16,7 @@ import 'package:sakuramedia/features/clip_collections/presentation/providers/cli
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_clips_to_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
@@ -109,6 +110,12 @@ void main() {
     final app = OKToast(
       child: MaterialApp(
         theme: sakuraThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Builder(
           builder: (context) {
             pickerContext = context;

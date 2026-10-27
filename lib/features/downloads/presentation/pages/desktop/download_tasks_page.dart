@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/downloads/presentation/download_task_pane.d
 import 'package:sakuramedia/features/downloads/presentation/manual_download_dialog.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
@@ -140,8 +141,11 @@ class _DesktopDownloadTasksPageState
   Future<void> _openManualAdd() async {
     final result = await showManualDownloadDialog(context);
     if (result == null || !mounted) return;
+    final l10n = AppLocalizations.of(context);
     showToast(
-      result.response.created ? '已提交到 ${result.clientName}' : '下载任务已存在',
+      result.response.created
+          ? l10n.downloadSubmittedToClient(result.clientName)
+          : l10n.downloadTaskAlreadyExists,
     );
 
     final filter =

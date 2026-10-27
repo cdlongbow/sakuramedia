@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 enum MoviePlayerDecodingMode { hardware, software, unknown }
@@ -53,9 +54,9 @@ class MoviePlayerPlaybackInfoSnapshot {
     required this.dynamicRangeDetailLabel,
     this.playbackGatewayHostLabel,
     this.playbackGatewayRequestPathLabel,
-    this.playbackModeLabel = '确认中',
+    this.playbackModeLabel,
     this.playbackDemuxerFormatLabel = '--',
-    this.playbackStreamTypeLabel = '未确认',
+    this.playbackStreamTypeLabel,
     this.playbackSourceBufferLabel,
     this.playbackSourceDownloadRateLabel,
   });
@@ -111,13 +112,15 @@ class MoviePlayerPlaybackInfoSnapshot {
   final String? playbackGatewayRequestPathLabel;
 
   /// 后端在播放器本次实际网关请求后确认的播放模式。
-  final String playbackModeLabel;
+  /// `null` 表示尚未确认，展示时回退到当前语言的「确认中」。
+  final String? playbackModeLabel;
 
   /// libmpv 报告的解复用格式；未知时展示 `--`。
   final String playbackDemuxerFormatLabel;
 
   /// 实际解复用结果识别的流类型，不把文件格式当作 Range 响应证据。
-  final String playbackStreamTypeLabel;
+  /// `null` 表示尚未识别，展示时回退到当前语言的「未确认」。
+  final String? playbackStreamTypeLabel;
 
   /// 缓冲：`12.3s / 8.2 MB`；未拿到时为 `null`。
   final String? playbackSourceBufferLabel;
@@ -208,8 +211,9 @@ MoviePlayerPlaybackInfoSnapshot buildMoviePlayerPlaybackInfoSnapshot({
   required double? decoderDropFramePerSecond,
   required double? delayedFramePerSecond,
   required double? mistimedFramePerSecond,
+  required AppLocalizations l10n,
   String? originalUrl,
-  String playbackModeLabel = '确认中',
+  String? playbackModeLabel,
   String? fileFormat,
   double? bufferCacheDurationSeconds,
   int? bufferForwardBytes,
@@ -230,7 +234,11 @@ MoviePlayerPlaybackInfoSnapshot buildMoviePlayerPlaybackInfoSnapshot({
   );
 
   return MoviePlayerPlaybackInfoSnapshot(
-    decodingModeLabel: _buildDecodingModeLabel(decodingMode, hwdecCurrent),
+    decodingModeLabel: _buildDecodingModeLabel(
+      decodingMode,
+      hwdecCurrent,
+      l10n,
+    ),
     videoCodecLabel: _normalizeTechnicalText(track.video.codec),
     videoDecoderLabel: _normalizeTechnicalText(track.video.decoder),
     videoResolutionLabel: _buildResolutionLabel(
@@ -248,24 +256,29 @@ MoviePlayerPlaybackInfoSnapshot buildMoviePlayerPlaybackInfoSnapshot({
     renderDropFrameLabel: _formatCounterWithRateLabel(
       count: renderDropFrameCount,
       perSecond: renderDropFramePerSecond,
+      l10n: l10n,
     ),
     decoderDropFrameLabel: _formatCounterWithRateLabel(
       count: decoderDropFrameCount,
       perSecond: decoderDropFramePerSecond,
+      l10n: l10n,
     ),
     delayedFrameLabel: _formatCounterWithRateLabel(
       count: delayedFrameCount,
       perSecond: delayedFramePerSecond,
+      l10n: l10n,
     ),
     mistimedFrameLabel: _formatCounterWithRateLabel(
       count: mistimedFrameCount,
       perSecond: mistimedFramePerSecond,
+      l10n: l10n,
     ),
     videoPixelFormatLabel: _buildPixelFormatLabel(videoParams),
     audioCodecLabel: _normalizeTechnicalText(track.audio.codec),
     audioChannelsLabel: _buildAudioChannelsLabel(
       audioParams.hrChannels ?? audioParams.channels ?? track.audio.channels,
       track.audio.audiochannels ?? audioParams.channelCount,
+      l10n,
     ),
     audioSampleRateLabel: _formatSampleRateLabel(
       audioParams.sampleRate ?? track.audio.samplerate,
@@ -273,13 +286,13 @@ MoviePlayerPlaybackInfoSnapshot buildMoviePlayerPlaybackInfoSnapshot({
     audioBitrateLabel: _formatBitrateLabel(
       audioBitrate ?? _castIntToDouble(track.audio.bitrate),
     ),
-    dynamicRangeLabel: _buildDynamicRangeLabel(dynamicRangeMode),
-    dynamicRangeDetailLabel: _buildDynamicRangeDetailLabel(videoParams),
+    dynamicRangeLabel: _buildDynamicRangeLabel(dynamicRangeMode, l10n),
+    dynamicRangeDetailLabel: _buildDynamicRangeDetailLabel(videoParams, l10n),
     playbackGatewayHostLabel: _extractHost(originalUrl),
     playbackGatewayRequestPathLabel: _extractPathAndTail(originalUrl),
     playbackModeLabel: playbackModeLabel,
     playbackDemuxerFormatLabel: _normalizeTechnicalText(fileFormat),
-    playbackStreamTypeLabel: _resolveStreamType(fileFormat, originalUrl),
+    playbackStreamTypeLabel: _resolveStreamType(fileFormat, originalUrl, l10n),
     playbackSourceBufferLabel: _buildBufferLabel(
       cacheDurationSeconds: bufferCacheDurationSeconds,
       forwardBytes: bufferForwardBytes,
@@ -290,7 +303,11 @@ MoviePlayerPlaybackInfoSnapshot buildMoviePlayerPlaybackInfoSnapshot({
   );
 }
 
-String _resolveStreamType(String? fileFormat, String? originalUrl) {
+String _resolveStreamType(
+  String? fileFormat,
+  String? originalUrl,
+  AppLocalizations l10n,
+) {
   final formats = (fileFormat ?? '')
       .toLowerCase()
       .split(',')
@@ -315,9 +332,9 @@ String _resolveStreamType(String? fileFormat, String? originalUrl) {
   };
   if ((scheme == 'http' || scheme == 'https') &&
       formats.any(fileFormats.contains)) {
-    return 'HTTP 文件流';
+    return l10n.widgetMoviePlayerHttpStream;
   }
-  return '未确认';
+  return l10n.widgetMoviePlayerModeUnconfirmed;
 }
 
 String? _extractHost(String? url) {
@@ -430,16 +447,17 @@ double? _castIntToDouble(int? value) {
 String _buildDecodingModeLabel(
   MoviePlayerDecodingMode mode,
   String? hwdecCurrent,
+  AppLocalizations l10n,
 ) {
   return switch (mode) {
     MoviePlayerDecodingMode.hardware =>
       hwdecCurrent == null ||
               hwdecCurrent.trim().isEmpty ||
               hwdecCurrent.trim().toLowerCase() == 'yes'
-          ? '硬件解码'
-          : '硬件解码 (${hwdecCurrent.trim()})',
-    MoviePlayerDecodingMode.software => '软件解码',
-    MoviePlayerDecodingMode.unknown => '未知',
+          ? l10n.widgetMoviePlayerHardwareDecode
+          : l10n.widgetMoviePlayerHardwareDecodeWith(hwdecCurrent.trim()),
+    MoviePlayerDecodingMode.software => l10n.widgetMoviePlayerSoftwareDecode,
+    MoviePlayerDecodingMode.unknown => l10n.commonUnknown,
   };
 }
 
@@ -495,13 +513,17 @@ String _buildPixelFormatLabel(VideoParams videoParams) {
   return pixelFormat!;
 }
 
-String _buildAudioChannelsLabel(String? channelsText, int? channelCount) {
+String _buildAudioChannelsLabel(
+  String? channelsText,
+  int? channelCount,
+  AppLocalizations l10n,
+) {
   final normalizedText = channelsText?.trim();
   if (normalizedText != null && normalizedText.isNotEmpty) {
     return normalizedText;
   }
   if (channelCount != null && channelCount > 0) {
-    return '$channelCount 声道';
+    return l10n.widgetMoviePlayerAudioChannels(channelCount);
   }
   return '--';
 }
@@ -545,13 +567,14 @@ String _formatBitrateLabel(double? bitrate) {
 String _formatCounterWithRateLabel({
   required double? count,
   required double? perSecond,
+  required AppLocalizations l10n,
 }) {
   final parts = <String>[];
   if (count case final c? when c.isFinite && c >= 0) {
-    parts.add('累计 ${_formatCounterValue(c)}');
+    parts.add(l10n.widgetMoviePlayerCounterTotal(_formatCounterValue(c)));
   }
   if (perSecond case final p? when p.isFinite && p >= 0) {
-    parts.add('近1s ${_formatCounterValue(p)}');
+    parts.add(l10n.widgetMoviePlayerCounterPerSecond(_formatCounterValue(p)));
   }
   if (parts.isEmpty) {
     return '--';
@@ -593,21 +616,27 @@ MoviePlayerDynamicRangeMode _resolveDynamicRangeMode(VideoParams videoParams) {
   return MoviePlayerDynamicRangeMode.unknown;
 }
 
-String _buildDynamicRangeLabel(MoviePlayerDynamicRangeMode mode) {
+String _buildDynamicRangeLabel(
+  MoviePlayerDynamicRangeMode mode,
+  AppLocalizations l10n,
+) {
   return switch (mode) {
     MoviePlayerDynamicRangeMode.hdr => 'HDR',
     MoviePlayerDynamicRangeMode.sdr => 'SDR',
-    MoviePlayerDynamicRangeMode.unknown => '未知',
+    MoviePlayerDynamicRangeMode.unknown => l10n.commonUnknown,
   };
 }
 
-String _buildDynamicRangeDetailLabel(VideoParams videoParams) {
+String _buildDynamicRangeDetailLabel(
+  VideoParams videoParams,
+  AppLocalizations l10n,
+) {
   final parts = <String>[
     if (_hasText(videoParams.primaries)) 'Primaries ${videoParams.primaries}',
     if (_hasText(videoParams.gamma)) 'Gamma ${videoParams.gamma}',
     if (_hasText(videoParams.light)) 'Light ${videoParams.light}',
     if (videoParams.sigPeak != null && videoParams.sigPeak! > 0)
-      '峰值 ${videoParams.sigPeak!.toStringAsFixed(2)}',
+      l10n.widgetMoviePlayerPeak(videoParams.sigPeak!.toStringAsFixed(2)),
   ];
   if (parts.isEmpty) {
     return '--';
@@ -632,6 +661,7 @@ class MoviePlayerPlaybackInfoPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return ValueListenableBuilder<MoviePlayerPlaybackInfoSnapshot>(
       valueListenable: infoListenable,
       builder: (context, info, child) {
@@ -639,7 +669,7 @@ class MoviePlayerPlaybackInfoPanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '播放信息',
+              l10n.widgetMoviePlayerInfoTooltip,
               key: const Key('movie-player-info-panel-title'),
               style: resolveAppTextStyle(
                 context,
@@ -652,41 +682,41 @@ class MoviePlayerPlaybackInfoPanel extends StatelessWidget {
             Expanded(
               child: ListView(
                 children: [
-                  ..._buildPlaybackRouteSection(info),
+                  ..._buildPlaybackRouteSection(info, l10n),
                   if (mediaInfo case final mediaInfo?) ...[
                     _MoviePlayerPlaybackInfoSection(
-                      title: '媒体',
+                      title: l10n.widgetMoviePlayerSectionMedia,
                       rows: [
                         _MoviePlayerPlaybackInfoRowData(
-                          label: '存储来源',
+                          label: l10n.widgetMoviePlayerStorageSource,
                           value: mediaInfo.sourceLabel,
                           valueKey: const Key(
                             'movie-player-info-value-media-source',
                           ),
                         ),
                         _MoviePlayerPlaybackInfoRowData(
-                          label: '媒体库',
+                          label: l10n.widgetMoviePlayerMediaLibrary,
                           value: mediaInfo.libraryLabel,
                           valueKey: const Key(
                             'movie-player-info-value-media-library',
                           ),
                         ),
                         _MoviePlayerPlaybackInfoRowData(
-                          label: '文件大小',
+                          label: l10n.widgetMoviePlayerFileSize,
                           value: mediaInfo.fileSizeLabel,
                           valueKey: const Key(
                             'movie-player-info-value-media-file-size',
                           ),
                         ),
                         _MoviePlayerPlaybackInfoRowData(
-                          label: '时长',
+                          label: l10n.widgetMoviePlayerDuration,
                           value: mediaInfo.durationLabel,
                           valueKey: const Key(
                             'movie-player-info-value-media-duration',
                           ),
                         ),
                         _MoviePlayerPlaybackInfoRowData(
-                          label: '记录分辨率',
+                          label: l10n.widgetMoviePlayerRecordedResolution,
                           value: mediaInfo.resolutionLabel,
                           valueKey: const Key(
                             'movie-player-info-value-media-resolution',
@@ -697,24 +727,24 @@ class MoviePlayerPlaybackInfoPanel extends StatelessWidget {
                     SizedBox(height: context.appSpacing.md),
                   ],
                   _MoviePlayerPlaybackInfoSection(
-                    title: '解码与动态范围',
+                    title: l10n.widgetMoviePlayerSectionDecode,
                     rows: [
                       _MoviePlayerPlaybackInfoRowData(
-                        label: '解码模式',
+                        label: l10n.widgetMoviePlayerDecodeMode,
                         value: info.decodingModeLabel,
                         valueKey: const Key(
                           'movie-player-info-value-decoding-mode',
                         ),
                       ),
                       _MoviePlayerPlaybackInfoRowData(
-                        label: '动态范围',
+                        label: l10n.widgetMoviePlayerDynamicRange,
                         value: info.dynamicRangeLabel,
                         valueKey: const Key(
                           'movie-player-info-value-dynamic-range',
                         ),
                       ),
                       _MoviePlayerPlaybackInfoRowData(
-                        label: '动态范围详情',
+                        label: l10n.widgetMoviePlayerDynamicRangeDetail,
                         value: info.dynamicRangeDetailLabel,
                         valueKey: const Key(
                           'movie-player-info-value-dynamic-range-detail',
@@ -724,73 +754,73 @@ class MoviePlayerPlaybackInfoPanel extends StatelessWidget {
                   ),
                   SizedBox(height: context.appSpacing.md),
                   _MoviePlayerPlaybackInfoSection(
-                    title: '视频',
+                    title: l10n.widgetMoviePlayerSectionVideo,
                     rows: [
                       _MoviePlayerPlaybackInfoRowData(
-                        label: '编码',
+                        label: l10n.widgetMoviePlayerCodec,
                         value: info.videoCodecLabel,
                         valueKey: const Key(
                           'movie-player-info-value-video-codec',
                         ),
                       ),
                       _MoviePlayerPlaybackInfoRowData(
-                        label: '解码器',
+                        label: l10n.widgetMoviePlayerDecoder,
                         value: info.videoDecoderLabel,
                         valueKey: const Key(
                           'movie-player-info-value-video-decoder',
                         ),
                       ),
                       _MoviePlayerPlaybackInfoRowData(
-                        label: '分辨率',
+                        label: l10n.widgetMoviePlayerResolution,
                         value: info.videoResolutionLabel,
                         valueKey: const Key(
                           'movie-player-info-value-video-resolution',
                         ),
                       ),
                       _MoviePlayerPlaybackInfoRowData(
-                        label: '媒体帧率',
+                        label: l10n.widgetMoviePlayerMediaFrameRate,
                         value: info.mediaFrameRateLabel,
                         valueKey: const Key(
                           'movie-player-info-value-video-media-fps',
                         ),
                       ),
                       _MoviePlayerPlaybackInfoRowData(
-                        label: '滤镜链帧率',
+                        label: l10n.widgetMoviePlayerFilterChainFrameRate,
                         value: info.filterChainFrameRateLabel,
                         valueKey: const Key(
                           'movie-player-info-value-video-filter-fps',
                         ),
                       ),
                       _MoviePlayerPlaybackInfoRowData(
-                        label: '实际输出帧率(估算)',
+                        label: l10n.widgetMoviePlayerActualOutputFrameRate,
                         value: info.actualOutputFrameRateLabel,
                         valueKey: const Key(
                           'movie-player-info-value-video-actual-fps',
                         ),
                       ),
                       _MoviePlayerPlaybackInfoRowData(
-                        label: '码率',
+                        label: l10n.widgetMoviePlayerBitrate,
                         value: info.videoBitrateLabel,
                         valueKey: const Key(
                           'movie-player-info-value-video-bitrate',
                         ),
                       ),
                       _MoviePlayerPlaybackInfoRowData(
-                        label: '渲染丢帧',
+                        label: l10n.widgetMoviePlayerRenderDropped,
                         value: info.renderDropFrameLabel,
                         valueKey: const Key(
                           'movie-player-info-value-video-render-drop',
                         ),
                       ),
                       _MoviePlayerPlaybackInfoRowData(
-                        label: '解码丢帧',
+                        label: l10n.widgetMoviePlayerDecodeDropped,
                         value: info.decoderDropFrameLabel,
                         valueKey: const Key(
                           'movie-player-info-value-video-decoder-drop',
                         ),
                       ),
                       _MoviePlayerPlaybackInfoRowData(
-                        label: '延迟帧',
+                        label: l10n.widgetMoviePlayerDelayedFrames,
                         value: info.delayedFrameLabel,
                         valueKey: const Key(
                           'movie-player-info-value-video-delayed-frame',
@@ -798,14 +828,14 @@ class MoviePlayerPlaybackInfoPanel extends StatelessWidget {
                       ),
                       if (info.mistimedFrameLabel != '--')
                         _MoviePlayerPlaybackInfoRowData(
-                          label: '时间失配帧',
+                          label: l10n.widgetMoviePlayerMistimedFrames,
                           value: info.mistimedFrameLabel,
                           valueKey: const Key(
                             'movie-player-info-value-video-mistimed-frame',
                           ),
                         ),
                       _MoviePlayerPlaybackInfoRowData(
-                        label: '像素格式',
+                        label: l10n.widgetMoviePlayerPixelFormat,
                         value: info.videoPixelFormatLabel,
                         valueKey: const Key(
                           'movie-player-info-value-video-pixelformat',
@@ -815,31 +845,31 @@ class MoviePlayerPlaybackInfoPanel extends StatelessWidget {
                   ),
                   SizedBox(height: context.appSpacing.md),
                   _MoviePlayerPlaybackInfoSection(
-                    title: '音频',
+                    title: l10n.widgetMoviePlayerSectionAudio,
                     rows: [
                       _MoviePlayerPlaybackInfoRowData(
-                        label: '编码',
+                        label: l10n.widgetMoviePlayerCodec,
                         value: info.audioCodecLabel,
                         valueKey: const Key(
                           'movie-player-info-value-audio-codec',
                         ),
                       ),
                       _MoviePlayerPlaybackInfoRowData(
-                        label: '声道',
+                        label: l10n.widgetMoviePlayerChannels,
                         value: info.audioChannelsLabel,
                         valueKey: const Key(
                           'movie-player-info-value-audio-channels',
                         ),
                       ),
                       _MoviePlayerPlaybackInfoRowData(
-                        label: '采样率',
+                        label: l10n.widgetMoviePlayerSampleRate,
                         value: info.audioSampleRateLabel,
                         valueKey: const Key(
                           'movie-player-info-value-audio-sample-rate',
                         ),
                       ),
                       _MoviePlayerPlaybackInfoRowData(
-                        label: '码率',
+                        label: l10n.widgetMoviePlayerBitrate,
                         value: info.audioBitrateLabel,
                         valueKey: const Key(
                           'movie-player-info-value-audio-bitrate',
@@ -921,9 +951,10 @@ class _MoviePlayerPlaybackInfoRow extends StatelessWidget {
 
   final _MoviePlayerPlaybackInfoRowData data;
 
-  Future<void> _handleCopy() async {
+  Future<void> _handleCopy(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     await Clipboard.setData(ClipboardData(text: data.value));
-    showToast('已复制');
+    showToast(l10n.widgetMoviePlayerCopied);
   }
 
   @override
@@ -968,8 +999,8 @@ class _MoviePlayerPlaybackInfoRow extends StatelessWidget {
               key: data.copyButtonKey,
               padding: EdgeInsets.zero,
               iconSize: 14,
-              tooltip: '复制',
-              onPressed: _handleCopy,
+              tooltip: AppLocalizations.of(context).commonCopy,
+              onPressed: () => _handleCopy(context),
               icon: const Icon(Icons.copy, color: Colors.white70),
             ),
           ),
@@ -980,11 +1011,14 @@ class _MoviePlayerPlaybackInfoRow extends StatelessWidget {
 }
 
 /// 构建播放器信息面板顶部的「播放链路」段。
-List<Widget> _buildPlaybackRouteSection(MoviePlayerPlaybackInfoSnapshot info) {
+List<Widget> _buildPlaybackRouteSection(
+  MoviePlayerPlaybackInfoSnapshot info,
+  AppLocalizations l10n,
+) {
   final rows = <_MoviePlayerPlaybackInfoRowData>[
     if (info.playbackGatewayHostLabel case final host?)
       _MoviePlayerPlaybackInfoRowData(
-        label: '网关主机',
+        label: l10n.widgetMoviePlayerGatewayHost,
         value: host,
         valueKey: const Key('movie-player-info-value-playback-gateway-host'),
         copyable: true,
@@ -994,7 +1028,7 @@ List<Widget> _buildPlaybackRouteSection(MoviePlayerPlaybackInfoSnapshot info) {
       ),
     if (info.playbackGatewayRequestPathLabel case final path?)
       _MoviePlayerPlaybackInfoRowData(
-        label: '网关路径',
+        label: l10n.widgetMoviePlayerGatewayPath,
         value: path,
         valueKey: const Key('movie-player-info-value-playback-gateway-path'),
         copyable: true,
@@ -1003,34 +1037,40 @@ List<Widget> _buildPlaybackRouteSection(MoviePlayerPlaybackInfoSnapshot info) {
         ),
       ),
     _MoviePlayerPlaybackInfoRowData(
-      label: '播放模式',
-      value: info.playbackModeLabel,
+      label: l10n.widgetMoviePlayerPlaybackMode,
+      value: info.playbackModeLabel ?? l10n.widgetMoviePlayerModePending,
       valueKey: const Key('movie-player-info-value-playback-mode'),
     ),
     _MoviePlayerPlaybackInfoRowData(
-      label: '流类型',
-      value: info.playbackStreamTypeLabel,
+      label: l10n.widgetMoviePlayerStreamType,
+      value:
+          info.playbackStreamTypeLabel ?? l10n.widgetMoviePlayerModeUnconfirmed,
       valueKey: const Key('movie-player-info-value-stream-type'),
     ),
     _MoviePlayerPlaybackInfoRowData(
-      label: '解复用格式',
+      label: l10n.widgetMoviePlayerDemuxerFormat,
       value: info.playbackDemuxerFormatLabel,
       valueKey: const Key('movie-player-info-value-playback-demuxer-format'),
     ),
     if (info.playbackSourceBufferLabel case final buffer?)
       _MoviePlayerPlaybackInfoRowData(
-        label: '缓冲',
+        label: l10n.widgetMoviePlayerBuffer,
         value: buffer,
         valueKey: const Key('movie-player-info-value-playback-source-buffer'),
       ),
     if (info.playbackSourceDownloadRateLabel case final rate?)
       _MoviePlayerPlaybackInfoRowData(
-        label: '下载速率',
+        label: l10n.widgetMoviePlayerDownloadRate,
         value: rate,
         valueKey: const Key(
           'movie-player-info-value-playback-source-download-rate',
         ),
       ),
   ];
-  return [_MoviePlayerPlaybackInfoSection(title: '播放链路', rows: rows)];
+  return [
+    _MoviePlayerPlaybackInfoSection(
+      title: l10n.widgetMoviePlayerSectionPlaybackChain,
+      rows: rows,
+    ),
+  ];
 }

@@ -1,6 +1,5 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakuramedia/features/search/data/catalog_search_stream_stats.dart';
 import 'package:sakuramedia/features/search/presentation/catalog_search_stream_status.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/search/catalog_search_stream_status_card.dart';
@@ -52,12 +51,7 @@ void main() {
                   isFailure: false,
                   current: 4,
                   total: 12,
-                  stats: CatalogSearchStreamStats(
-                    total: 12,
-                    createdCount: 3,
-                    alreadyExistsCount: 8,
-                    failedCount: 1,
-                  ),
+                  statsLabel: '共 12 条，新增 3，已存在 8，失败 1',
                 ),
               ),
             ),

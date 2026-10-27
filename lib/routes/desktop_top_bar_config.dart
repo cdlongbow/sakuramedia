@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/app/app_platform.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_back_destination.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_route_spec.dart';
@@ -20,94 +21,96 @@ class DesktopTopBarConfig {
   final bool isBackEnabled;
 }
 
+/// 顶栏标题按当前语言解析；导航目的地的标题直接取导航项标签。
 DesktopTopBarConfig resolveDesktopTopBarConfig({
   required String currentPath,
-  required List<AppRouteSpec> routeSpecs,
+  required List<AppNavGroup> navGroups,
+  required AppLocalizations l10n,
   Object? routeExtra,
 }) {
   if (currentPath == desktopOverviewPath) {
-    return const DesktopTopBarConfig(
-      title: '概览',
+    return DesktopTopBarConfig(
+      title: l10n.routeOverviewTitle,
       fallbackPath: null,
       isBackEnabled: false,
     );
   }
 
   if (currentPath == desktopSystemDiagnosticsPath) {
-    return const DesktopTopBarConfig(
-      title: '组件诊断',
+    return DesktopTopBarConfig(
+      title: l10n.systemDiagnosticsComponentTitle,
       fallbackPath: desktopOverviewPath,
       isBackEnabled: true,
     );
   }
 
   if (currentPath == desktopDiscoverMoviesPath) {
-    return const DesktopTopBarConfig(
-      title: '推荐影片',
+    return DesktopTopBarConfig(
+      title: l10n.routeRecommendedMoviesTitle,
       fallbackPath: desktopDiscoverPath,
       isBackEnabled: true,
     );
   }
 
   if (currentPath == desktopDiscoverMomentsPath) {
-    return const DesktopTopBarConfig(
-      title: '推荐时刻',
+    return DesktopTopBarConfig(
+      title: l10n.routeRecommendedMomentsTitle,
       fallbackPath: desktopDiscoverPath,
       isBackEnabled: true,
     );
   }
 
   if (currentPath == desktopLatestMoviesPath) {
-    return const DesktopTopBarConfig(
-      title: '最近添加',
+    return DesktopTopBarConfig(
+      title: l10n.routeLatestAddedTitle,
       fallbackPath: desktopOverviewPath,
       isBackEnabled: true,
     );
   }
 
   if (currentPath == desktopRecentlySubscribedMoviesPath) {
-    return const DesktopTopBarConfig(
-      title: '最近订阅',
+    return DesktopTopBarConfig(
+      title: l10n.routeRecentlySubscribedTitle,
       fallbackPath: desktopOverviewPath,
       isBackEnabled: true,
     );
   }
 
   if (currentPath == desktopRecentViewsPath) {
-    return const DesktopTopBarConfig(
-      title: '最近浏览',
+    return DesktopTopBarConfig(
+      title: l10n.routeRecentViewsTitle,
       fallbackPath: desktopOverviewPath,
       isBackEnabled: true,
     );
   }
 
   if (currentPath == desktopFavoritesPath) {
-    return const DesktopTopBarConfig(
-      title: '我的收藏',
+    return DesktopTopBarConfig(
+      title: l10n.routeFavoritesTitle,
       fallbackPath: desktopOverviewPath,
       isBackEnabled: true,
     );
   }
 
   if (currentPath == desktopRecentlyPlayedPath) {
-    return const DesktopTopBarConfig(
-      title: '最近播放',
+    return DesktopTopBarConfig(
+      title: l10n.routeRecentlyPlayedTitle,
       fallbackPath: desktopOverviewPath,
       isBackEnabled: true,
     );
   }
 
   if (currentPath == desktopHotActressReleasesPath) {
-    return const DesktopTopBarConfig(
-      title: '热门新片',
+    return DesktopTopBarConfig(
+      title: l10n.routePopularNewReleasesTitle,
       fallbackPath: desktopDiscoverPath,
       isBackEnabled: true,
     );
   }
 
   if (currentPath == desktopFollowPath) {
-    return const DesktopTopBarConfig(
-      title: '女优上新',
+    return DesktopTopBarConfig(
+      title: l10n.routeNewActorReleasesTitle,
       fallbackPath: desktopDiscoverPath,
       isBackEnabled: true,
     );
@@ -115,7 +118,7 @@ DesktopTopBarConfig resolveDesktopTopBarConfig({
 
   if (currentPath.startsWith(desktopMovieSeriesPathPrefix)) {
     return DesktopTopBarConfig(
-      title: '系列影片',
+      title: l10n.routeSeriesMoviesTitle,
       fallbackPath:
           _fallbackPathFromExtra(routeExtra, currentPath: currentPath) ??
           AppBackDestination.defaultLocationForPath(currentPath),
@@ -125,7 +128,7 @@ DesktopTopBarConfig resolveDesktopTopBarConfig({
 
   if (currentPath.startsWith('/desktop/library/movies/')) {
     return DesktopTopBarConfig(
-      title: '影片详情',
+      title: l10n.routeMovieDetailsTitle,
       fallbackPath:
           _fallbackPathFromExtra(routeExtra, currentPath: currentPath) ??
           AppBackDestination.defaultLocationForPath(currentPath),
@@ -135,7 +138,7 @@ DesktopTopBarConfig resolveDesktopTopBarConfig({
 
   if (currentPath.startsWith('/desktop/library/actors/')) {
     return DesktopTopBarConfig(
-      title: '女优详情',
+      title: l10n.routeActorDetailsTitle,
       fallbackPath:
           _fallbackPathFromExtra(routeExtra, currentPath: currentPath) ??
           AppBackDestination.defaultLocationForPath(currentPath),
@@ -145,7 +148,7 @@ DesktopTopBarConfig resolveDesktopTopBarConfig({
 
   if (currentPath.startsWith('$desktopTagsPath/')) {
     return DesktopTopBarConfig(
-      title: '标签',
+      title: l10n.routeTagsTitle,
       fallbackPath:
           _fallbackPathFromExtra(routeExtra, currentPath: currentPath) ??
           AppBackDestination.defaultLocationForPath(currentPath),
@@ -155,7 +158,7 @@ DesktopTopBarConfig resolveDesktopTopBarConfig({
 
   if (currentPath.startsWith('/desktop/library/playlists/')) {
     return DesktopTopBarConfig(
-      title: '播放列表详情',
+      title: l10n.routePlaylistDetailsTitle,
       fallbackPath:
           _fallbackPathFromExtra(routeExtra, currentPath: currentPath) ??
           AppBackDestination.defaultLocationForPath(currentPath),
@@ -166,7 +169,7 @@ DesktopTopBarConfig resolveDesktopTopBarConfig({
   if (currentPath.startsWith('$desktopVideosPath/')) {
     if (currentPath.endsWith('/thumbnails')) {
       return DesktopTopBarConfig(
-        title: '缩略图',
+        title: l10n.routeThumbnailsTitle,
         fallbackPath:
             _fallbackPathFromExtra(routeExtra, currentPath: currentPath) ??
             AppBackDestination.defaultLocationForPath(currentPath),
@@ -174,7 +177,7 @@ DesktopTopBarConfig resolveDesktopTopBarConfig({
       );
     }
     return DesktopTopBarConfig(
-      title: '视频详情',
+      title: l10n.routeVideoDetailsTitle,
       fallbackPath:
           _fallbackPathFromExtra(routeExtra, currentPath: currentPath) ??
           AppBackDestination.defaultLocationForPath(currentPath),
@@ -183,8 +186,8 @@ DesktopTopBarConfig resolveDesktopTopBarConfig({
   }
 
   if (currentPath == desktopVideoCollectionsPath) {
-    return const DesktopTopBarConfig(
-      title: '视频合集',
+    return DesktopTopBarConfig(
+      title: l10n.routeVideoCollectionsTitle,
       fallbackPath: desktopVideosPath,
       isBackEnabled: true,
     );
@@ -192,17 +195,17 @@ DesktopTopBarConfig resolveDesktopTopBarConfig({
 
   if (currentPath.startsWith('$desktopVideoCollectionsPath/')) {
     return DesktopTopBarConfig(
-      title: '合集详情',
+      title: l10n.routeCollectionDetailsTitle,
       fallbackPath:
           _fallbackPathFromExtra(routeExtra, currentPath: currentPath) ??
-          AppBackDestination.defaultLocationForPath(currentPath),
+          desktopVideoCollectionsPath,
       isBackEnabled: true,
     );
   }
 
   if (currentPath == desktopClipCollectionsPath) {
-    return const DesktopTopBarConfig(
-      title: '切片合集',
+    return DesktopTopBarConfig(
+      title: l10n.routeClipCollectionsTitle,
       fallbackPath: desktopClipsPath,
       isBackEnabled: true,
     );
@@ -210,7 +213,7 @@ DesktopTopBarConfig resolveDesktopTopBarConfig({
 
   if (currentPath.startsWith('$desktopClipCollectionsPath/')) {
     return DesktopTopBarConfig(
-      title: '合集详情',
+      title: l10n.routeCollectionDetailsTitle,
       fallbackPath:
           _fallbackPathFromExtra(routeExtra, currentPath: currentPath) ??
           desktopClipCollectionsPath,
@@ -219,8 +222,8 @@ DesktopTopBarConfig resolveDesktopTopBarConfig({
   }
 
   if (currentPath == desktopMomentCollectionsPath) {
-    return const DesktopTopBarConfig(
-      title: '时刻合集',
+    return DesktopTopBarConfig(
+      title: l10n.routeMomentCollectionsTitle,
       fallbackPath: desktopMomentsPath,
       isBackEnabled: true,
     );
@@ -228,7 +231,7 @@ DesktopTopBarConfig resolveDesktopTopBarConfig({
 
   if (currentPath.startsWith('$desktopMomentCollectionsPath/')) {
     return DesktopTopBarConfig(
-      title: '合集详情',
+      title: l10n.routeCollectionDetailsTitle,
       fallbackPath:
           _fallbackPathFromExtra(routeExtra, currentPath: currentPath) ??
           desktopMomentCollectionsPath,
@@ -238,7 +241,7 @@ DesktopTopBarConfig resolveDesktopTopBarConfig({
 
   if (currentPath == desktopImageSearchPath) {
     return DesktopTopBarConfig(
-      title: '画面搜索',
+      title: l10n.routeImageSearchTitle,
       fallbackPath:
           _fallbackPathFromExtra(routeExtra, currentPath: currentPath) ??
           AppBackDestination.defaultLocationForPath(currentPath),
@@ -249,7 +252,7 @@ DesktopTopBarConfig resolveDesktopTopBarConfig({
   if (currentPath == desktopSearchPath ||
       currentPath.startsWith('$desktopSearchPath/')) {
     final title = currentPath == desktopSearchPath
-        ? '搜索'
+        ? l10n.routeSearchTitle
         : _decodeSearchTitleSegment(
             currentPath.substring(desktopSearchPath.length + 1),
           );
@@ -262,12 +265,15 @@ DesktopTopBarConfig resolveDesktopTopBarConfig({
     );
   }
 
-  final currentSpec = routeSpecs.firstWhere(
-    (spec) => spec.path == currentPath,
-    orElse: () => routeSpecs.first,
+  final navItems = navGroups
+      .expand((group) => group.items)
+      .toList(growable: false);
+  final currentItem = navItems.firstWhere(
+    (item) => item.path == currentPath,
+    orElse: () => navItems.first,
   );
   return DesktopTopBarConfig(
-    title: currentSpec.title,
+    title: currentItem.label,
     fallbackPath: null,
     isBackEnabled: false,
   );

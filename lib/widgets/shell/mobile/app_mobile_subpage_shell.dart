@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:sakuramedia/widgets/shell/mobile/mobile_system_overlay.dart';
 
 /// 让子页面把「真实标题」报给外层返回栏的信箱。
@@ -199,6 +200,7 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
   }
 
   AppBar _buildAppBar(BuildContext context, {required bool immersive}) {
+    final l10n = appL10n(context);
     return AppBar(
       key: const Key('mobile-subpage-topbar'),
       backgroundColor: immersive
@@ -233,7 +235,7 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
           // 沉浸页压在封面和顶部压暗渐变上，沿用媒体前景色保证可读。
           color: immersive ? context.appTextPalette.onMedia : null,
         ),
-        tooltip: '返回',
+        tooltip: l10n.shellBack,
       ),
       title: immersive
           // 沉浸页不占标题位：封面直通状态栏，顶栏只留返回键和渐变。

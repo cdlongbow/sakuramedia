@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/cast/data/cast_device.dart';
 import 'package:sakuramedia/features/cast/data/cast_director.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
@@ -20,14 +21,18 @@ import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 Future<CastDevice?> showCastDevicePicker({
   required BuildContext context,
   required Future<void> Function(CastDevice device) onCast,
-  CastDirector director = const CastDirector(),
+  CastDirector? director,
 }) {
   return showAppAdaptiveModal<CastDevice>(
     context: context,
     desktopWidth: 420,
     desktopHeight: 340,
     mobileHeightFactor: 0.4,
-    builder: (_) => CastDevicePickerBody(onCast: onCast, director: director),
+    builder: (_) => CastDevicePickerBody(
+      onCast: onCast,
+      director:
+          director ?? CastDirector(l10n: () => AppLocalizations.of(context)),
+    ),
   );
 }
 
@@ -35,7 +40,7 @@ class CastDevicePickerBody extends StatefulWidget {
   const CastDevicePickerBody({
     super.key,
     required this.onCast,
-    this.director = const CastDirector(),
+    required this.director,
   });
 
   final Future<void> Function(CastDevice device) onCast;
@@ -114,7 +119,10 @@ class _CastDevicePickerBodyState extends State<CastDevicePickerBody> {
       setState(() {
         _castingDeviceId = null;
         _failedDeviceId = device.id;
-        _castErrorMessage = castErrorMessage(error);
+        _castErrorMessage = castErrorMessage(
+          error,
+          l10n: AppLocalizations.of(context),
+        );
       });
     }
   }
@@ -122,13 +130,14 @@ class _CastDevicePickerBodyState extends State<CastDevicePickerBody> {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Column(
       children: [
         Row(
           children: [
             Expanded(
               child: Text(
-                '投屏到电视',
+                l10n.castPickerTitle,
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s16,
@@ -142,7 +151,7 @@ class _CastDevicePickerBodyState extends State<CastDevicePickerBody> {
               SizedBox(width: spacing.xl),
             AppTextButton(
               key: const Key('cast-rescan'),
-              label: '重新搜索',
+              label: l10n.castRescan,
               size: AppTextButtonSize.small,
               onPressed: _scanning ? null : _startScan,
             ),
@@ -155,12 +164,13 @@ class _CastDevicePickerBodyState extends State<CastDevicePickerBody> {
   }
 
   Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (_devices.isEmpty) {
       if (_scanFailed) {
-        return const AppEmptyState(
+        return AppEmptyState(
           icon: Icons.wifi_off_rounded,
-          title: '搜索设备失败',
-          message: '请确认已连接局域网 Wi-Fi 后重试',
+          title: l10n.castSearchFailedTitle,
+          message: l10n.castSearchFailedMessage,
         );
       }
       if (_scanning) {
@@ -168,31 +178,31 @@ class _CastDevicePickerBodyState extends State<CastDevicePickerBody> {
         // 避免「扫描中 → 有结果」之间的高度跳变。
         return AppSkeletonizer(
           child: AppSettingsGroup(
-            children: const [
+            children: [
               AppSettingCell(
-                key: Key('cast-scanning'),
+                key: const Key('cast-scanning'),
                 icon: Icons.tv_rounded,
-                title: '正在搜索附近设备…',
-                subtitle: '正在搜索附近的投屏设备',
+                title: l10n.castScanningTitle,
+                subtitle: l10n.castScanningSubtitle,
               ),
               AppSettingCell(
                 icon: Icons.tv_rounded,
-                title: '设备名称',
+                title: l10n.castDeviceNamePlaceholder,
                 subtitle: '192.168.1.100',
               ),
               AppSettingCell(
                 icon: Icons.tv_rounded,
-                title: '设备名称',
+                title: l10n.castDeviceNamePlaceholder,
                 subtitle: '192.168.1.101',
               ),
             ],
           ),
         );
       }
-      return const AppEmptyState(
+      return AppEmptyState(
         icon: Icons.tv_off_rounded,
-        title: '未发现可投屏设备',
-        message: '请确认电视与本机在同一网络，且电视已开启投屏功能',
+        title: l10n.castNoDeviceTitle,
+        message: l10n.castNoDeviceMessage,
       );
     }
     return SingleChildScrollView(

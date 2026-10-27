@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 import 'package:multi_split_view/multi_split_view.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 
@@ -241,7 +242,9 @@ class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
       key: widget.handleKey,
       size: AppIconButtonSize.regular,
       iconColor: context.appTextPalette.onMedia,
-      semanticLabel: _expanded ? '收起缩略图面板' : '展开缩略图面板',
+      semanticLabel: _expanded
+          ? AppLocalizations.of(context).widgetMediaThumbnailPanelCollapse
+          : AppLocalizations.of(context).widgetMediaThumbnailPanelExpand,
       onPressed: _togglePanel,
       icon: Icon(
         _expanded ? Icons.chevron_right_rounded : Icons.grid_view_rounded,

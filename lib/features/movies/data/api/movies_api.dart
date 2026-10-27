@@ -2,24 +2,33 @@ import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_sse_event.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/activity/data/job_metadata_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_interaction_filter_options_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
-import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
-import 'package:sakuramedia/features/movies/data/dto/series_import/movie_search_stream_update.dart';
-import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
-import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_subscription_batch_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/parsed_movie_number_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/rating/movie_rating_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/rating/rating_dimension_dto.dart';
-import 'package:sakuramedia/features/search/data/catalog_search_stream_stats.dart';
+import 'package:sakuramedia/features/movies/data/dto/series_import/movie_search_stream_update.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
+import 'package:sakuramedia/features/search/data/catalog_search_stream_stats.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 class MoviesApi {
-  const MoviesApi({required ApiClient apiClient}) : _apiClient = apiClient;
+  const MoviesApi({
+    required ApiClient apiClient,
+    AppLocalizations Function()? l10n,
+  }) : _apiClient = apiClient,
+       _l10n = l10n;
 
   final ApiClient _apiClient;
+  final AppLocalizations Function()? _l10n;
+
+  AppLocalizations get _localizations => _l10n?.call() ?? AppLocalizationsZh();
 
   Future<PaginatedResponseDto<MovieListItemDto>> getMovies({
     MovieStatusFilter? status,
@@ -395,61 +404,70 @@ class MoviesApi {
 
     switch (event.event) {
       case 'search_started':
-        return const MovieSearchStreamUpdate(
+        return MovieSearchStreamUpdate(
           stage: 'searching',
-          message: '正在搜索系列...',
+          message: _localizations.sseMovieSeriesSearching,
         );
       case 'series_found':
         return MovieSearchStreamUpdate(
           stage: 'series_matched',
-          message: '已找到库内系列：${payload['series_name'] ?? ''}',
+          message: _localizations.sseMovieSeriesFound(
+            payload['series_name'] as String? ?? '',
+          ),
         );
       case 'javdb_series_found':
         final count = payload['videos_count'];
-        final countLabel = count != null ? '，共 $count 部' : '';
+        final countLabel = count != null
+            ? _localizations.sseMovieJavdbSeriesCount(count as int)
+            : '';
         return MovieSearchStreamUpdate(
           stage: 'series_matched',
-          message: '已匹配到 JAVDB 系列$countLabel',
+          message: '${_localizations.sseMovieJavdbSeriesFound}$countLabel',
           total: count as int?,
         );
       case 'movie_found':
         final total = payload['total'] as int?;
         return MovieSearchStreamUpdate(
           stage: 'movies_found',
-          message: '已获取到 ${total ?? 0} 部影片，准备入库',
+          message: _localizations.sseMovieCandidatesReady(total ?? 0),
           total: total,
         );
       case 'upsert_started':
         return MovieSearchStreamUpdate(
           stage: 'importing',
-          message: '正在入库影片...',
+          message: _localizations.sseMovieImporting,
           current: 0,
           total: payload['total'] as int?,
         );
       case 'movie_skipped' || 'movie_upsert_started' || 'movie_upsert_finished':
         return MovieSearchStreamUpdate(
           stage: 'importing',
-          message: '正在入库影片...',
+          message: _localizations.sseMovieImporting,
           current: payload['index'] as int?,
           total: payload['total'] as int?,
         );
       case 'upsert_finished':
         return MovieSearchStreamUpdate(
           stage: 'import_finished',
-          message: '入库完成',
+          message: _localizations.sseMovieImportFinished,
           stats: CatalogSearchStreamStats.fromLooseJson(payload),
         );
       case 'completed':
         return MovieSearchStreamUpdate(
           stage: 'completed',
-          message: payload['success'] as bool? ?? false ? '导入成功' : '导入失败',
+          message: payload['success'] as bool? ?? false
+              ? _localizations.sseMovieImportSuccess
+              : _localizations.sseMovieImportFailed,
           results: _parseMovieResults(payload['movies']),
           stats: CatalogSearchStreamStats.fromLooseJson(payload),
           success: payload['success'] as bool?,
           reason: payload['reason'] as String?,
         );
       default:
-        return MovieSearchStreamUpdate(stage: event.event, message: '正在处理...');
+        return MovieSearchStreamUpdate(
+          stage: event.event,
+          message: _localizations.sseMovieProcessing,
+        );
     }
   }
 
@@ -458,32 +476,32 @@ class MoviesApi {
 
     switch (event.event) {
       case 'search_started':
-        return const MovieSearchStreamUpdate(
+        return MovieSearchStreamUpdate(
           stage: 'search_started',
-          message: '正在从外部数据源搜索影片',
+          message: _localizations.sseMovieSearchingExternal,
         );
       case 'movie_found':
         return MovieSearchStreamUpdate(
           stage: 'movie_found',
-          message: '已从在线源获取候选影片',
+          message: _localizations.sseMovieCandidatesFetched,
           total: payload['total'] as int?,
         );
       case 'upsert_started':
         return MovieSearchStreamUpdate(
           stage: 'upsert_started',
-          message: '正在入库在线影片',
+          message: _localizations.sseMovieImportingOnline,
           total: payload['total'] as int?,
         );
       case 'upsert_finished':
         return MovieSearchStreamUpdate(
           stage: 'upsert_finished',
-          message: '在线影片入库完成',
+          message: _localizations.sseMovieOnlineImportFinished,
           stats: CatalogSearchStreamStats.fromLooseJson(payload),
         );
       case 'completed':
         return MovieSearchStreamUpdate(
           stage: 'completed',
-          message: '在线搜索已完成',
+          message: _localizations.sseMovieOnlineSearchFinished,
           results: _parseMovieResults(payload['movies']),
           success: payload['success'] as bool? ?? false,
           reason: payload['reason'] as String?,
@@ -494,7 +512,7 @@ class MoviesApi {
       default:
         return MovieSearchStreamUpdate(
           stage: event.event,
-          message: '正在同步在线影片搜索结果',
+          message: _localizations.sseMovieSyncingOnlineResults,
         );
     }
   }

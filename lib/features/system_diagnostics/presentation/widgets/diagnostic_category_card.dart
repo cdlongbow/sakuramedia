@@ -4,6 +4,7 @@ import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_sta
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_status.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/widgets/diagnostic_item_tile.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/widgets/diagnostic_status_badge.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 
@@ -20,10 +21,11 @@ class DiagnosticCategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return AppContentCard(
       title: category.label,
       headerBottomSpacing: spacing.md,
-      headerTrailing: _buildAggregateBadge(),
+      headerTrailing: _buildAggregateBadge(l10n),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -48,10 +50,10 @@ class DiagnosticCategoryCard extends StatelessWidget {
     );
   }
 
-  Widget _buildAggregateBadge() {
+  Widget _buildAggregateBadge(AppLocalizations l10n) {
     final aggregate = category.aggregate;
     return DiagnosticStatusBadge(
-      label: _aggregateLabel(aggregate, category),
+      label: _aggregateLabel(aggregate, category, l10n),
       status: aggregate,
       dense: true,
     );
@@ -60,25 +62,26 @@ class DiagnosticCategoryCard extends StatelessWidget {
   String _aggregateLabel(
     DiagnosticItemStatus status,
     DiagnosticCategoryState category,
+    AppLocalizations l10n,
   ) {
     switch (status) {
       case DiagnosticItemStatus.healthy:
-        return '全部正常';
+        return l10n.diagnosticCategoryAllHealthy;
       case DiagnosticItemStatus.warning:
-        return '存在告警';
+        return l10n.diagnosticCategoryHasWarnings;
       case DiagnosticItemStatus.unhealthy:
         final count = category.items
             .where((i) => i.status == DiagnosticItemStatus.unhealthy)
             .length;
-        return '$count 项异常';
+        return l10n.systemDiagnosticsStatusIssues(count);
       case DiagnosticItemStatus.probing:
-        return '检测中';
+        return l10n.diagnosticStatusProbing;
       case DiagnosticItemStatus.blocked:
-        return '等待前置';
+        return l10n.diagnosticCategoryWaitingDependency;
       case DiagnosticItemStatus.disabled:
-        return '未启用';
+        return l10n.systemMaintenanceDisabled;
       case DiagnosticItemStatus.notTested:
-        return '未检测';
+        return l10n.systemDiagnosticsStatusNotChecked;
     }
   }
 }

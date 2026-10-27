@@ -9,6 +9,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_fullscreen.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/preview_image_stage.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -409,6 +410,12 @@ void main() {
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
         child: MaterialApp.router(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           routerConfig: router,
           builder:
@@ -462,6 +469,12 @@ class _TestApp extends StatelessWidget {
     return ProviderScope(
       overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
       child: MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         builder:
             (context, content) =>

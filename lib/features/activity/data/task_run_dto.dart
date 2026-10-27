@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:sakuramedia/core/json/json_parse.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 class TaskRunDto {
   const TaskRunDto({
@@ -69,17 +70,17 @@ class TaskRunDto {
     }
   }
 
-  String? get displaySummary {
+  String? displaySummary(AppLocalizations l10n) {
     if (state == 'failed' &&
         errorMessage != null &&
         errorMessage!.trim().isNotEmpty) {
       return errorMessage;
     }
-    final mediaTransferSummary = _mediaTransferSummary;
+    final mediaTransferSummary = _mediaTransferSummary(l10n);
     if (mediaTransferSummary != null) {
       return mediaTransferSummary;
     }
-    final batchOperationSummary = _batchOperationSummary;
+    final batchOperationSummary = _batchOperationSummary(l10n);
     if (batchOperationSummary != null) {
       return batchOperationSummary;
     }
@@ -93,7 +94,7 @@ class TaskRunDto {
   }
 
   /// `batch_operation` 任务完成后的「成功 X 项 · 失败 Y 项」摘要。
-  String? get _batchOperationSummary {
+  String? _batchOperationSummary(AppLocalizations l10n) {
     if (taskKey != 'batch_operation' || resultSummary == null) {
       return null;
     }
@@ -103,30 +104,30 @@ class TaskRunDto {
       return null;
     }
     final fragments = <String>[
-      if (succeeded > 0) '成功 $succeeded 项',
-      if (failed > 0) '失败 $failed 项',
+      if (succeeded > 0) l10n.activitySummarySucceeded(succeeded),
+      if (failed > 0) l10n.activitySummaryFailed(failed),
     ];
     return fragments.isEmpty ? null : fragments.join(' · ');
   }
 
-  String? get _mediaTransferSummary {
+  String? _mediaTransferSummary(AppLocalizations l10n) {
     if (taskKey != 'media_storage_transfer' || resultSummary == null) {
       return null;
     }
     final summary = resultSummary!;
     final fragments = <String>[];
-    void addCount(String key, String label) {
+    void addCount(String key, String Function(int count) label) {
       final value = summary[key];
-      if (value is int && value > 0) fragments.add('$label $value 项');
+      if (value is int && value > 0) fragments.add(label(value));
     }
 
-    addCount('transferred_count', '已迁移');
-    addCount('skipped_count', '已跳过');
-    addCount('failed_count', '迁移失败');
-    addCount('cleanup_incomplete_count', '源文件待确认');
+    addCount('transferred_count', l10n.activitySummaryTransferred);
+    addCount('skipped_count', l10n.activitySummarySkipped);
+    addCount('failed_count', l10n.activitySummaryTransferFailed);
+    addCount('cleanup_incomplete_count', l10n.activitySummaryCleanupIncomplete);
     final unexecuted = summary['unexecuted_media_ids'];
     if (unexecuted is List && unexecuted.isNotEmpty) {
-      fragments.add('未执行 ${unexecuted.length} 项');
+      fragments.add(l10n.activitySummaryUnexecuted(unexecuted.length));
     }
     return fragments.isEmpty ? null : fragments.join(' · ');
   }

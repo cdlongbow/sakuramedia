@@ -3,6 +3,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -110,6 +111,7 @@ class _EditPlaylistDialogState extends ConsumerState<EditPlaylistDialog> {
 
   Widget _buildFormContent(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Form(
       key: _formKey,
       child: Column(
@@ -117,7 +119,7 @@ class _EditPlaylistDialogState extends ConsumerState<EditPlaylistDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '编辑播放列表',
+            l10n.playlistEditTitle,
             style: resolveAppTextStyle(
               context,
               size: _isDialog ? AppTextSize.s18 : AppTextSize.s16,
@@ -127,7 +129,7 @@ class _EditPlaylistDialogState extends ConsumerState<EditPlaylistDialog> {
           ),
           SizedBox(height: spacing.xs),
           Text(
-            '更新当前播放列表的名称和描述，保存后会立即生效。',
+            l10n.playlistEditDescription,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -139,17 +141,20 @@ class _EditPlaylistDialogState extends ConsumerState<EditPlaylistDialog> {
           AppTextField(
             fieldKey: _nameFieldKey,
             controller: _nameController,
-            hintText: '例如：稍后再看',
+            hintText: l10n.playlistNameHint,
             enabled: !_isSubmitting,
             autovalidateMode: _autovalidateMode,
-            validator: (value) =>
-                value == null || value.trim().isEmpty ? '请输入播放列表名称' : null,
+            validator:
+                (value) =>
+                    value == null || value.trim().isEmpty
+                        ? l10n.playlistNameRequired
+                        : null,
           ),
           SizedBox(height: spacing.sm),
           AppTextField(
             fieldKey: _descriptionFieldKey,
             controller: _descriptionController,
-            hintText: '描述可选',
+            hintText: l10n.playlistDescriptionHint,
             enabled: !_isSubmitting,
             autovalidateMode: _autovalidateMode,
             maxLines: 3,
@@ -160,7 +165,7 @@ class _EditPlaylistDialogState extends ConsumerState<EditPlaylistDialog> {
             children: [
               Expanded(
                 child: AppButton(
-                  label: '取消',
+                  label: l10n.commonCancel,
                   onPressed: _isSubmitting
                       ? null
                       : () => Navigator.of(context).pop(),
@@ -170,7 +175,7 @@ class _EditPlaylistDialogState extends ConsumerState<EditPlaylistDialog> {
               Expanded(
                 child: AppButton(
                   key: _submitKey,
-                  label: '保存',
+                  label: l10n.commonSave,
                   variant: AppButtonVariant.primary,
                   isLoading: _isSubmitting,
                   onPressed: _submit,
@@ -210,13 +215,18 @@ class _EditPlaylistDialogState extends ConsumerState<EditPlaylistDialog> {
       if (!mounted) {
         return;
       }
-      showToast('播放列表已更新');
+      showToast(AppLocalizations.of(context).playlistUpdatedToast);
       Navigator.of(context).pop(playlist);
     } catch (error) {
       if (!mounted) {
         return;
       }
-      showToast(apiErrorMessage(error, fallback: '更新播放列表失败'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(context).playlistUpdateFailed,
+        ),
+      );
       setState(() => _isSubmitting = false);
     }
   }

@@ -24,6 +24,7 @@ import 'package:sakuramedia/features/videos/presentation/controllers/listing/vid
 import 'package:sakuramedia/features/videos/presentation/providers/video_summary_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_summary_scope.dart';
 import 'package:sakuramedia/features/videos/presentation/video_placeholders.dart';
+import 'package:sakuramedia/features/videos/presentation/video_display_title.dart';
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/batch_operation_submission_provider.dart';
@@ -49,6 +50,7 @@ import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_summary_card.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 /// 移动端 PornBox 主页（底部导航第 5 个 tab）：上方「视频合集」横滑区 + 下方「全部视频」
 /// 网格。数据层与桌面 `DesktopVideoListPage` 完全一致（复用缓存页状态 + 合集控制器 +
@@ -160,7 +162,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     if (await tryLaunchExternalVideoPlayback(
       context,
       videoId: video.id,
-      title: video.preferredTitle,
+      title: video.displayTitle(AppLocalizations.of(context)),
     )) {
       return;
     }
@@ -187,24 +189,25 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
   }
 
   Future<void> _deleteVideo(VideoItemListItemDto video) async {
+    final l10n = AppLocalizations.of(context);
     final title = video.preferredTitle.trim();
-    final label = title.isEmpty ? '该视频' : '“$title”';
+    final label = title.isEmpty ? l10n.videoGenericVideo : '“$title”';
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除视频',
-      message: '确认删除$label？该操作不可恢复。',
-      confirmLabel: '删除',
+      title: l10n.videoDeleteTitle,
+      message: l10n.videoDeleteConfirmMessage(label),
+      confirmLabel: l10n.commonDelete,
       danger: true,
       dialogKey: const Key('mobile-video-delete-drawer'),
       confirmKey: const Key('mobile-video-delete-confirm-button'),
       onConfirm: () => ref.read(videosApiProvider).deleteVideo(video.id),
-      failureFallback: '删除失败，请重试',
+      failureFallback: l10n.videoDeleteFailed,
     );
     if (!mounted || !confirmed) {
       return;
     }
     ref.read(videoMutationEventsProvider.notifier).reportDeleted(video.id);
-    showToast('已删除视频');
+    showToast(l10n.videoDeletedToast);
   }
 
   // --------------------------------------------------------- 批量动作
@@ -239,12 +242,13 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     if (selected.isEmpty) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除视频',
-      message: '确认删除选中的 ${selected.length} 个视频？该操作不可恢复。',
+      title: l10n.videoDeleteTitle,
+      message: l10n.videoBatchDeleteConfirmMessage(selected.length),
       danger: true,
-      confirmLabel: '删除',
+      confirmLabel: l10n.commonDelete,
       dialogKey: const Key('mobile-videos-batch-delete-drawer'),
       confirmKey: const Key('mobile-videos-batch-delete-confirm-button'),
     );
@@ -275,7 +279,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     }
     await ref.read(videoCollectionsOverviewProvider.notifier).refresh();
     if (mounted) {
-      showToast('已创建合集');
+      showToast(AppLocalizations.of(context).videoCollectionCreated);
     }
   }
 
@@ -298,6 +302,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     final paged =
         summary?.paged ?? const PagedListState<VideoItemListItemDto>();
     final filter = summary?.filter ?? VideoFilterState.initial;
+    final l10n = AppLocalizations.of(context);
 
     ref.listen(videoMutationEventsProvider, (_, next) {
       if (next.value != null) {
@@ -352,7 +357,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
                           videosAsync.isLoading && summary == null,
                       initialErrorMessage:
                           videosAsync.hasError && summary == null
-                          ? '视频列表加载失败，请稍后重试'
+                          ? l10n.errorVideoListLoadFailed
                           : null,
                     ),
                     // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
@@ -386,6 +391,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
   Widget _buildCollectionsSection(BuildContext context) {
     final spacing = context.appSpacing;
     final componentTokens = context.appComponentTokens;
+    final l10n = AppLocalizations.of(context);
     return Consumer(
       builder: (context, ref, _) {
         final async = ref.watch(videoCollectionsOverviewProvider);
@@ -402,7 +408,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
                 child: Row(
                   children: [
                     Text(
-                      '视频合集',
+                      l10n.videoCollectionsTitle,
                       style: resolveAppTextStyle(
                         context,
                         size: AppTextSize.s16,
@@ -413,7 +419,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
                     const Spacer(),
                     AppIconButton(
                       key: const Key('mobile-pornbox-create-collection-button'),
-                      tooltip: '新建合集',
+                      tooltip: l10n.videoNewCollection,
                       onPressed: _createCollection,
                       icon: const Icon(Icons.add_rounded),
                     ),
@@ -423,7 +429,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
                         key: const Key(
                           'mobile-pornbox-view-all-collections-button',
                         ),
-                        label: '查看全部',
+                        label: l10n.videoViewAll,
                         size: AppTextButtonSize.xSmall,
                         onPressed: _viewAllCollections,
                       ),
@@ -449,9 +455,10 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     List<VideoCollectionDto> collections,
   ) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     if (async.hasError && collections.isEmpty) {
       return CollectionHintBox(
-        message: apiErrorMessage(async.error!, fallback: '合集加载失败，请稍后重试'),
+        message: apiErrorMessage(async.error!, fallback: l10n.videoCollectionsLoadFailed),
       );
     }
     final isLoading = async.isLoading && collections.isEmpty;
@@ -459,7 +466,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
         ? videoCollectionPlaceholders(count: 4)
         : collections;
     if (display.isEmpty) {
-      return const CollectionHintBox(message: '还没有合集，点「新建」把视频攒成一个连播合集吧');
+      return CollectionHintBox(message: l10n.videoCollectionsEmptyHint);
     }
     return AppSkeletonizer(
       enabled: isLoading,
@@ -505,10 +512,11 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     required int total,
   }) {
     if (selectionMode) {
+      final l10n = AppLocalizations.of(context);
       final videoIds = videos.map((video) => video.id);
       final allSelected = isAllSelected(videoIds);
       return AppListHeader.selection(
-        selectionLabel: '已选 $selectedCount 个',
+        selectionLabel: l10n.videoSelectedCount(selectedCount),
         selectionExitButtonKey: const Key(
           'mobile-pornbox-exit-selection-button',
         ),
@@ -516,7 +524,10 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
         actionSlots: [
           AppButton(
             key: const Key('mobile-pornbox-select-all-button'),
-            label: allSelected ? '取消全选' : '全选(${videos.length})',
+            label:
+                allSelected
+                    ? l10n.videoDeselectAll
+                    : l10n.videoSelectAllCount(videos.length),
             variant: AppButtonVariant.ghost,
             size: AppButtonSize.xSmall,
             isSelected: allSelected,
@@ -526,10 +537,11 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
       );
     }
 
+    final l10n = AppLocalizations.of(context);
     return AppListHeader(
       filterButtonKey: const Key('mobile-pornbox-filter-button'),
-      filterTooltip: '筛选',
-      filterLabel: filter.triggerLabel,
+      filterTooltip: l10n.videoFilter,
+      filterLabel: filter.triggerLabel(l10n),
       onFilterTap: _openFilterDrawer,
       filterUpdate: paged.filterUpdate,
       hasPreviousFilterItems: videos.isNotEmpty,
@@ -539,7 +551,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
       informationSlots: [
         AppListHeaderInfo(
           key: const Key('mobile-pornbox-total'),
-          label: '$total 个',
+          label: l10n.videoTotalCount(total),
         ),
       ],
       actionSlots: [
@@ -585,8 +597,11 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     }
     final videos = isLoading ? videoSummaryPlaceholders() : paged.items;
     if (videos.isEmpty) {
-      return const SliverToBoxAdapter(
-        child: SizedBox(height: 200, child: AppEmptyState(message: '暂无视频数据')),
+      return SliverToBoxAdapter(
+        child: SizedBox(
+          height: 200,
+          child: AppEmptyState(message: AppLocalizations.of(context).videoEmptyList),
+        ),
       );
     }
     // 网格横向缩进由 shell 提供；用 Sliver 瀑布流直接消费外层 CustomScrollView，
@@ -638,11 +653,11 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
       context: cardContext,
       globalPosition: globalPosition,
       drawerKey: const Key('mobile-pornbox-card-menu'),
-      items: const <AppMenuItem<bool>>[
+      items: <AppMenuItem<bool>>[
         AppMenuItem(
           key: Key('mobile-pornbox-card-menu-select-item'),
           value: true,
-          label: '选择',
+          label: AppLocalizations.of(cardContext).videoSelect,
           icon: Icons.check_circle_outline,
         ),
       ],
@@ -664,6 +679,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
   // --------------------------------------------------------- 选择模式
 
   Widget _buildBatchBar(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final hasSelection = selectedCount > 0;
     final submitting = watchBatchOperationSubmitting(ref, const [
       BatchOperationType.videoCollectionAdd,
@@ -674,13 +690,13 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
       actions: [
         AppButton(
           key: const Key('mobile-pornbox-batch-add-collection-button'),
-          label: '加入合集',
+          label: l10n.videoAddToCollection,
           variant: AppButtonVariant.secondary,
           onPressed: hasSelection && !submitting ? _batchAddToCollection : null,
         ),
         AppButton(
           key: const Key('mobile-pornbox-batch-delete-button'),
-          label: '删除',
+          label: l10n.commonDelete,
           variant: AppButtonVariant.danger,
           onPressed: hasSelection && !submitting ? _batchDelete : null,
         ),

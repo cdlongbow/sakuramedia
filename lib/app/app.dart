@@ -7,11 +7,14 @@ import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/app/appearance_store.dart';
+import 'package:sakuramedia/app/language/language_store.dart';
+import 'package:sakuramedia/app/language/providers/language_providers.dart';
 import 'package:sakuramedia/app/providers/appearance_providers.dart';
 import 'package:sakuramedia/app/window_bootstrap_desktop.dart'
     show applyDesktopWindowBrightness;
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_router.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_fullscreen.dart';
@@ -38,6 +41,7 @@ class MyApp extends StatefulWidget {
     this.platformOverride,
     this.sessionStore,
     this.appearanceStore,
+    this.languageStore,
     this.observers,
   });
 
@@ -46,6 +50,9 @@ class MyApp extends StatefulWidget {
 
   /// 外观偏好存储；生产传 SharedPreferences 实现，测试/预览默认内存实现。
   final AppearanceStore? appearanceStore;
+
+  /// 界面语言存储；生产传 SharedPreferences 实现，测试/预览默认内存实现。
+  final AppLanguageStore? languageStore;
 
   /// 挂到组合根 [ProviderScope] 上的观察者。
   ///
@@ -62,6 +69,7 @@ class _MyAppState extends State<MyApp> {
   late AppPlatform _platform;
   late SessionStore _activeSessionStore;
   late AppearanceStore _activeAppearanceStore;
+  late AppLanguageStore _activeLanguageStore;
   late GoRouter _router;
   late bool _ownsSessionStore;
 
@@ -76,7 +84,8 @@ class _MyAppState extends State<MyApp> {
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.platformOverride == widget.platformOverride &&
-        oldWidget.sessionStore == widget.sessionStore) {
+        oldWidget.sessionStore == widget.sessionStore &&
+        oldWidget.languageStore == widget.languageStore) {
       return;
     }
 
@@ -96,6 +105,7 @@ class _MyAppState extends State<MyApp> {
     _activeSessionStore = widget.sessionStore ?? SessionStore.inMemory();
     _activeAppearanceStore =
         widget.appearanceStore ?? InMemoryAppearanceStore();
+    _activeLanguageStore = widget.languageStore ?? InMemoryLanguageStore();
     _router = buildAppRouter(_platform, _activeSessionStore);
   }
 
@@ -123,6 +133,7 @@ class _MyAppState extends State<MyApp> {
       overrides: [
         sessionStoreProvider.overrideWithValue(_activeSessionStore),
         appearanceStoreProvider.overrideWithValue(_activeAppearanceStore),
+        appLanguageStoreProvider.overrideWithValue(_activeLanguageStore),
       ],
       observers: widget.observers,
       child: AppPlatformScope(
@@ -175,6 +186,7 @@ class _SakuraAppState extends ConsumerState<_SakuraApp>
   @override
   Widget build(BuildContext context) {
     final appearance = ref.watch(appearanceProvider);
+    final language = ref.watch(appLanguageControllerProvider);
     final effective = effectiveBrightness(appearance, _platformBrightness);
 
     ref.listen(appearanceProvider, (previous, next) {
@@ -209,10 +221,14 @@ class _SakuraAppState extends ConsumerState<_SakuraApp>
       textStyle: appToastTextStyleFor(effective),
       backgroundColor: appToastBackgroundColorFor(effective),
       child: MaterialApp.router(
-        title: 'SakuraMedia',
+        onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
         debugShowCheckedModeBanner: false,
-        localizationsDelegates: GlobalMaterialLocalizations.delegates,
-        supportedLocales: const <Locale>[Locale('zh', 'CN')],
+        locale: language.locale,
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: lightTheme,
         darkTheme: darkTheme,
         themeMode: appearance.themeMode,

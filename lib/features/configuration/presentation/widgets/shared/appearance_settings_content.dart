@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/providers/appearance_providers.dart';
+import 'package:sakuramedia/features/configuration/presentation/widgets/shared/language_settings_content.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
 
@@ -13,6 +15,7 @@ class AppearanceSettingsContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final appearance = ref.watch(appearanceProvider);
     final controller = ref.read(appearanceProvider.notifier);
     final themeMode = appearance.themeMode;
@@ -21,7 +24,7 @@ class AppearanceSettingsContent extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '调整界面明暗与主题色，设置保存在本机。',
+          l10n.appearanceDescription,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -30,7 +33,7 @@ class AppearanceSettingsContent extends ConsumerWidget {
         ),
         SizedBox(height: spacing.lg),
         Text(
-          '主题模式',
+          l10n.appearanceThemeMode,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s14,
@@ -43,17 +46,16 @@ class AppearanceSettingsContent extends ConsumerWidget {
             AppSettingCell(
               key: const Key('appearance-mode-system'),
               icon: Icons.brightness_auto_outlined,
-              title: '跟随系统',
+              title: l10n.appearanceSystem,
               trailing: themeMode == ThemeMode.system
                   ? const _SelectionCheckMark()
                   : null,
-              onTap: () =>
-                  unawaited(controller.setThemeMode(ThemeMode.system)),
+              onTap: () => unawaited(controller.setThemeMode(ThemeMode.system)),
             ),
             AppSettingCell(
               key: const Key('appearance-mode-light'),
               icon: Icons.light_mode_outlined,
-              title: '浅色',
+              title: l10n.appearanceLight,
               trailing: themeMode == ThemeMode.light
                   ? const _SelectionCheckMark()
                   : null,
@@ -62,7 +64,7 @@ class AppearanceSettingsContent extends ConsumerWidget {
             AppSettingCell(
               key: const Key('appearance-mode-dark'),
               icon: Icons.dark_mode_outlined,
-              title: '深色',
+              title: l10n.appearanceDark,
               trailing: themeMode == ThemeMode.dark
                   ? const _SelectionCheckMark()
                   : null,
@@ -72,7 +74,7 @@ class AppearanceSettingsContent extends ConsumerWidget {
         ),
         SizedBox(height: spacing.xl),
         Text(
-          '主题色',
+          l10n.appearanceThemeColor,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s14,
@@ -81,7 +83,7 @@ class AppearanceSettingsContent extends ConsumerWidget {
         ),
         SizedBox(height: spacing.sm),
         AppSettingsGroup(
-          footer: '主题色会应用到按钮、选中态和强调元素。',
+          footer: l10n.appearanceThemeColorFooter,
           children: [
             for (final themeColor in AppThemeColor.values)
               AppSettingCell(
@@ -105,6 +107,8 @@ class AppearanceSettingsContent extends ConsumerWidget {
               ),
           ],
         ),
+        SizedBox(height: spacing.xl),
+        const LanguageSettingsContent(),
       ],
     );
   }

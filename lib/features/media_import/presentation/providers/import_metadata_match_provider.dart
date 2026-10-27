@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/features/media_import/data/import_metadata_search_dto.dart';
 import 'package:sakuramedia/features/media_import/presentation/providers/media_import_api_provider.dart';
 
@@ -46,7 +47,9 @@ class ImportMetadataMatch extends _$ImportMetadataMatch {
             movieNumber: number,
           );
     } catch (_) {
-      errorMessage = '搜索元数据失败，请稍后重试。';
+      errorMessage = ref
+          .read(appLocalizationsProvider)
+          .mediaImportMetadataSearchFailed;
     }
     if (_isDisposed) return;
     state = ImportMetadataMatchState(

@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
@@ -32,7 +33,12 @@ class DownloadClients extends _$DownloadClients
     if (current == null) {
       await reload();
       return state.hasError
-          ? apiErrorMessage(state.error!, fallback: '下载器加载失败，请稍后重试。')
+          ? ref.apiErrorMessage(
+              state.error!,
+              fallback: ref
+                  .read(appLocalizationsProvider)
+                  .errorDownloadClientLoadFailed,
+            )
           : null;
     }
     try {
@@ -40,7 +46,12 @@ class DownloadClients extends _$DownloadClients
       if (!isDisposed) state = AsyncData(next);
       return null;
     } catch (error) {
-      return apiErrorMessage(error, fallback: '下载器加载失败，请稍后重试。');
+      return ref.apiErrorMessage(
+        error,
+        fallback: ref
+            .read(appLocalizationsProvider)
+            .errorDownloadClientLoadFailed,
+      );
     }
   }
 

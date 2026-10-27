@@ -2,6 +2,7 @@ import 'dart:ui' show SemanticsRole;
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_fullscreen.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 
@@ -410,13 +411,14 @@ class _AppDrawerCancelRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return InkWell(
       onTap: onTap,
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: _drawerItemMinHeight),
         child: Center(
           child: Text(
-            '取消',
+            l10n.commonCancel,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,

@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_collections_overview_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_target_picker.dart';
 
@@ -19,6 +20,7 @@ Future<VideoCollectionDto?> showPickVideoCollectionDialog(
       PickVideoCollectionPresentation.dialog,
   int? excludedCollectionId,
 }) {
+  final l10n = AppLocalizations.of(context);
   return showCollectionTargetPicker<VideoCollectionDto>(
     context: context,
     variant: _variantOf(presentation),
@@ -27,7 +29,7 @@ Future<VideoCollectionDto?> showPickVideoCollectionDialog(
     watchCollections: (ref) => ref.watch(videoCollectionsOverviewProvider),
     idOf: (collection) => collection.id,
     nameOf: (collection) => collection.name,
-    countTextOf: (collection) => '${collection.itemCount} 个视频',
+    countTextOf: (collection) => l10n.videoCollectionVideoCount(collection.itemCount),
     excludedCollectionId: excludedCollectionId,
     onCreate: (context, isDrawer) => showVideoCollectionDialog(
       context,

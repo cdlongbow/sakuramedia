@@ -3,6 +3,7 @@ import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/image_search/data/image_search_target.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_filter_state.dart';
 import 'package:sakuramedia/features/image_search/presentation/widgets/actor_selector_dialog.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_mobile_filter_drawer_scaffold.dart';
@@ -130,6 +131,7 @@ class ImageSearchFilterPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
     final hasCurrentMovie =
         currentMovieNumber != null && currentMovieNumber!.trim().isNotEmpty;
@@ -140,7 +142,7 @@ class ImageSearchFilterPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _FilterSection(
-          title: '搜索素材',
+          title: l10n.imageSearchMaterialTitle,
           child: Wrap(
             spacing: spacing.sm,
             runSpacing: spacing.sm,
@@ -148,7 +150,7 @@ class ImageSearchFilterPanel extends StatelessWidget {
               for (final target in ImageSearchTarget.values)
                 AppButton(
                   key: Key('image-search-filter-target-${target.name}'),
-                  label: target.label,
+                  label: target.label(l10n),
                   size: AppButtonSize.xSmall,
                   variant: AppButtonVariant.secondary,
                   isSelected: filterState.searchTarget == target,
@@ -161,7 +163,7 @@ class ImageSearchFilterPanel extends StatelessWidget {
         if (hasCurrentMovie) ...[
           SizedBox(height: spacing.md),
           _FilterSection(
-            title: '影片范围',
+            title: l10n.imageSearchMovieScopeTitle,
             child: Wrap(
               spacing: spacing.sm,
               runSpacing: spacing.sm,
@@ -169,7 +171,7 @@ class ImageSearchFilterPanel extends StatelessWidget {
                 for (final scope in ImageSearchCurrentMovieScope.values)
                   AppButton(
                     key: Key('image-search-filter-movie-${scope.name}'),
-                    label: scope.label,
+                    label: scope.label(l10n),
                     size: AppButtonSize.xSmall,
                     variant: AppButtonVariant.secondary,
                     isSelected: filterState.currentMovieScope == scope,
@@ -183,7 +185,7 @@ class ImageSearchFilterPanel extends StatelessWidget {
         ],
         SizedBox(height: spacing.md),
         _FilterSection(
-          title: '女优范围',
+          title: l10n.imageSearchActorScopeTitle,
           child: Wrap(
             spacing: spacing.sm,
             runSpacing: spacing.sm,
@@ -191,7 +193,7 @@ class ImageSearchFilterPanel extends StatelessWidget {
               for (final mode in ImageSearchActorFilterMode.values)
                 AppButton(
                   key: Key('image-search-filter-actor-${mode.name}'),
-                  label: mode.label,
+                  label: mode.label(l10n),
                   size: AppButtonSize.xSmall,
                   variant: AppButtonVariant.secondary,
                   isSelected: filterState.actorFilterMode == mode,
@@ -206,8 +208,10 @@ class ImageSearchFilterPanel extends StatelessWidget {
           AppButton(
             key: const Key('image-search-filter-select-actors'),
             label: filterState.selectedActors.isEmpty
-                ? '选择已订阅女优'
-                : '已选 ${filterState.selectedActorCount} 位',
+                ? l10n.imageSearchSelectSubscribedActors
+                : l10n.imageSearchSelectedActorsCount(
+                    filterState.selectedActorCount,
+                  ),
             icon: const Icon(Icons.groups_2_outlined),
             trailingIcon: const Icon(Icons.chevron_right_rounded),
             size: AppButtonSize.small,
@@ -218,7 +222,7 @@ class ImageSearchFilterPanel extends StatelessWidget {
           if (filterState.selectedActors.isEmpty) ...[
             SizedBox(height: spacing.xs),
             Text(
-              '请选择至少一位女优',
+              l10n.imageSearchSelectAtLeastOneActor,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s12,
@@ -248,11 +252,12 @@ class ImageSearchFilterFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       children: [
         AppButton(
           key: const Key('image-search-filter-reset'),
-          label: '重置',
+          label: l10n.imageSearchReset,
           size: AppButtonSize.xSmall,
           variant: AppButtonVariant.secondary,
           onPressed: filterState.isDefault ? null : onReset,
@@ -260,7 +265,7 @@ class ImageSearchFilterFooter extends StatelessWidget {
         const Spacer(),
         AppButton(
           key: const Key('image-search-filter-apply'),
-          label: '应用并搜索',
+          label: l10n.imageSearchApplyAndSearch,
           icon: const Icon(Icons.search_rounded),
           size: AppButtonSize.small,
           variant: AppButtonVariant.primary,

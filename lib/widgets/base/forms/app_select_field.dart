@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 
 enum AppSelectFieldSize { regular, compact, mini }
 
@@ -29,6 +30,7 @@ class AppSelectField<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return FormField<T>(
       key: ValueKey<Object?>(value),
       initialValue: value,
@@ -38,7 +40,7 @@ class AppSelectField<T> extends StatelessWidget {
           label: label,
           value: field.value,
           items: items,
-          placeholder: placeholder ?? '请选择',
+          placeholder: placeholder ?? l10n.baseSelectPlaceholder,
           errorText: field.errorText,
           size: size,
           textStyle: textStyle,

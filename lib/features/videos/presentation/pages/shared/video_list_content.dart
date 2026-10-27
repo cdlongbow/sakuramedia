@@ -15,6 +15,7 @@ import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_filter_sections.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_summary_grid.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/domain/videos/video_sort_menu_button.dart';
 
 /// 视频列表「排序条 + 总数 + 网格 + 分页底栏」的 Sliver 呈现层。
@@ -46,7 +47,7 @@ class VideoListContent extends StatelessWidget {
     this.sectionSpacing = 0,
     this.contentKey,
     this.totalKey,
-    this.emptyMessage = '暂无视频数据',
+    this.emptyMessage,
   });
 
   final PagedListState<VideoItemListItemDto> paged;
@@ -96,10 +97,13 @@ class VideoListContent extends StatelessWidget {
   final double sectionSpacing;
   final Key? contentKey;
   final Key? totalKey;
-  final String emptyMessage;
+
+  /// 空态文案；为 `null` 时用语言包的默认文案。
+  final String? emptyMessage;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final selectionHeader = selectionMode
         ? selectionHeaderBuilder?.call(context)
         : null;
@@ -118,7 +122,7 @@ class VideoListContent extends StatelessWidget {
               selectionHeader ??
                   AppListHeader(
                     filterButtonKey: const Key('videos-filter-trigger'),
-                    filterLabel: filterState.triggerLabel,
+                    filterLabel: filterState.triggerLabel(l10n),
                     filterPanelKey: const Key('videos-filter-panel'),
                     filterPanelExtraWidth: 180,
                     filterPanelBuilder: (_) => VideoFilterSectionGroup(
@@ -136,7 +140,7 @@ class VideoListContent extends StatelessWidget {
                     informationSlots: [
                       AppListHeaderInfo(
                         key: totalKey ?? const Key('videos-page-total'),
-                        label: '${paged.total} 个',
+                        label: l10n.videoTotalCount(paged.total),
                       ),
                     ],
                     actionSlots: [
@@ -169,7 +173,7 @@ class VideoListContent extends StatelessWidget {
               selectionMode: selectionMode,
               selectedIds: selectedIds,
               onVideoToggleSelect: onVideoToggleSelect,
-              emptyMessage: emptyMessage,
+              emptyMessage: emptyMessage ?? l10n.videoEmptyList,
             ),
           ),
         // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。

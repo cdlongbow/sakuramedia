@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
@@ -308,6 +309,12 @@ Future<void> _pumpSection(
       child: OKToast(
         child: MaterialApp(
           theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           home: Scaffold(
             body: SingleChildScrollView(
               child: DesktopPluginsSection(active: active),

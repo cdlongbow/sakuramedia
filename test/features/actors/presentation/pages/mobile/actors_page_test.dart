@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/mobile/actors_page.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../../../../support/test_api_bundle.dart';
@@ -45,6 +46,12 @@ void main() {
         overrides: bundle.riverpodOverrides(),
         child: OKToast(
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraThemeData,
             home: const Scaffold(body: MobileActorsPage()),
           ),
@@ -136,14 +143,14 @@ Map<String, dynamic> _actorsJson({int total = 1}) {
   return <String, dynamic>{
     'items': <Map<String, dynamic>>[
       for (var index = 0; index < total; index++)
-      <String, dynamic>{
+        <String, dynamic>{
           'id': index + 1,
           'javdb_id': 'javdb-${index + 1}',
           'name': index == 0 ? '演员一号' : '演员${index + 1}',
-        'alias_name': '',
-        'profile_image': null,
-        'is_subscribed': true,
-      },
+          'alias_name': '',
+          'profile_image': null,
+          'is_subscribed': true,
+        },
     ],
     'page': 1,
     'page_size': 24,

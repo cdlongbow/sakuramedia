@@ -7,6 +7,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/media_import/data/import_failed_item_dto.dart';
 import 'package:sakuramedia/features/media_import/data/import_failure_reason_descriptions.dart';
 import 'package:sakuramedia/features/media_import/presentation/providers/failed_import_items_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
@@ -101,7 +102,7 @@ class _ImportFailedItemsDialogBodyState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '失败与跳过文件',
+          AppLocalizations.of(context).widgetMediaImportFailedSkippedTitle,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s18,
@@ -127,6 +128,7 @@ class _ImportFailedItemsDialogBodyState
 
   String _subtitle(List<ImportFailedItemDto>? items) {
     if (items == null) return widget.taskName;
+    final l10n = AppLocalizations.of(context);
     final pendingFailures = items
         .where(
           (item) =>
@@ -135,10 +137,14 @@ class _ImportFailedItemsDialogBodyState
         .length;
     final skippedCount = items.where((item) => item.isSkipped).length;
     final parts = <String>[
-      if (pendingFailures > 0) '失败 $pendingFailures 个待处理',
-      if (skippedCount > 0) '已跳过 $skippedCount 个',
+      if (pendingFailures > 0)
+        l10n.widgetMediaImportSubtitlePendingFailures(pendingFailures),
+      if (skippedCount > 0)
+        l10n.widgetMediaImportSubtitleSkipped(skippedCount),
     ];
-    if (parts.isEmpty) return '${widget.taskName} · 已全部处理';
+    if (parts.isEmpty) {
+      return l10n.widgetMediaImportSubtitleAllProcessed(widget.taskName);
+    }
     return '${widget.taskName} · ${parts.join(' · ')}';
   }
 
@@ -146,7 +152,11 @@ class _ImportFailedItemsDialogBodyState
     return itemsAsync.when(
       data: (items) {
         if (items.isEmpty) {
-          return const AppEmptyState(message: '该任务没有失败或跳过的文件');
+          return AppEmptyState(
+            message: AppLocalizations.of(
+              context,
+            ).widgetMediaImportNoFailedOrSkippedFiles,
+          );
         }
         final failures = items.where((item) => !item.isSkipped).toList();
         final skipped = items.where((item) => item.isSkipped).toList();
@@ -156,7 +166,9 @@ class _ImportFailedItemsDialogBodyState
             children: [
               if (failures.isNotEmpty)
                 AppSettingsGroup(
-                  header: '失败文件',
+                  header: AppLocalizations.of(
+                    context,
+                  ).widgetMediaImportFailedFilesHeader,
                   children: [
                     for (final item in failures)
                       _FailedItemRow(
@@ -169,7 +181,9 @@ class _ImportFailedItemsDialogBodyState
                 SizedBox(height: context.appSpacing.xl),
               if (skipped.isNotEmpty)
                 AppSettingsGroup(
-                  header: '已跳过',
+                  header: AppLocalizations.of(
+                    context,
+                  ).widgetMediaImportSkipped,
                   children: [
                     for (final item in skipped) _FailedItemRow(item: item),
                   ],
@@ -180,7 +194,13 @@ class _ImportFailedItemsDialogBodyState
       },
       loading: () => const Center(child: AppInlineSpinner()),
       error: (error, _) => AppEmptyState(
-        message: apiErrorMessage(error, fallback: '失败文件加载失败，请稍后重试'),
+        message: apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(
+            context,
+          ).widgetMediaImportFailedItemsLoadFailed,
+          l10n: AppLocalizations.of(context),
+        ),
         onRetry: () =>
             ref.invalidate(failedImportItemsProvider(widget.taskRunId)),
         retryKey: const Key('import-failed-items-retry'),
@@ -199,12 +219,22 @@ class _FailedItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final (stateLabel, stateTone) = item.isSkipped
-        ? ('已跳过', AppBadgeTone.neutral)
+        ? (l10n.widgetMediaImportSkipped, AppBadgeTone.neutral)
         : switch (item.state) {
-            ImportFailedItemState.pending => ('待处理', AppBadgeTone.neutral),
-            ImportFailedItemState.queued => ('重试中', AppBadgeTone.warning),
-            ImportFailedItemState.resolved => ('已导入', AppBadgeTone.success),
+            ImportFailedItemState.pending => (
+              l10n.widgetMediaImportStatePending,
+              AppBadgeTone.neutral,
+            ),
+            ImportFailedItemState.queued => (
+              l10n.widgetMediaImportStateRetrying,
+              AppBadgeTone.warning,
+            ),
+            ImportFailedItemState.resolved => (
+              l10n.widgetMediaImportStateImported,
+              AppBadgeTone.success,
+            ),
           };
     final onMatch = this.onMatch;
     final lastRetryError = item.lastRetryError;
@@ -229,7 +259,7 @@ class _FailedItemRow extends StatelessWidget {
                 AppButton(
                   key: Key('import-failed-item-match-${item.id}'),
                   size: AppButtonSize.xSmall,
-                  label: '手动匹配',
+                  label: l10n.widgetMediaImportManualMatch,
                   onPressed: onMatch,
                 ),
               ],
@@ -245,7 +275,7 @@ class _FailedItemRow extends StatelessWidget {
               context.appSpacing.md,
             ),
             child: Text(
-              '重试失败：$lastRetryError',
+              l10n.widgetMediaImportRetryFailed(lastRetryError),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: resolveAppTextStyle(

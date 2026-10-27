@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/media/media_playback_progress_controller.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/core/media/playback_resume_policy.dart';
@@ -201,7 +202,9 @@ class MoviePlayer extends _$MoviePlayer {
       }
       state = state.copyWith(
         thumbnails: const <MovieMediaThumbnailDto>[],
-        thumbnailErrorMessage: '请稍后重试。',
+        thumbnailErrorMessage: ref
+            .read(appLocalizationsProvider)
+            .movieProviderRetryLater,
       );
       _setActiveThumbnailIndex(null);
     } finally {
@@ -250,7 +253,9 @@ class MoviePlayer extends _$MoviePlayer {
         subtitleFetchStatus: 'failed',
         subtitleOptions: const <MoviePlayerSubtitleOption>[],
         selectedSubtitleId: null,
-        subtitleErrorMessage: '请稍后重试。',
+        subtitleErrorMessage: ref
+            .read(appLocalizationsProvider)
+            .movieProviderRetryLater,
       );
     } finally {
       if (_isCurrentSubtitle(requestVersion)) {
@@ -417,7 +422,9 @@ class MoviePlayer extends _$MoviePlayer {
     if (lastError != null && lastError.isNotEmpty) {
       return lastError;
     }
-    return result.fetchStatus == 'failed' ? '字幕抓取失败' : null;
+    return result.fetchStatus == 'failed'
+        ? ref.read(appLocalizationsProvider).movieProviderSubtitleFetchFailed
+        : null;
   }
 
   MoviePlayerState _resetSubtitleState(MoviePlayerState current) {
@@ -455,11 +462,12 @@ class MoviePlayer extends _$MoviePlayer {
   }
 
   String _messageForError(Object error) {
+    final l10n = ref.read(appLocalizationsProvider);
     if (error is ApiException &&
         (error.statusCode == 404 || error.error?.code == 'movie_not_found')) {
-      return '未找到该影片';
+      return l10n.movieProviderMovieNotFound;
     }
-    return '播放器暂时无法加载，请稍后重试';
+    return l10n.movieProviderPlayerLoadFailed;
   }
 
   bool _isCurrentLoad(int requestVersion) =>

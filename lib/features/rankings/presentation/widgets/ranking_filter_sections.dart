@@ -3,6 +3,7 @@ import 'package:sakuramedia/features/rankings/data/ranking_board_dto.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_source_dto.dart';
 import 'package:sakuramedia/features/rankings/presentation/rankings_placeholders.dart';
 import 'package:sakuramedia/features/shared/data/movie_interaction_filter.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
 
@@ -68,6 +69,7 @@ class RankingFilterSectionGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final boardOptions = isBoardLoading ? rankingBoardPlaceholders() : boards;
     final periodOptions = isBoardLoading
         ? rankingPeriodPlaceholders()
@@ -80,7 +82,7 @@ class RankingFilterSectionGroup extends StatelessWidget {
         KeyedSubtree(
           key: sectionKeys?.source,
           child: MovieFilterChoiceSection<RankingSourceDto>(
-            title: '来源',
+            title: l10n.rankingFilterSource,
             options: sources,
             selectedValue: selectedSource,
             optionKeyBuilder: (value) =>
@@ -93,7 +95,7 @@ class RankingFilterSectionGroup extends StatelessWidget {
         KeyedSubtree(
           key: sectionKeys?.board,
           child: MovieFilterChoiceSection<RankingBoardDto>(
-            title: '榜单',
+            title: l10n.rankingFilterBoard,
             options: boardOptions,
             selectedValue: selectedBoard,
             isLoading: isBoardLoading,
@@ -107,12 +109,12 @@ class RankingFilterSectionGroup extends StatelessWidget {
         KeyedSubtree(
           key: sectionKeys?.period,
           child: MovieFilterChoiceSection<String>(
-            title: '周期',
+            title: l10n.rankingFilterPeriod,
             options: periodOptions,
             selectedValue: selectedPeriod,
             isLoading: isBoardLoading,
             optionKeyBuilder: (value) => Key('rankings-filter-period-$value'),
-            labelBuilder: rankingPeriodLabel,
+            labelBuilder: (value) => rankingPeriodLabel(value, l10n: l10n),
             onSelected: onPeriodChanged,
           ),
         ),

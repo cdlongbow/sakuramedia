@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 
@@ -28,6 +29,7 @@ Future<MovieSubscriptionRowAction?> showMovieSubscriptionRowActions({
   final title = movieTitle.trim();
   final primaryTitle = number.isNotEmpty ? number : title;
   final subtitle = title.isNotEmpty && title != primaryTitle ? title : null;
+  final l10n = AppLocalizations.of(context);
   return showAppActionMenu<MovieSubscriptionRowAction>(
     context: context,
     presentation: AppMenuPresentation.bottomDrawer,
@@ -38,48 +40,48 @@ Future<MovieSubscriptionRowAction?> showMovieSubscriptionRowActions({
       AppMenuItem(
         key: const Key('movie-subscription-row-action-downloads'),
         value: MovieSubscriptionRowAction.openDownloads,
-        label: '查看下载任务',
-        subtitle: '查看该影片的下载进度',
+        label: l10n.subscriptionActionViewDownloads,
+        subtitle: l10n.subscriptionActionViewDownloadsSubtitle,
         icon: Icons.download_outlined,
         visible: hasDownloads,
       ),
       AppMenuItem(
         key: const Key('movie-subscription-row-action-files'),
         value: MovieSubscriptionRowAction.viewFiles,
-        label: '查看文件',
-        subtitle: '查看下载任务里的文件',
+        label: l10n.subscriptionActionViewFiles,
+        subtitle: l10n.subscriptionActionViewFilesSubtitle,
         icon: Icons.folder_open_rounded,
         visible: hasFiles,
       ),
       AppMenuItem(
         key: const Key('movie-subscription-row-action-retrigger-import'),
         value: MovieSubscriptionRowAction.retriggerImport,
-        label: '重新导入',
-        subtitle: '重提最新失败或跳过的导入任务',
+        label: l10n.subscriptionActionRetriggerImport,
+        subtitle: l10n.subscriptionActionRetriggerImportSubtitle,
         icon: Icons.refresh_rounded,
         visible: canRetriggerImport,
       ),
-      const AppMenuItem(
-        key: Key('movie-subscription-row-action-magnet-search'),
+      AppMenuItem(
+        key: const Key('movie-subscription-row-action-magnet-search'),
         value: MovieSubscriptionRowAction.searchMagnet,
-        label: '磁力搜索',
-        subtitle: '手动搜索资源并提交下载',
+        label: l10n.subscriptionActionSearchMagnet,
+        subtitle: l10n.subscriptionActionSearchMagnetSubtitle,
         icon: Icons.search_rounded,
       ),
       AppMenuItem(
         key: const Key('movie-subscription-row-action-delete-downloads'),
         value: MovieSubscriptionRowAction.deleteDownloads,
-        label: '删除下载任务',
-        subtitle: '可选同时删除下载器里的文件',
+        label: l10n.subscriptionActionDeleteDownloads,
+        subtitle: l10n.subscriptionActionDeleteDownloadsSubtitle,
         icon: Icons.delete_outline_rounded,
         tone: AppTextTone.error,
         visible: hasDownloads,
       ),
-      const AppMenuItem(
-        key: Key('movie-subscription-row-action-unsubscribe'),
+      AppMenuItem(
+        key: const Key('movie-subscription-row-action-unsubscribe'),
         value: MovieSubscriptionRowAction.unsubscribe,
-        label: '取消订阅',
-        subtitle: '不再自动查找资源，不影响已有文件',
+        label: l10n.subscriptionActionUnsubscribe,
+        subtitle: l10n.subscriptionActionUnsubscribeSubtitle,
         icon: Icons.bookmark_remove_outlined,
         tone: AppTextTone.error,
       ),

@@ -63,7 +63,7 @@ final class IndexerConnectionTestProvider
 }
 
 String _$indexerConnectionTestHash() =>
-    r'b8ef20cec41af521cd91382b8dc5b7b1a7e19a5d';
+    r'f540ef214cc4a0117d571852e57fdaf082b302c0';
 
 /// 以组件 identity 隔离的 Torznab 测试状态，请求由调用方传入以支持草稿测试。
 

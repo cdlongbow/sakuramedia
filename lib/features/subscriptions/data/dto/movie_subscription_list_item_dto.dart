@@ -1,6 +1,7 @@
 import 'package:sakuramedia/core/json/json_parse.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 /// `GET /movie-subscriptions` 的单条订阅影片。
 class MovieSubscriptionListItemDto with MovieCoverSelection {
@@ -51,7 +52,9 @@ class MovieSubscriptionListItemDto with MovieCoverSelection {
       movieId: asInt(json['movie_id']),
       movieNumber: asStringOrNull(json['movie_number']) ?? '',
       title: asStringOrNull(json['title']) ?? '',
-      coverImage: coverImage == null ? null : MovieImageDto.fromJson(coverImage),
+      coverImage: coverImage == null
+          ? null
+          : MovieImageDto.fromJson(coverImage),
       thinCoverImage: thinCoverImage == null
           ? null
           : MovieImageDto.fromJson(thinCoverImage),
@@ -64,7 +67,10 @@ class MovieSubscriptionListItemDto with MovieCoverSelection {
       lastSearchedAt: asDateTime(json['last_searched_at']),
       lastError: asStringOrNull(json['last_error'], trim: true),
       importStatus: asStringOrNull(json['import_status'], trim: true),
-      importStatusLabel: asStringOrNull(json['import_status_label'], trim: true),
+      importStatusLabel: asStringOrNull(
+        json['import_status_label'],
+        trim: true,
+      ),
       deadDownloadTaskCount: asInt(json['dead_download_task_count']),
       mediaCount: asInt(json['media_count']),
     );
@@ -79,8 +85,10 @@ class MovieSubscriptionListItemDto with MovieCoverSelection {
       status == MovieSubscriptionStatus.importFailed &&
       importStatus == 'completed';
 
-  String get displayStatusLabel =>
-      isImportedMediaRemoved ? '媒体已删除' : status.label;
+  /// 状态标签。调用方负责传入当前语言的 [AppLocalizations]。
+  String displayStatusLabel(AppLocalizations l10n) => isImportedMediaRemoved
+      ? l10n.subscriptionStatusMediaRemoved
+      : status.label(l10n);
 
   bool get canResetSearch =>
       status == MovieSubscriptionStatus.missing ||

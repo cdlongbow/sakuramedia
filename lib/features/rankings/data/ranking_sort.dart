@@ -1,3 +1,5 @@
+import 'package:sakuramedia/l10n/app_localizations.dart';
+
 export 'package:sakuramedia/features/shared/data/sort_direction.dart'
     show SortDirection, SortDirectionX;
 
@@ -22,13 +24,14 @@ extension RankingSortFieldX on RankingSortField {
     RankingSortField.commentCount => 'comment_count',
   };
 
-  String get label => switch (this) {
-    RankingSortField.rank => '榜单名次',
-    RankingSortField.heat => '热度',
-    RankingSortField.score => '评分',
-    RankingSortField.scoreNumber => '评分人数',
-    RankingSortField.watchedCount => '看过人数',
-    RankingSortField.wantWatchCount => '想看人数',
-    RankingSortField.commentCount => '评论人数',
+  /// 排序字段的展示文案，按当前语言渲染。
+  String label(AppLocalizations l10n) => switch (this) {
+    RankingSortField.rank => l10n.rankingSortFieldRank,
+    RankingSortField.heat => l10n.sharedInteractionHeat,
+    RankingSortField.score => l10n.sharedInteractionScore,
+    RankingSortField.scoreNumber => l10n.sharedInteractionScoreNumber,
+    RankingSortField.watchedCount => l10n.sharedInteractionWatchedCount,
+    RankingSortField.wantWatchCount => l10n.sharedInteractionWantWatchCount,
+    RankingSortField.commentCount => l10n.rankingSortFieldCommentCount,
   };
 }

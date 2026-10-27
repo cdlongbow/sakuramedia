@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/json/json_parse.dart';
 import 'package:sakuramedia/features/activity/data/job_metadata_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_switch.dart';
@@ -140,13 +141,14 @@ class _JobParamsDialogState extends State<_JobParamsDialog> {
   }
 
   Widget _buildHeader(BuildContext context, AppSpacing spacing) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: EdgeInsets.only(right: spacing.xxl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '填写任务参数',
+            l10n.activityJobParamsTitle,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s18,
@@ -173,6 +175,7 @@ class _JobParamsDialogState extends State<_JobParamsDialog> {
 
   Widget _buildForm(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Form(
       key: _formKey,
       child: Column(
@@ -180,7 +183,7 @@ class _JobParamsDialogState extends State<_JobParamsDialog> {
         children: [
           if (_fields.isEmpty)
             Text(
-              '该任务没有可填写的参数，将按默认配置执行。',
+              l10n.activityJobParamsEmpty,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s14,
@@ -199,19 +202,20 @@ class _JobParamsDialogState extends State<_JobParamsDialog> {
   }
 
   Widget _buildActions(BuildContext context, AppSpacing spacing) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         AppButton(
           key: const Key('activity-job-params-cancel-button'),
-          label: '取消',
+          label: l10n.commonCancel,
           size: AppButtonSize.small,
           onPressed: () => Navigator.of(context).pop(),
         ),
         SizedBox(width: spacing.sm),
         AppButton(
           key: const Key('activity-job-params-submit-button'),
-          label: '提交任务',
+          label: l10n.activityJobParamsSubmit,
           size: AppButtonSize.small,
           variant: AppButtonVariant.primary,
           onPressed: _submit,
@@ -221,8 +225,10 @@ class _JobParamsDialogState extends State<_JobParamsDialog> {
   }
 
   Widget _buildField(BuildContext context, _JobParamDefinition field) {
+    final l10n = AppLocalizations.of(context);
     final label = '${field.label}${field.required ? ' *' : ''}';
-    final helperText = field.description ?? '参数名：${field.name}';
+    final helperText =
+        field.description ?? l10n.activityJobParamFallbackHelp(field.name);
     switch (field.kind) {
       case _JobParamKind.string:
       case _JobParamKind.integer:
@@ -260,11 +266,20 @@ class _JobParamsDialogState extends State<_JobParamsDialog> {
           key: Key('activity-job-param-${field.name}'),
           label: label,
           value: _values[field.name] as bool?,
-          placeholder: '未设置',
-          items: const <DropdownMenuItem<bool?>>[
-            DropdownMenuItem<bool?>(value: null, child: Text('未设置')),
-            DropdownMenuItem<bool?>(value: true, child: Text('是')),
-            DropdownMenuItem<bool?>(value: false, child: Text('否')),
+          placeholder: l10n.activityJobParamUnset,
+          items: <DropdownMenuItem<bool?>>[
+            DropdownMenuItem<bool?>(
+              value: null,
+              child: Text(l10n.activityJobParamUnset),
+            ),
+            DropdownMenuItem<bool?>(
+              value: true,
+              child: Text(l10n.activityJobParamYes),
+            ),
+            DropdownMenuItem<bool?>(
+              value: false,
+              child: Text(l10n.activityJobParamNo),
+            ),
           ],
           onChanged: (value) => setState(() => _values[field.name] = value),
         );
@@ -274,19 +289,25 @@ class _JobParamsDialogState extends State<_JobParamsDialog> {
           key: Key('activity-job-param-${field.name}'),
           label: label,
           value: _values[field.name],
-          placeholder: field.required ? '请选择' : '未设置',
+          placeholder: field.required
+              ? l10n.activityJobParamSelectPlaceholder
+              : l10n.activityJobParamUnset,
           items: [
             if (!field.required)
-              const DropdownMenuItem<dynamic>(value: null, child: Text('未设置')),
+              DropdownMenuItem<dynamic>(
+                value: null,
+                child: Text(l10n.activityJobParamUnset),
+              ),
             ...options.map(
               (option) => DropdownMenuItem<dynamic>(
                 value: option.value,
-                child: Text(option.label ?? _displayValue(option.value)),
+                child: Text(option.label ?? _displayValue(option.value, l10n)),
               ),
             ),
           ],
           validator: field.required
-              ? (value) => value == null ? '请选择${field.label}' : null
+              ? (value) =>
+                    value == null ? l10n.activityJobParamSelectRequired(field.label) : null
               : null,
           onChanged: (value) => _setValue(field.name, value),
         );
@@ -382,26 +403,31 @@ class _JobParamsDialogState extends State<_JobParamsDialog> {
   }
 
   String? _validateTextField(_JobParamDefinition field) {
+    final l10n = AppLocalizations.of(context);
     final value = _controllers[field.name]?.text.trim() ?? '';
     if (value.isEmpty) {
-      return field.required ? '请输入${field.label}' : null;
+      return field.required ? l10n.activityJobParamRequired(field.label) : null;
     }
     switch (field.kind) {
       case _JobParamKind.integer:
-        return int.tryParse(value) == null ? '请输入整数' : null;
+        return int.tryParse(value) == null
+            ? l10n.activityJobParamIntegerRequired
+            : null;
       case _JobParamKind.number:
-        return double.tryParse(value) == null ? '请输入数字' : null;
+        return double.tryParse(value) == null
+            ? l10n.activityJobParamNumberRequired
+            : null;
       case _JobParamKind.json:
         try {
           final decoded = jsonDecode(value);
           if (field.type == 'array' && decoded is! List) {
-            return '请输入 JSON 数组';
+            return l10n.activityJobParamJsonArrayRequired;
           }
           if (field.type == 'object' && decoded is! Map) {
-            return '请输入 JSON 对象';
+            return l10n.activityJobParamJsonObjectRequired;
           }
         } on FormatException {
-          return '请输入合法的 JSON';
+          return l10n.activityJobParamJsonInvalid;
         }
         return null;
       case _JobParamKind.string:
@@ -631,12 +657,12 @@ String _textForDefault(_JobParamDefinition field, dynamic value) {
   return value.toString();
 }
 
-String _displayValue(dynamic value) {
+String _displayValue(dynamic value, AppLocalizations l10n) {
   if (value == null) {
-    return '未设置';
+    return l10n.activityJobParamUnset;
   }
   if (value is bool) {
-    return value ? '是' : '否';
+    return value ? l10n.activityJobParamYes : l10n.activityJobParamNo;
   }
   return value.toString();
 }

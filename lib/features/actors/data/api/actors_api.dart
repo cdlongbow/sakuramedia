@@ -11,11 +11,20 @@ import 'package:sakuramedia/features/actors/data/dto/actor_movie_year_dto.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_search_stream_update.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
 import 'package:sakuramedia/features/search/data/catalog_search_stream_stats.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 class ActorsApi {
-  const ActorsApi({required ApiClient apiClient}) : _apiClient = apiClient;
+  const ActorsApi({
+    required ApiClient apiClient,
+    AppLocalizations Function()? l10n,
+  }) : _apiClient = apiClient,
+       _l10n = l10n;
 
   final ApiClient _apiClient;
+  final AppLocalizations Function()? _l10n;
+
+  AppLocalizations get _localizations => _l10n?.call() ?? AppLocalizationsZh();
 
   Future<PaginatedResponseDto<ActorListItemDto>> getActors({
     ActorSubscriptionStatus subscriptionStatus = ActorSubscriptionStatus.all,
@@ -209,48 +218,52 @@ class ActorsApi {
 
     switch (event.event) {
       case 'search_started':
-        return const ActorSearchStreamUpdate(
+        return ActorSearchStreamUpdate(
           stage: 'search_started',
-          message: '正在从外部数据源搜索女优',
+          message: _localizations.sseActorSearchingExternal,
         );
       case 'actor_found':
         return ActorSearchStreamUpdate(
           stage: 'actor_found',
-          message: '已从在线源获取候选女优',
+          message: _localizations.sseActorCandidatesFetched,
           total: payload['total'] as int?,
         );
       case 'upsert_started':
         return ActorSearchStreamUpdate(
           stage: 'upsert_started',
-          message: '正在入库在线女优',
+          message: _localizations.sseActorImportingOnline,
           total: payload['total'] as int?,
         );
       case 'image_download_started':
         return ActorSearchStreamUpdate(
           stage: 'image_download_started',
-          message:
-              '正在下载头像 ${payload['index'] as int? ?? 0}/${payload['total'] as int? ?? 0}',
+          message: _localizations.sseActorDownloadingAvatar(
+            payload['index'] as int? ?? 0,
+            payload['total'] as int? ?? 0,
+          ),
           current: payload['index'] as int?,
           total: payload['total'] as int?,
         );
       case 'image_download_finished':
         return ActorSearchStreamUpdate(
           stage: 'image_download_finished',
-          message:
-              '正在下载头像 ${payload['index'] as int? ?? 0}/${payload['total'] as int? ?? 0}',
+          message: _localizations.sseActorDownloadingAvatar(
+            payload['index'] as int? ?? 0,
+            payload['total'] as int? ?? 0,
+          ),
           current: payload['index'] as int?,
           total: payload['total'] as int?,
         );
       case 'upsert_finished':
         return ActorSearchStreamUpdate(
           stage: 'upsert_finished',
-          message: '在线女优入库完成',
+          message: _localizations.sseActorOnlineImportFinished,
           stats: CatalogSearchStreamStats.fromLooseJson(payload),
         );
       case 'completed':
         return ActorSearchStreamUpdate(
           stage: 'completed',
-          message: '在线搜索已完成',
+          message: _localizations.sseActorOnlineSearchFinished,
           results: _parseActorResults(payload['actors']),
           success: payload['success'] as bool? ?? false,
           reason: payload['reason'] as String?,
@@ -261,7 +274,7 @@ class ActorsApi {
       default:
         return ActorSearchStreamUpdate(
           stage: event.event,
-          message: '正在同步在线女优搜索结果',
+          message: _localizations.sseActorSyncingOnlineResults,
         );
     }
   }

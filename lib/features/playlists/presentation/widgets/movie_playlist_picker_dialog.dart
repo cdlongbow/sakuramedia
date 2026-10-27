@@ -5,6 +5,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/create_playlist_dialog.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
@@ -114,7 +115,9 @@ class _MoviePlaylistPickerDialogState
         return;
       }
       setState(() {
-        _errorMessage = '播放列表加载失败';
+        _errorMessage = AppLocalizations.of(
+          context,
+        ).playlistPickerLoadFailed;
         _isLoading = false;
       });
     }
@@ -185,7 +188,9 @@ class _MoviePlaylistPickerDialogState
                     ),
                     SizedBox(width: spacing.md),
                     Text(
-                      '${playlist.movieCount} 部',
+                      AppLocalizations.of(
+                        context,
+                      ).playlistMovieCountShort(playlist.movieCount),
                       style: resolveAppTextStyle(
                         context,
                         size: AppTextSize.s12,
@@ -247,7 +252,7 @@ class _MoviePlaylistPickerDialogState
     } else if (_playlists.isEmpty) {
       body = Center(
         child: Text(
-          '暂无播放列表',
+          AppLocalizations.of(context).playlistEmpty,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s14,
@@ -258,7 +263,7 @@ class _MoviePlaylistPickerDialogState
     } else if (visiblePlaylists.isEmpty) {
       body = Center(
         child: Text(
-          '没有匹配的播放列表',
+          AppLocalizations.of(context).playlistNoMatch,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s14,
@@ -277,7 +282,7 @@ class _MoviePlaylistPickerDialogState
           children: [
             Expanded(
               child: Text(
-                '加入播放列表',
+                AppLocalizations.of(context).playlistAddToPlaylist,
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s16,
@@ -287,7 +292,7 @@ class _MoviePlaylistPickerDialogState
             ),
             AppIconButton(
               key: const Key('movie-playlist-close-button'),
-              tooltip: '关闭',
+              tooltip: AppLocalizations.of(context).playlistCloseTooltip,
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.close_rounded),
             ),
@@ -297,7 +302,7 @@ class _MoviePlaylistPickerDialogState
         AppSearchField(
           fieldKey: const Key('movie-playlist-search-field'),
           controller: _searchController,
-          hintText: '搜索播放列表',
+          hintText: AppLocalizations.of(context).playlistSearchHint,
           onChanged: (value) =>
               setState(() => _keyword = value.trim().toLowerCase()),
           clearKey: const Key('movie-playlist-search-clear'),
@@ -322,7 +327,7 @@ class _MoviePlaylistPickerDialogState
         Divider(color: context.appColors.divider, height: spacing.lg),
         AppTextButton(
           key: const Key('movie-playlist-create-button'),
-          label: '新建播放列表',
+          label: AppLocalizations.of(context).playlistCreateTooltip,
           icon: const Icon(Icons.add_rounded),
           onPressed: _createPlaylist,
         ),
@@ -376,7 +381,12 @@ class _MoviePlaylistPickerDialogState
         }
       });
       showToast(
-        apiErrorMessage(error, fallback: isSelected ? '移出播放列表失败' : '加入播放列表失败'),
+        apiErrorMessage(
+          error,
+          fallback: isSelected
+              ? AppLocalizations.of(context).playlistRemoveFailed
+              : AppLocalizations.of(context).playlistAddFailed,
+        ),
       );
     } finally {
       if (mounted) {

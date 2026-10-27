@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_state.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tags_api_provider.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 
 part 'tag_selection_provider.g.dart';
 
@@ -59,7 +59,10 @@ class TagSelection extends _$TagSelection {
       }
       state = state.copyWith(
         isLoading: false,
-        errorMessage: apiErrorMessage(error, fallback: '标签加载失败，请稍后重试'),
+        errorMessage: ref.apiErrorMessage(
+          error,
+          fallback: ref.read(appLocalizationsProvider).errorTagLoadFailed,
+        ),
       );
     }
   }

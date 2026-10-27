@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
+import 'package:sakuramedia/features/videos/presentation/video_display_title.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_collection_chips.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
@@ -81,38 +83,39 @@ class DesktopVideoActionsDialogBody extends StatelessWidget {
   }
 
   List<MediaPreviewActionItem> _buildActions(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return <MediaPreviewActionItem>[
       MediaPreviewActionItem(
         key: const Key('desktop-video-action-play'),
-        label: '播放',
+        label: l10n.videoPlay,
         icon: Icons.play_circle_outline_rounded,
         onTap: video.canPlay ? () => _run(context, onPlay) : null,
       ),
       if (onThumbnails != null)
         MediaPreviewActionItem(
           key: const Key('desktop-video-action-thumbnails'),
-          label: '缩略图',
+          label: l10n.videoThumbnails,
           icon: Icons.photo_library_outlined,
           onTap: () => _run(context, onThumbnails!),
         ),
       if (onAddToCollection != null)
         MediaPreviewActionItem(
           key: const Key('desktop-video-action-add-to-collection'),
-          label: '加入合集',
+          label: l10n.videoAddToCollection,
           icon: Icons.playlist_add_rounded,
           onTap: () => _run(context, onAddToCollection!),
         ),
       if (onRemoveFromCollection != null)
         MediaPreviewActionItem(
           key: const Key('desktop-video-action-remove-from-collection'),
-          label: '移出合集',
+          label: l10n.videoRemoveFromCollection,
           icon: Icons.playlist_remove_rounded,
           onTap: () => _run(context, onRemoveFromCollection!),
         ),
       if (onDelete != null)
         MediaPreviewActionItem(
           key: const Key('desktop-video-action-delete'),
-          label: '删除',
+          label: l10n.commonDelete,
           icon: Icons.delete_outline_rounded,
           onTap: () => _run(context, onDelete!),
         ),
@@ -124,6 +127,7 @@ class DesktopVideoActionsDialogBody extends StatelessWidget {
     final spacing = context.appSpacing;
     final colors = context.appColors;
     final tokens = context.appComponentTokens;
+    final l10n = AppLocalizations.of(context);
     final coverUrl = video.coverImage?.origin;
 
     // 关闭按钮浮在弹窗右上角(约 40px)，标题右侧留同宽度空隙避免遮挡。
@@ -162,7 +166,7 @@ class DesktopVideoActionsDialogBody extends StatelessWidget {
         Padding(
           padding: EdgeInsets.only(right: closeGutter),
           child: Text(
-            video.preferredTitle,
+            video.displayTitle(l10n),
             key: const Key('desktop-video-actions-title'),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -177,7 +181,7 @@ class DesktopVideoActionsDialogBody extends StatelessWidget {
         if (video.mediaCount > 1) ...[
           SizedBox(height: spacing.xs),
           Text(
-            '共 ${video.mediaCount} 个媒体',
+            l10n.videoMediaCount(video.mediaCount),
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -189,7 +193,7 @@ class DesktopVideoActionsDialogBody extends StatelessWidget {
         if (collections.isNotEmpty && onCollectionTap != null) ...[
           SizedBox(height: spacing.lg),
           Text(
-            '所属合集',
+            l10n.videoBelongsToCollections,
             key: const Key('desktop-video-actions-collections-title'),
             style: resolveAppTextStyle(
               context,

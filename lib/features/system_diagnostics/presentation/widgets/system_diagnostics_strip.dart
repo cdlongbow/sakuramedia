@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/format/relative_time_label.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_status.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/controllers/system_diagnostics_controller.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -65,6 +66,7 @@ class _SystemDiagnosticsStripState
 
   Widget _buildBody(BuildContext context, SystemDiagnosticsState c) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     if (c.isRunning) {
       return Row(
         children: [
@@ -79,7 +81,10 @@ class _SystemDiagnosticsStripState
           SizedBox(width: spacing.sm),
           Expanded(
             child: Text(
-              '正在检测组件 ${c.completedItemCount}/${c.totalItemCount}…',
+              l10n.systemDiagnosticsCheckingComponents(
+                c.completedItemCount,
+                c.totalItemCount,
+              ),
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s12,
@@ -97,8 +102,8 @@ class _SystemDiagnosticsStripState
       if (c.lastRunAt != null)
         AppIconButton(
           key: const Key('system-diagnostics-strip-refresh'),
-          tooltip: '重新检测',
-          semanticLabel: '重新检测',
+          tooltip: l10n.systemDiagnosticsRerun,
+          semanticLabel: l10n.systemDiagnosticsRerun,
           size: AppIconButtonSize.mini,
           icon: const Icon(Icons.refresh),
           onPressed: _runAll,
@@ -106,8 +111,8 @@ class _SystemDiagnosticsStripState
       SizedBox(width: spacing.xs),
       AppIconButton(
         key: const Key('system-diagnostics-strip-open'),
-        tooltip: '打开组件诊断页',
-        semanticLabel: '打开组件诊断页',
+        tooltip: l10n.systemDiagnosticsOpenPage,
+        semanticLabel: l10n.systemDiagnosticsOpenPage,
         size: AppIconButtonSize.mini,
         icon: const Icon(Icons.arrow_forward),
         onPressed: () => context.pushDesktopSystemDiagnostics(),
@@ -123,7 +128,7 @@ class _SystemDiagnosticsStripState
         ),
         SizedBox(width: spacing.sm),
         Text(
-          '组件诊断',
+          l10n.systemDiagnosticsComponentTitle,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -143,7 +148,7 @@ class _SystemDiagnosticsStripState
         if (c.lastRunAt != null) ...[
           SizedBox(width: spacing.sm),
           Text(
-            '· ${formatRelativeTimeLabel(c.lastRunAt!, suffix: '检测')}',
+            '· ${l10n.lastCheckedRelative(formatRelativeTimeLabel(c.lastRunAt!, l10n: l10n))}',
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -157,7 +162,7 @@ class _SystemDiagnosticsStripState
           SizedBox(width: spacing.md),
           AppButton(
             key: const Key('system-diagnostics-strip-start'),
-            label: '开始检测',
+            label: l10n.systemDiagnosticsStartCheck,
             variant: AppButtonVariant.secondary,
             size: AppButtonSize.xSmall,
             onPressed: _runAll,
@@ -197,11 +202,12 @@ class _SystemDiagnosticsStripState
     BuildContext context,
     SystemDiagnosticsState c,
   ) {
+    final l10n = AppLocalizations.of(context);
     if (c.lastRunAt == null) {
       return (
         icon: Icons.radio_button_unchecked,
         color: context.appTextPalette.muted,
-        label: '未检测',
+        label: l10n.systemDiagnosticsStatusNotChecked,
       );
     }
     if (c.unhealthyCount > 0 ||
@@ -209,7 +215,9 @@ class _SystemDiagnosticsStripState
       return (
         icon: Icons.error_outline,
         color: context.appTextPalette.error,
-        label: '${c.unhealthyCount > 0 ? c.unhealthyCount : 1} 项异常',
+        label: l10n.systemDiagnosticsStatusIssues(
+          c.unhealthyCount > 0 ? c.unhealthyCount : 1,
+        ),
       );
     }
     if (c.overallStatus == DiagnosticItemStatus.warning ||
@@ -217,7 +225,7 @@ class _SystemDiagnosticsStripState
       return (
         icon: Icons.warning_amber_rounded,
         color: context.appTextPalette.warning,
-        label: '有警告',
+        label: l10n.systemDiagnosticsStatusWarning,
       );
     }
     if (c.overallStatus == DiagnosticItemStatus.disabled ||
@@ -225,13 +233,13 @@ class _SystemDiagnosticsStripState
       return (
         icon: Icons.radio_button_unchecked,
         color: context.appTextPalette.muted,
-        label: '部分未检测',
+        label: l10n.systemDiagnosticsStatusPartiallyChecked,
       );
     }
     return (
       icon: Icons.check_circle_outline,
       color: context.appTextPalette.success,
-      label: '全部通过',
+      label: l10n.systemDiagnosticsStatusAllPassed,
     );
   }
 }

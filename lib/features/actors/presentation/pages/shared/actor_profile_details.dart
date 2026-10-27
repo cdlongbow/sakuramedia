@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_detail_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 
@@ -32,29 +33,34 @@ class _ActorProfileDetailsState extends State<ActorProfileDetails> {
   Widget build(BuildContext context) {
     final actor = widget.actor;
     final birthday = actor.birthday;
-    final age = actor.age == null ? null : '${actor.age}岁';
+    final l10n = AppLocalizations.of(context);
+    final age = actor.age == null ? null : l10n.actorAgeValue(actor.age!);
     final fields = <(String, String)>[
       if (birthday != null)
         (
-          '生日',
-          '${birthday.year}年${birthday.month}月${birthday.day}日${age == null ? '' : ' · $age'}',
+          l10n.actorBirthdayLabel,
+          '${l10n.actorBirthdayValue(birthday.year, birthday.month, birthday.day)}'
+              '${age == null ? '' : ' · $age'}',
         )
       else if (age != null)
-        ('年龄', age),
-      if (actor.birthplace != null) ('出生地', actor.birthplace!),
-      if (actor.bloodType != null) ('血型', actor.bloodType!),
-      if (actor.heightCm != null) ('身高', '${actor.heightCm} cm'),
-      if (actor.cup != null) ('罩杯', actor.cup!),
-      if (actor.bustCm != null) ('胸围', '${actor.bustCm} cm'),
-      if (actor.waistCm != null) ('腰围', '${actor.waistCm} cm'),
-      if (actor.hipsCm != null) ('臀围', '${actor.hipsCm} cm'),
+        (l10n.actorAgeLabel, age),
+      if (actor.birthplace != null)
+        (l10n.actorBirthplaceLabel, actor.birthplace!),
+      if (actor.bloodType != null) (l10n.actorBloodTypeLabel, actor.bloodType!),
+      if (actor.heightCm != null)
+        (l10n.actorHeightLabel, '${actor.heightCm} cm'),
+      if (actor.cup != null) (l10n.actorCupLabel, actor.cup!),
+      if (actor.bustCm != null) (l10n.actorBustLabel, '${actor.bustCm} cm'),
+      if (actor.waistCm != null) (l10n.actorWaistLabel, '${actor.waistCm} cm'),
+      if (actor.hipsCm != null) (l10n.actorHipsLabel, '${actor.hipsCm} cm'),
     ];
     if (fields.isEmpty) return const SizedBox.shrink();
 
     final summary = <(String, String)>[
-      if (age != null) ('年龄', age),
-      if (actor.heightCm != null) ('身高', '${actor.heightCm} cm'),
-      if (actor.cup != null) ('罩杯', actor.cup!),
+      if (age != null) (l10n.actorAgeLabel, age),
+      if (actor.heightCm != null)
+        (l10n.actorHeightLabel, '${actor.heightCm} cm'),
+      if (actor.cup != null) (l10n.actorCupLabel, actor.cup!),
     ];
     // 只有出生地等少量资料时直接显示，避免空摘要和无意义的展开操作。
     if (summary.isEmpty) summary.addAll(fields.take(3));
@@ -108,8 +114,12 @@ class _ActorProfileDetailsState extends State<ActorProfileDetails> {
                   key: const Key('actor-profile-toggle'),
                   icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
                   size: AppIconButtonSize.mini,
-                  tooltip: _expanded ? '收起资料' : '展开资料',
-                  semanticLabel: _expanded ? '收起资料' : '展开资料',
+                  tooltip: _expanded
+                      ? AppLocalizations.of(context).actorProfileCollapseTooltip
+                      : AppLocalizations.of(context).actorProfileExpandTooltip,
+                  semanticLabel: _expanded
+                      ? AppLocalizations.of(context).actorProfileCollapseTooltip
+                      : AppLocalizations.of(context).actorProfileExpandTooltip,
                   onPressed: () => setState(() => _expanded = !_expanded),
                 ),
               ],

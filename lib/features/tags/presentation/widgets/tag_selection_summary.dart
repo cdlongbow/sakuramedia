@@ -3,6 +3,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_provider.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
+import 'package:sakuramedia/features/tags/presentation/tag_match_mode_label.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 
@@ -30,11 +32,12 @@ class TagSelectionSummary extends ConsumerWidget {
     final selection = ref.watch(tagSelectionProvider(scope));
     final notifier = ref.read(tagSelectionProvider(scope).notifier);
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final editButton = AppTextButton(
       key: const Key('tags-edit-selection'),
       label: selection.hasSelection
-          ? '标签 · ${selection.selectedCount}'
-          : '选择标签',
+          ? l10n.tagSummarySelected(selection.selectedCount)
+          : l10n.tagSummarySelect,
       trailingIcon: const Icon(Icons.tune_rounded),
       size: AppTextButtonSize.small,
       isSelected: selection.hasSelection,
@@ -54,7 +57,7 @@ class TagSelectionSummary extends ConsumerWidget {
             ),
           AppTextButton(
             key: const Key('tags-summary-clear'),
-            label: '清空',
+            label: l10n.tagClear,
             size: AppTextButtonSize.xSmall,
             onPressed: onClear,
           ),
@@ -63,7 +66,9 @@ class TagSelectionSummary extends ConsumerWidget {
     );
     final matchToggle = AppTextButton(
       key: const Key('tags-summary-match'),
-      label: '匹配${selection.matchMode.label}',
+      label: l10n.tagSummaryMatchMode(
+        tagMatchModeLabel(selection.matchMode, l10n),
+      ),
       size: AppTextButtonSize.xSmall,
       onPressed: () => notifier.setMatchMode(
         selection.matchMode == TagMatchMode.or

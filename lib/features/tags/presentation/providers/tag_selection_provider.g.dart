@@ -70,7 +70,7 @@ final class TagSelectionProvider
   }
 }
 
-String _$tagSelectionHash() => r'c22434675479d4f4816b5ad8959e17f8ee6d88b6';
+String _$tagSelectionHash() => r'0da06578cf1fa7b0a11ca5088477ad6862263141';
 
 /// 标签云及选择草稿。
 ///

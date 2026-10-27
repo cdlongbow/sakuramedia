@@ -12,6 +12,7 @@ import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_ac
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_menu.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_support.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
 
@@ -112,6 +113,7 @@ void main() {
           movieDetailRemoteActionSpecFor(
             action: action,
             movieNumber: 'ABC-001',
+            l10n: AppLocalizationsZh(),
           ),
           isNull,
         );
@@ -261,6 +263,7 @@ Future<MovieDetailRemoteActionSpec> _runRemoteActionSpec({
   final spec = movieDetailRemoteActionSpecFor(
     action: action,
     movieNumber: 'ABC-001',
+    l10n: AppLocalizationsZh(),
   )!;
   final response = action == MovieDetailActionType.recomputeHeat
       ? <String, dynamic>{

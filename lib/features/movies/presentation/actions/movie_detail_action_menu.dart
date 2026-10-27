@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 
@@ -120,7 +121,7 @@ Future<MovieDetailActionType?> showMovieDetailMobileActionDrawer({
   return showAppActionMenu<MovieDetailActionType>(
     context: context,
     presentation: AppMenuPresentation.bottomDrawer,
-    title: '影片操作',
+    title: AppLocalizations.of(context).movieActionDetailMenuTitle,
     items: buildMovieDetailActionMenuItems(actions),
   );
 }

@@ -9,6 +9,7 @@ import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_
 import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/widgets/rename_clip_dialog.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_clips_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_actions_panel.dart';
@@ -53,6 +54,7 @@ mixin MovieClipSectionMixin<T extends ConsumerStatefulWidget>
   }
 
   Future<void> renameMovieClip(MediaClipDto clip) async {
+    final l10n = AppLocalizations.of(context);
     final newTitle = await showRenameClipDialog(
       context,
       initialTitle: clip.title,
@@ -66,20 +68,29 @@ mixin MovieClipSectionMixin<T extends ConsumerStatefulWidget>
           .updateClipTitle(clipId: clip.clipId, title: newTitle);
       if (!mounted) return;
       ref.read(movieClipsProvider(movieNumber).notifier).replaceClip(updated);
-      showToast('已重命名');
+      showToast(l10n.movieControllerClipRenamed);
     } catch (error) {
-      showToast(apiErrorMessage(error, fallback: '重命名失败，请重试'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: l10n.movieControllerClipRenameFailed,
+          l10n: l10n,
+        ),
+      );
     }
   }
 
   Future<void> deleteMovieClip(MediaClipDto clip) async {
-    final title = clip.title.trim().isEmpty ? '该切片' : '“${clip.title.trim()}”';
+    final l10n = AppLocalizations.of(context);
+    final clipTitle = clip.title.trim();
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除切片',
-      message: '确认删除$title？切片文件会被一并删除，该操作不可恢复。',
+      title: l10n.movieControllerClipDeleteTitle,
+      message: clipTitle.isEmpty
+          ? l10n.movieControllerClipDeleteMessageUnnamed
+          : l10n.movieControllerClipDeleteMessage(clipTitle),
       danger: true,
-      confirmLabel: '删除',
+      confirmLabel: l10n.commonDelete,
       confirmKey: const Key('movie-clip-delete-confirm-button'),
     );
     if (!mounted || !confirmed) {
@@ -92,9 +103,15 @@ mixin MovieClipSectionMixin<T extends ConsumerStatefulWidget>
       ref
           .read(clipMutationEventsProvider.notifier)
           .reportDeleted(clip.clipId);
-      showToast('已删除切片');
+      showToast(l10n.movieControllerClipDeleted);
     } catch (error) {
-      showToast(apiErrorMessage(error, fallback: '删除失败，请重试'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: l10n.movieControllerClipDeleteFailed,
+          l10n: l10n,
+        ),
+      );
     }
   }
 

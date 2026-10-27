@@ -1,6 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
-import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_subscription_batch_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/subscription_movie_list_item.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
@@ -68,10 +67,13 @@ mixin MovieSubscriptionMutationMixin<
       if (isMovieSubscriptionBlockedByMedia(error)) {
         return const MovieSubscriptionToggleResult.blockedByMedia();
       }
+      final l10n = ref.read(appLocalizationsProvider);
       return MovieSubscriptionToggleResult.failed(
         message: ref.apiErrorMessage(
           error,
-          fallback: subscribe ? '订阅影片失败' : '取消订阅影片失败',
+          fallback: subscribe
+              ? l10n.movieProviderSubscribeMovieFailed
+              : l10n.errorUnsubscribeMovieFailed,
         ),
       );
     } finally {
@@ -103,6 +105,10 @@ mixin MovieSubscriptionMutationMixin<
 
     final patched = <String>{};
     MovieSubscriptionBatchResultDto? response;
+    final l10n = ref.read(appLocalizationsProvider);
+    final batchFailureFallback = subscribe
+        ? l10n.movieProviderBatchSubscribeMoviesFailed
+        : l10n.errorBatchUnsubscribeMoviesFailed;
     final result =
         await withBatchOptimisticPatch<String, MovieSubscriptionBatchResultDto>(
           keys: ordered,
@@ -139,15 +145,13 @@ mixin MovieSubscriptionMutationMixin<
             ),
           },
           rollback: _restoreSubscriptionStatuses,
-          errorMessageOf: (error) => ref.apiErrorMessage(
-            error,
-            fallback: subscribe ? '批量订阅影片失败' : '批量取消订阅影片失败',
-          ),
+          errorMessageOf: (error) =>
+              ref.apiErrorMessage(error, fallback: batchFailureFallback),
         );
     if (result.errorMessage != null || response == null) {
       return MovieSubscriptionBatchToggleResult.failed(
         requestedCount: ordered.length,
-        message: result.errorMessage ?? (subscribe ? '批量订阅影片失败' : '批量取消订阅影片失败'),
+        message: result.errorMessage ?? batchFailureFallback,
       );
     }
 

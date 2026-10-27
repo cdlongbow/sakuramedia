@@ -3201,5 +3201,157 @@
       }
     }
   },
-  "moviePageClipCreated": "Clip created"
+  "moviePageClipCreated": "Clip created",
+  "movieActionDetailMenuTitle": "Movie actions",
+  "movieActionSelect": "Select",
+  "movieActionSubscribeMovie": "Subscribe",
+  "movieActionUnsubscribeMovie": "Unsubscribe",
+  "movieActionMarkAsCollection": "Mark as collection",
+  "movieActionMarkAsSingle": "Mark as single movie",
+  "movieActionMarkAsCollectionOrSingle": "Mark as collection/single movie",
+  "movieActionBlacklistMovie": "Block movie",
+  "movieActionBlacklistMovieMessage": "Subscribed movies cannot be blocked. Unsubscribe first. Blocked movies are hidden from normal lists and recommendations.",
+  "movieActionBlacklistConfirm": "Block",
+  "movieActionBlacklistMovieFailed": "Failed to block the movie",
+  "movieActionMovieBlacklisted": "Movie blocked",
+  "movieActionCollectionStatusLoadFailed": "Failed to load collection status. Please try again later.",
+  "movieActionCollectionStatusUnmatched": "No matching movie found; collection status was not updated.",
+  "movieActionMovieMarkedAsCollection": "Marked {movieNumber} as a collection",
+  "@movieActionMovieMarkedAsCollection": {
+    "placeholders": {
+      "movieNumber": {
+        "type": "String"
+      }
+    }
+  },
+  "movieActionMovieMarkedAsSingle": "Marked {movieNumber} as a single movie",
+  "@movieActionMovieMarkedAsSingle": {
+    "placeholders": {
+      "movieNumber": {
+        "type": "String"
+      }
+    }
+  },
+  "movieActionCollectionStatusUpdateFailed": "Failed to update collection status",
+  "movieActionExternalPlayerUnavailableInApp": "The external player is unavailable; playing in the app instead",
+  "movieActionExternalPlayerUnavailable": "The external player is unavailable",
+  "movieActionMergedPlaybackUrlUnavailable": "Could not get the merged playback URL",
+  "movieActionMergedPlaybackStartFailed": "Failed to start merged playback. Please try again later.",
+  "movieActionSearchSimilarImages": "Similar images",
+  "movieActionSaveToLocal": "Save to device",
+  "movieActionReadImageFailed": "Failed to read the image. Please try again later.",
+  "movieActionImageSaved": "Image saved",
+  "movieActionImageSaveFailed": "Failed to save. Please try again later.",
+  "movieControllerClipRenamed": "Renamed",
+  "movieControllerClipRenameFailed": "Failed to rename. Please try again.",
+  "movieControllerClipDeleteTitle": "Delete clip",
+  "movieControllerClipDeleteMessage": "Delete \"{title}\"? Its clip files will also be deleted. This cannot be undone.",
+  "@movieControllerClipDeleteMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "movieControllerClipDeleteMessageUnnamed": "Delete this clip? Its clip files will also be deleted. This cannot be undone.",
+  "movieControllerClipDeleted": "Clip deleted",
+  "movieControllerClipDeleteFailed": "Failed to delete. Please try again.",
+  "movieProviderSimilarMoviesLoadFailed": "Similar movies are temporarily unavailable. Please try again later.",
+  "movieProviderMovieNotFound": "Movie not found",
+  "movieProviderMovieDetailLoadFailed": "Movie details are temporarily unavailable. Please try again later.",
+  "movieProviderRetryLater": "Please try again later.",
+  "movieProviderSubtitleFetchFailed": "Failed to fetch subtitles",
+  "movieProviderPlayerLoadFailed": "The player is temporarily unavailable. Please try again later.",
+  "movieProviderMagnetSearchFailed": "Failed to search for sources. Please try again later.",
+  "movieProviderSeriesImportReady": "Ready",
+  "movieProviderSeriesImportConnecting": "Connecting to the server...",
+  "movieProviderSeriesImportDisconnected": "The connection was lost. Please try again.",
+  "movieProviderSeriesImportSeriesNotFound": "The series does not exist in the library",
+  "movieProviderSeriesImportJavdbSeriesNotFound": "No matching series found on JAVDB. Check the series name.",
+  "movieProviderSubscribeMovieFailed": "Failed to subscribe to the movie",
+  "movieProviderBatchSubscribeMoviesFailed": "Failed to subscribe to the selected movies",
+  "movieProviderForceUnsubscribeBusy": "The selected movies are already being processed. Please try again later.",
+  "movieProviderReadMovieMediaFailed": "Failed to read movie media",
+  "movieProviderReadMovieMediaForFailed": "Failed to read media for {movieNumber}",
+  "@movieProviderReadMovieMediaForFailed": {
+    "placeholders": {
+      "movieNumber": {
+        "type": "String"
+      }
+    }
+  },
+  "movieProviderReadingMediaList": "Reading media list: {current} of {total}",
+  "@movieProviderReadingMediaList": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "movieProviderDeleteMovieMediaFailed": "Failed to delete media {mediaId} for {movieNumber}",
+  "@movieProviderDeleteMovieMediaFailed": {
+    "placeholders": {
+      "movieNumber": {
+        "type": "String"
+      },
+      "mediaId": {
+        "type": "int"
+      }
+    }
+  },
+  "movieProviderMediaDeletedProgress": "Deleted {deleted} of {total} media · {movieNumber}",
+  "@movieProviderMediaDeletedProgress": {
+    "placeholders": {
+      "deleted": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "movieNumber": {
+        "type": "String"
+      }
+    }
+  },
+  "movieProviderRefreshMovieMediaFailed": "Failed to refresh media status for {movieNumber}",
+  "@movieProviderRefreshMovieMediaFailed": {
+    "placeholders": {
+      "movieNumber": {
+        "type": "String"
+      }
+    }
+  },
+  "movieProviderMediaClearedUnsubscribeFailed": "Media was cleared, but bulk unsubscribe failed",
+  "movieProviderMediaDeletedUnsubscribing": "Deleted {deleted} of {total} media; unsubscribing…",
+  "@movieProviderMediaDeletedUnsubscribing": {
+    "placeholders": {
+      "deleted": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "movieProviderForceUnsubscribeStopped": "{step}: {reason}. The operation stopped; {deletedCount} media were deleted and cannot be restored.",
+  "@movieProviderForceUnsubscribeStopped": {
+    "placeholders": {
+      "step": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      },
+      "deletedCount": {
+        "type": "int"
+      }
+    }
+  },
+  "movieActionMovieMetadataRefreshed": "Movie metadata refreshed",
+  "movieActionRefreshMovieMetadataFailed": "Failed to refresh movie metadata",
+  "movieActionHeatRecomputeSubmitted": "Movie heat recompute submitted. Check the activity center for progress.",
+  "movieActionRecomputeMovieHeatFailed": "Failed to recompute movie heat"
 }

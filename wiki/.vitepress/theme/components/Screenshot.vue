@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { withBase } from 'vitepress'
+import { useData, withBase } from 'vitepress'
 
 type Variant = 'default' | 'narrow' | 'phone'
 
@@ -21,6 +21,15 @@ const props = withDefaults(
   },
 )
 
+const zoomLabel: Record<string, (alt: string) => string> = {
+  root: (alt: string) => `查看大图：${alt}`,
+  en: (alt: string) => `View full size: ${alt}`,
+}
+
+const { localeIndex } = useData()
+
+const zoomTitle = computed(() => (zoomLabel[localeIndex.value] ?? zoomLabel.root)(props.alt))
+
 const url = computed(() => withBase(props.src))
 </script>
 
@@ -32,7 +41,7 @@ const url = computed(() => withBase(props.src))
       :href="url"
       target="_blank"
       rel="noopener"
-      :title="`查看大图：${alt}`"
+      :title="zoomTitle"
     >
       <img
         class="sm-shot__img"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { withBase } from 'vitepress'
+import { useData, withBase } from 'vitepress'
 
 type Chapter = { label: string; time: number }
 
@@ -14,10 +14,41 @@ const props = withDefaults(
   }>(),
   {
     caption: '',
-    title: 'SakuraMedia 产品演示',
+    title: '',
     chapters: () => [],
   },
 )
+
+type DemoCopy = {
+  title: string
+  openVideo: string
+  playAria: string
+  playText: string
+  chaptersAria: string
+}
+
+const copy: Record<string, DemoCopy> = {
+  root: {
+    title: 'SakuraMedia 产品演示',
+    openVideo: '打开演示视频',
+    playAria: '播放 45 秒演示视频',
+    playText: '播放 45 秒',
+    chaptersAria: '演示章节',
+  },
+  en: {
+    title: 'SakuraMedia product demo',
+    openVideo: 'Open the demo video',
+    playAria: 'Play the 45-second demo video',
+    playText: 'Play 45 s',
+    chaptersAria: 'Demo chapters',
+  },
+}
+
+const { localeIndex } = useData()
+
+const text = computed(() => copy[localeIndex.value] ?? copy.root)
+
+const videoTitle = computed(() => props.title || text.value.title)
 
 const video = ref<HTMLVideoElement | null>(null)
 const started = ref(false)
@@ -64,24 +95,24 @@ function playAt(seconds: number) {
         playsinline
         preload="metadata"
         :poster="posterUrl"
-        :aria-label="title"
+        :aria-label="videoTitle"
         @play="started = true"
       >
         <source :src="videoUrl" type="video/mp4" />
-        <a :href="videoUrl">打开演示视频</a>
+        <a :href="videoUrl">{{ text.openVideo }}</a>
       </video>
       <button
         v-if="!started"
         type="button"
         class="sm-demo__play"
-        aria-label="播放 45 秒演示视频"
+        :aria-label="text.playAria"
         @click="startPlayback"
       >
         <span class="sm-demo__play-icon" aria-hidden="true" />
-        <span class="sm-demo__play-text">播放 45 秒</span>
+        <span class="sm-demo__play-text">{{ text.playText }}</span>
       </button>
     </div>
-    <div v-if="chapters.length" class="sm-demo__chapters" aria-label="演示章节">
+    <div v-if="chapters.length" class="sm-demo__chapters" :aria-label="text.chaptersAria">
       <button
         v-for="chapter in chapters"
         :key="chapter.time"

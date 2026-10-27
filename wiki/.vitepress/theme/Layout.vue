@@ -1,19 +1,95 @@
 <script setup lang="ts">
-import { withBase } from 'vitepress'
+import { computed } from 'vue'
+import { useData, withBase } from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
 import DemoVideo from './components/DemoVideo.vue'
 
-const chapters = [
-  { label: '概览', time: 0 },
-  { label: '发现', time: 4.5 },
-  { label: '详情', time: 9.5 },
-  { label: '播放器', time: 14.5 },
-  { label: '以图搜图', time: 22.5 },
-  { label: '切片', time: 26.5 },
-  { label: 'PornBox', time: 32 },
-]
+type Chapter = { label: string; time: number }
+
+type HomeCopy = {
+  demoEyebrow: string
+  demoTitle: string
+  demoNote: string
+  demoVideoTitle: string
+  demoCaption: string
+  chapters: Chapter[]
+  storyTitle: string
+  storyBody: string
+  storyLink: string
+  featuresTitle: string
+  previewTitle: string
+  previewAlt: string
+  previewCaption: string
+  previewLink: string
+}
+
+const copy: Record<string, HomeCopy> = {
+  root: {
+    demoEyebrow: '产品演示 · 45 秒',
+    demoTitle: '看一遍完整流程',
+    demoNote: '演示数据，封面与缩略图已虚化；视频无旁白。',
+    demoVideoTitle: 'SakuraMedia 产品演示',
+    demoCaption: '从概览、发现、详情和播放，到缩略图、以图搜图、切片与 PornBox。',
+    chapters: [
+      { label: '概览', time: 0 },
+      { label: '发现', time: 4.5 },
+      { label: '详情', time: 9.5 },
+      { label: '播放器', time: 14.5 },
+      { label: '以图搜图', time: 22.5 },
+      { label: '切片', time: 26.5 },
+      { label: 'PornBox', time: 32 },
+    ],
+    storyTitle: '这部影片里，你真正想留下什么？',
+    storyBody:
+      '一部喜欢的作品，一个舍不得的画面，或是想好好保存的几分钟。聊聊我为什么做这个项目，以及我理解的收藏。',
+    storyLink: '读读 SakuraMedia 的初衷',
+    featuresTitle: '功能一览',
+    previewTitle: '界面预览',
+    previewAlt: 'SakuraMedia 界面预览',
+    previewCaption: '截图使用演示数据，封面与缩略图已虚化。',
+    previewLink: '从使用手册开始 →',
+  },
+  en: {
+    demoEyebrow: 'Product demo · 45 seconds',
+    demoTitle: 'Watch the whole flow once',
+    demoNote: 'Demo data: posters and thumbnails are blurred, and the video has no narration.',
+    demoVideoTitle: 'SakuraMedia product demo',
+    demoCaption:
+      'From overview, discovery, details and playback, to thumbnails, image search, clips and PornBox.',
+    chapters: [
+      { label: 'Overview', time: 0 },
+      { label: 'Discovery', time: 4.5 },
+      { label: 'Details', time: 9.5 },
+      { label: 'Player', time: 14.5 },
+      { label: 'Image search', time: 22.5 },
+      { label: 'Clips', time: 26.5 },
+      { label: 'PornBox', time: 32 },
+    ],
+    storyTitle: 'What do you really want to keep from this movie?',
+    storyBody:
+      'A movie you love, a frame you cannot let go of, or a few minutes worth keeping properly. On why I built this project, and what collecting means to me.',
+    storyLink: 'Read why SakuraMedia exists',
+    featuresTitle: 'Features at a glance',
+    previewTitle: 'Interface preview',
+    previewAlt: 'SakuraMedia interface preview',
+    previewCaption: 'Screenshots use demo data; posters and thumbnails are blurred.',
+    previewLink: 'Start with the user manual →',
+  },
+}
+
+const { localeIndex } = useData()
+
+const text = computed(() => copy[localeIndex.value] ?? copy.root)
 
 const previewImage = withBase('/images/readme/home-hero.jpg')
+
+const storyLink = computed(() =>
+  withBase(localeIndex.value === 'en' ? '/en/guide/collection-strategy' : '/guide/collection-strategy'),
+)
+
+const manualLink = computed(() =>
+  withBase(localeIndex.value === 'en' ? '/en/manual/' : '/manual/'),
+)
 </script>
 
 <template>
@@ -22,45 +98,46 @@ const previewImage = withBase('/images/readme/home-hero.jpg')
       <section id="demo" class="demo" aria-labelledby="demo-title">
         <div class="demo__head">
           <div>
-            <p class="demo__eyebrow">产品演示 · 45 秒</p>
-            <h2 id="demo-title" class="demo__title">看一遍完整流程</h2>
+            <p class="demo__eyebrow">{{ text.demoEyebrow }}</p>
+            <h2 id="demo-title" class="demo__title">{{ text.demoTitle }}</h2>
           </div>
-          <p class="demo__note">演示数据，封面与缩略图已虚化；视频无旁白。</p>
+          <p class="demo__note">{{ text.demoNote }}</p>
         </div>
         <DemoVideo
           src="/videos/sakuramedia-demo.mp4"
           poster="/images/readme/desktop-overview.png"
-          :chapters="chapters"
-          caption="从概览、发现、详情和播放，到缩略图、以图搜图、切片与 PornBox。"
+          :chapters="text.chapters"
+          :title="text.demoVideoTitle"
+          :caption="text.demoCaption"
         />
       </section>
 
       <section class="story" aria-labelledby="story-title">
-        <a class="story-card" :href="withBase('/guide/collection-strategy')">
-          <h2 id="story-title">这部影片里，你真正想留下什么？</h2>
-          <p>一部喜欢的作品，一个舍不得的画面，或是想好好保存的几分钟。聊聊我为什么做这个项目，以及我理解的收藏。</p>
-          <span class="story-link">读读 SakuraMedia 的初衷 <span aria-hidden="true">→</span></span>
+        <a class="story-card" :href="storyLink">
+          <h2 id="story-title">{{ text.storyTitle }}</h2>
+          <p>{{ text.storyBody }}</p>
+          <span class="story-link">{{ text.storyLink }} <span aria-hidden="true">→</span></span>
         </a>
       </section>
 
-      <h2 class="features-title">功能一览</h2>
+      <h2 class="features-title">{{ text.featuresTitle }}</h2>
     </template>
 
     <template #home-features-after>
       <section class="preview" aria-labelledby="preview-title">
-        <h2 id="preview-title" class="preview__title">界面预览</h2>
+        <h2 id="preview-title" class="preview__title">{{ text.previewTitle }}</h2>
         <img
           class="preview__img"
           :src="previewImage"
-          alt="SakuraMedia 界面预览"
+          :alt="text.previewAlt"
           width="2200"
           height="1237"
           loading="lazy"
           decoding="async"
         />
         <p class="preview__caption">
-          截图使用演示数据，封面与缩略图已虚化。
-          <a :href="withBase('/manual/')">从使用手册开始 →</a>
+          {{ text.previewCaption }}
+          <a :href="manualLink">{{ text.previewLink }}</a>
         </p>
       </section>
     </template>

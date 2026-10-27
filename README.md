@@ -26,6 +26,10 @@
 </p>
 
 <p align="center">
+  <sub><strong>简体中文</strong> · <a href="./README.en.md">English</a></sub>
+</p>
+
+<p align="center">
   <sub>需要一台 24 小时运行的主机 + Docker；客户端不能单独使用。</sub>
 </p>
 

@@ -4,7 +4,7 @@ outline: [2, 3]
 
 # 插件开发
 
-SakuraMedia 插件是运行在后端进程内的 Python 包。本文对应当前后端的 **Host API 9**，宿主接受 API **4–9** 的插件。插件的 `manifest.json` 与 `register()` 返回值中的 `plugin_id`、插件 `version` 必须一致；Host API 的声明规则见[版本兼容](#版本兼容)。
+SakuraMedia 插件是运行在后端进程内的 Python 包。本文对应当前后端的 **Host API 12**，宿主接受 API **4–12** 的插件。插件的 `manifest.json` 与 `register()` 返回值中的 `plugin_id`、插件 `version` 必须一致；Host API 的声明规则见[版本兼容](#版本兼容)。
 
 插件不是前端扩展机制。当前不能注册页面、UI 组件、HTTP 路由、事件钩子或中间件，也不应直接访问宿主数据库。请只使用本文列出的公开契约；绑定 `src.model`、`src.service` 等内部实现会使插件随宿主重构失效。
 
@@ -42,7 +42,7 @@ example_plugin/
   "plugin_id": "example_plugin",
   "display_name": "示例插件",
   "version": "1.0.0",
-  "host_api_version": 9,
+  "host_api_version": 12,
   "settings_model": "Settings",
   "requires_python": ">=3.10,<3.11",
   "dependencies": []
@@ -476,12 +476,95 @@ uv run python -m src.start.commands plugins check /path/to/example_plugin
 
 运行时加载器会记录并隔离单个插件的加载错误；但容器启动前的依赖同步或预装校验仍可能阻止启动，应同时检查容器启动日志。进入「系统设置 → 插件」或执行 `plugins list` 查看 `load_error`；常见原因是目录名与 `plugin_id` 不一致、manifest 与 `register()` 的插件 `version` 不一致、Host API 声明不兼容，或任务和扩展点标识冲突。`plugins check` 只验证导入、注册及契约，不代表联网行为、图片交付或任务执行已经通过验收。
 
+## 多语言（zh-CN / en）
+
+插件可以向宿主声明中英两种文案，宿主按当前语言渲染。只提供中文仍然可用，但用户可见文案应尽量给出英文。
+
+### 语言包
+
+语言包放在插件包根目录：
+
+```text
+example_plugin/
+├── manifest.json
+├── __init__.py
+└── i18n/
+    ├── zh-CN.json
+    └── en.json
+```
+
+- 两个文件的 key 集合必须完全一致；key 是非空的平铺点分字符串（如 `jobs.sync.cli_help`），不要写成嵌套对象。
+- 值为字符串；需要复数时写成 `{"one": ..., "other": ...}`，调用 `t()` 时传 `count=`。
+- 占位符统一使用 `{name}`，两种语言的占位符必须一致。
+- 语言包缺失或缺少 key 都是合法的：静态字段回退插件原文，运行时文本回退 `default`。`plugins check` 与安装前校验会严格检查语言包结构（JSON、key 形式、值类型），运行时加载保持宽松，坏语言包不会阻断已启用插件。
+
+多语言文案分两条路径：静态文案在**读取时**由宿主解析，运行时文本在**写入时**由插件生成。不要把两种文案混用。
+
+### 静态文案：`*_i18n` 字典
+
+这类字段是「原文字段 + 可选 `*_i18n` 字典」。宿主在读取时按当前语言取值，缺失时依次回退 `zh-CN`、插件原文：
+
+| 位置 | 字段 |
+|---|---|
+| `manifest.json`、`PluginRegistration` | `display_name_i18n`（两处给任一即可，同时提供时以 `register()` 为准） |
+| `JobDefinition` | `cli_help_i18n` |
+| 任务参数、设置项的 JSON Schema | 任意层级的 `title_i18n`、`description_i18n`，含 `oneOf` 等组合选项的 `title_i18n` |
+| Provider `ConfigField` | `label_i18n`、`description_i18n`、`hint_i18n` |
+| 媒体 Provider bundle | `display_name_i18n` |
+| 排行榜 `PluginRankingSource`、`PluginRankingBoard` | `name_i18n` |
+
+Pydantic 模型通过 `json_schema_extra` 携带字典，字典在导入期由插件自己的语言包读取器生成：
+
+```python
+from pydantic import BaseModel, Field
+
+from .translations import text_map
+
+
+class Settings(BaseModel):
+    username: str = Field(
+        default="",
+        json_schema_extra={"title_i18n": text_map("settings.username.title")},
+    )
+```
+
+语言包读取方式可直接参考样板插件 `sakuramedia_javdb_ranking` 的 `translations.py`：`text_map(key)` 返回 `{locale: text}`，`text(key, locale, default)` 返回源文案；文件或 key 缺失时返回空字典或兜底值，不会在导入期失败。
+
+### 运行时文本：`context.i18n.t()`
+
+进度、诊断与错误文本在写入时生成，语言取决于当时的请求或任务，必须调用 `context.i18n.t()`：
+
+```python
+reporter.emit(
+    current=done,
+    total=total,
+    text=context.i18n.t(
+        "sync.progress",
+        default="已同步 {done}/{total} 个榜单",
+        done=done,
+        total=total,
+    ),
+)
+```
+
+- `t(key, default=None, **params)` 按当前语言查插件语言包，缺失时回退 `zh-CN`；**缺 key 且未提供 `default` 时返回 key 本身**，所以每个调用都要给中文 `default` 兜底。
+- 语言包文件按路径缓存，可以在循环里直接调用。
+- 适用场景：任务进度文本、`ProviderDiagnosticCheck.message`、`ProviderOperationError.safe_message`、任务失败原因、通知正文和元数据错误。
+
+### 声明与语言选择
+
+新插件把 manifest 的 `host_api_version` 声明为 `12`（宿主当前版本，`4`–`11` 仍兼容），`register()` 继续使用 `HOST_API_VERSION` 常量；不要因为多语言改动插件自身的 `version`。
+
+请求路径上，宿主按 `Accept-Language`、其次用户的 `User.language` 偏好、最后默认 `zh-CN` 决定当前语言；后台任务没有请求上下文，执行时读取单账号的 `User.language`。插件不需要自己解析请求头。
+
+以 `sakuramedia_javdb_ranking` 为样板：manifest 与 `plugin.py` 声明展示名，`boards.py` 声明榜单名，`settings.py` 与 `sync_jobs.py` 声明字段标题，同步任务里用 `t()` 生成进度文本。
+
 ## 版本兼容
 
-当前宿主常量为 `HOST_API_VERSION = 9`、`MIN_SUPPORTED_HOST_API_VERSION = 4`，加载规则如下：
+当前宿主常量为 `HOST_API_VERSION = 12`、`MIN_SUPPORTED_HOST_API_VERSION = 4`，加载规则如下：
 
-- manifest 的 `host_api_version` 必须在 **4–9** 内。
-- `register()` 的 `host_api_version` 必须等于 manifest 声明的版本，或当前宿主版本 `9`。例如 manifest 为 `4` 时，注册返回 `4` 或导入宿主常量得到的 `9` 均可，返回 `5` 则不兼容。
+- manifest 的 `host_api_version` 必须在 **4–12** 内。
+- `register()` 的 `host_api_version` 必须等于 manifest 声明的版本，或当前宿主版本 `12`。例如 manifest 为 `4` 时，注册返回 `4` 或导入宿主常量得到的 `12` 均可，返回 `5` 则不兼容。
 - `catalog.metadata_source` 额外要求 manifest 声明 **6**；只把 `register()` 改为宿主常量不能绕过这一限制。
 - `context.media` 和 `context.downloads` 需要 Host API **7**；旧宿主能加载旧声明，不意味着旧宿主能提供这两个接口。
 - `context.imports`、`context.videos`、`context.collections.ensure_video_collection()` 与视频合集成员管理需要 Host API **9**。

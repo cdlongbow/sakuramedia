@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_speed_button.dart';
 
@@ -237,6 +238,12 @@ void main() {
         var pushOnBuild = false;
         await tester.pumpWidget(
           MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraThemeData,
             home: Scaffold(
               backgroundColor: Colors.black,
@@ -289,6 +296,12 @@ void main() {
 Future<void> _pumpHarness(WidgetTester tester) async {
   await tester.pumpWidget(
     MaterialApp(
+      locale: const Locale('zh'),
+      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
       theme: sakuraThemeData,
       home: Scaffold(
         backgroundColor: Colors.black,

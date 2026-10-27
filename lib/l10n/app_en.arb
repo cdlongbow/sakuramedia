@@ -4747,5 +4747,273 @@
         "type": "int"
       }
     }
-  }
+  },
+  "widgetMovieSelectionCount": "Selected {count}",
+  "@widgetMovieSelectionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetMovieDeselectAll": "Deselect all",
+  "widgetMovieSelectAllWithCount": "Select all ({count})",
+  "@widgetMovieSelectAllWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetMovieSubscribe": "Subscribe",
+  "widgetMovieUnsubscribe": "Unsubscribe",
+  "widgetMovieBlacklist": "Blacklist",
+  "widgetMovieBatchSubscribeTitle": "Batch subscribe",
+  "widgetMovieBatchUnsubscribeTitle": "Batch unsubscribe",
+  "widgetMovieBatchSubscribeMessage": "Subscribe the {count} selected movies.",
+  "@widgetMovieBatchSubscribeMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetMovieBatchUnsubscribeMessage": "Unsubscribe the {count} selected movies. Movies that already have local media are skipped.",
+  "@widgetMovieBatchUnsubscribeMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetMovieBatchSubscribeFailed": "Batch subscribe failed",
+  "widgetMovieBatchUnsubscribeFailed": "Batch unsubscribe failed",
+  "widgetMovieBatchBlacklistTitle": "Batch blacklist",
+  "widgetMovieBatchBlacklistMessage": "Subscribed movies cannot be blacklisted. Unsubscribe first. Blacklisted movies are hidden from normal lists and recommendations.",
+  "widgetMovieBatchBlacklistFailed": "Batch blacklist failed",
+  "widgetMovieFilterStatusTitle": "Status",
+  "widgetMovieFilterResolutionTitle": "Resolution",
+  "widgetMovieFilterAll": "All",
+  "widgetMovieFilterCollectionTypeTitle": "Collection type",
+  "widgetMovieFilterNumberSourceTitle": "Number source",
+  "widgetMovieFilterInteractionTitle": "Engagement",
+  "widgetMovieFilterClear": "Clear",
+  "widgetMovieFilterInteractionLoadFailed": "Failed to load engagement ranges",
+  "widgetMovieFilterInteractionEmpty": "No engagement ranges available",
+  "widgetMovieFilterActorAgeTitle": "Actor age",
+  "widgetMovieFilterYearTitle": "Release year",
+  "widgetMovieFilterAllYears": "All years",
+  "widgetMovieFilterCollapseYears": "Collapse years",
+  "widgetMovieFilterExpandAllYears": "Expand all years",
+  "widgetMovieMagnetSearching": "Searching",
+  "widgetMovieMagnetSearchResources": "Search resources",
+  "widgetMovieMagnetSortDescHint": "Currently descending, tap to switch to ascending",
+  "widgetMovieMagnetSortAscHint": "Currently ascending, tap to switch to descending",
+  "widgetMovieMagnetEmptyHint": "Searching requires download clients and indexers set up in system settings.",
+  "widgetMovieMagnetEmpty": "No usable resources found",
+  "widgetMovieMagnetSubmittedTo": "Submitted to {client}",
+  "@widgetMovieMagnetSubmittedTo": {
+    "placeholders": {
+      "client": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetMovieMagnetDownloadExists": "Download task already exists",
+  "widgetMovieMagnetSubmitFailed": "Failed to submit the download",
+  "widgetMovieMagnetIndexerLabel": "Indexer",
+  "widgetMovieMagnetTypeLabel": "Type",
+  "widgetMovieMagnetSeedersLabel": "Seeders",
+  "widgetMovieMagnetSizeLabel": "Size",
+  "widgetMovieMagnetSourceUriLabel": "Source URL",
+  "widgetMovieMagnetUriCopied": "Source URL copied",
+  "widgetMovieMagnetCopyFailed": "Copy failed, please select the address manually",
+  "widgetMovieMagnetSubmitDownload": "Submit download",
+  "widgetMovieMagnetUriMissing": "Source URL missing",
+  "widgetMoviePlay": "Play",
+  "widgetMovieSubscribeMovie": "Subscribe movie",
+  "widgetMovieToggleCollectionType": "Mark as collection/single",
+  "widgetMovieBlacklistMovie": "Blacklist movie",
+  "widgetMovieEmptyList": "No movie data to display.",
+  "widgetMovieDurationWithDate": "{duration} · {date}",
+  "@widgetMovieDurationWithDate": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetActorFilterSubscriptionTitle": "Subscription",
+  "widgetActorFilterGenderTitle": "Gender",
+  "widgetActorFilterPlayableTitle": "Playback",
+  "widgetActorFilterHasPlayable": "Has playable movies",
+  "widgetActorFilterAll": "All",
+  "widgetActorFilterOptionsLoadFailed": "Failed to load profile filter options",
+  "widgetActorFilterUnlimited": "Any",
+  "widgetActorFilterNoProfileData": "No {title} data available",
+  "@widgetActorFilterNoProfileData": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetActorFilterNoData": "No data available",
+  "widgetActorAgeLabel": "Age",
+  "widgetActorAgeUnit": " yrs",
+  "widgetActorHeightLabel": "Height",
+  "widgetActorCupLabel": "Cup",
+  "widgetActorSearchHint": "Search actors",
+  "widgetActorClearSearch": "Clear search",
+  "widgetActorSortRelevance": "Relevance",
+  "widgetActorSortRelevanceTooltip": "Sorted by relevance while searching",
+  "widgetActorSortDisabledWhileSearching": "Sorting is unavailable while searching",
+  "widgetActorSort": "Sort",
+  "widgetActorSubscribe": "Subscribe actor",
+  "widgetActorUnsubscribe": "Unsubscribe",
+  "widgetActorEmptyList": "No actor data to display.",
+  "widgetActorMovieCountLabel": "Movies",
+  "widgetActorBirthdayLabel": "Born",
+  "widgetActorBustLabel": "Bust",
+  "widgetActorWaistLabel": "Waist",
+  "widgetActorHipsLabel": "Hips",
+  "widgetActorAgeValue": "{age} yrs",
+  "@widgetActorAgeValue": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetActorBirthdayValue": "{month}/{year}",
+  "@widgetActorBirthdayValue": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      },
+      "month": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetTagFilterTitle": "Tags",
+  "widgetTagSelectorTitle": "Select tags",
+  "widgetTagSearchHint": "Search tags",
+  "widgetTagClearAll": "Clear",
+  "widgetTagMatchLabel": "Match",
+  "widgetTagSearchResultCount": "Search results · {count}",
+  "@widgetTagSearchResultCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetTagAllCount": "All tags · {count}",
+  "@widgetTagAllCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetTagSearchResult": "Search results",
+  "widgetTagPopular": "Popular tags",
+  "widgetTagCollapse": "Collapse",
+  "widgetTagExpandAll": "Expand all",
+  "widgetTagNoMatch": "No matching tags found",
+  "widgetTagEmpty": "No tags yet",
+  "widgetMoviePlayerInfoTooltip": "Playback info",
+  "widgetMoviePlayerPlaybackUnavailable": "This media cannot be played right now.",
+  "widgetMoviePlayerPlaybackFailed": "Playback failed",
+  "widgetMoviePlayerNoSubtitle": "No subtitles available",
+  "widgetMoviePlayerSubtitle": "Subtitles",
+  "widgetMoviePlayerSpeed": "Speed",
+  "widgetMoviePlayerModePending": "Confirming",
+  "widgetMoviePlayerModeUnconfirmed": "Unconfirmed",
+  "widgetMoviePlayerModeDirect": "Direct",
+  "widgetMoviePlayerModeProxy": "Backend proxy",
+  "widgetMoviePlayerHttpStream": "HTTP file stream",
+  "widgetMoviePlayerHardwareDecode": "Hardware decoding",
+  "widgetMoviePlayerHardwareDecodeWith": "Hardware decoding ({value})",
+  "@widgetMoviePlayerHardwareDecodeWith": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetMoviePlayerSoftwareDecode": "Software decoding",
+  "widgetMoviePlayerAudioChannels": "{count} ch",
+  "@widgetMoviePlayerAudioChannels": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetMoviePlayerCounterTotal": "Total {value}",
+  "@widgetMoviePlayerCounterTotal": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetMoviePlayerCounterPerSecond": "1s {value}",
+  "@widgetMoviePlayerCounterPerSecond": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetMoviePlayerPeak": "Peak {value}",
+  "@widgetMoviePlayerPeak": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetMoviePlayerSubtitleLoadFailed": "Failed to load subtitles, please try again later",
+  "widgetMoviePlayerLoading": "Loading movie…",
+  "widgetMoviePlayerSectionMedia": "Media",
+  "widgetMoviePlayerStorageSource": "Storage source",
+  "widgetMoviePlayerMediaLibrary": "Library",
+  "widgetMoviePlayerFileSize": "File size",
+  "widgetMoviePlayerDuration": "Duration",
+  "widgetMoviePlayerRecordedResolution": "Recorded resolution",
+  "widgetMoviePlayerSectionDecode": "Decoding & dynamic range",
+  "widgetMoviePlayerDecodeMode": "Decode mode",
+  "widgetMoviePlayerDynamicRange": "Dynamic range",
+  "widgetMoviePlayerDynamicRangeDetail": "Dynamic range details",
+  "widgetMoviePlayerSectionVideo": "Video",
+  "widgetMoviePlayerCodec": "Codec",
+  "widgetMoviePlayerDecoder": "Decoder",
+  "widgetMoviePlayerResolution": "Resolution",
+  "widgetMoviePlayerMediaFrameRate": "Media FPS",
+  "widgetMoviePlayerFilterChainFrameRate": "Filter chain FPS",
+  "widgetMoviePlayerActualOutputFrameRate": "Actual output FPS (estimated)",
+  "widgetMoviePlayerBitrate": "Bitrate",
+  "widgetMoviePlayerRenderDropped": "Render dropped",
+  "widgetMoviePlayerDecodeDropped": "Decode dropped",
+  "widgetMoviePlayerDelayedFrames": "Delayed frames",
+  "widgetMoviePlayerMistimedFrames": "Mistimed frames",
+  "widgetMoviePlayerPixelFormat": "Pixel format",
+  "widgetMoviePlayerSectionAudio": "Audio",
+  "widgetMoviePlayerChannels": "Channels",
+  "widgetMoviePlayerSampleRate": "Sample rate",
+  "widgetMoviePlayerCopied": "Copied",
+  "widgetMoviePlayerGatewayHost": "Gateway host",
+  "widgetMoviePlayerGatewayPath": "Gateway path",
+  "widgetMoviePlayerPlaybackMode": "Playback mode",
+  "widgetMoviePlayerStreamType": "Stream type",
+  "widgetMoviePlayerDemuxerFormat": "Demuxer format",
+  "widgetMoviePlayerBuffer": "Buffer",
+  "widgetMoviePlayerDownloadRate": "Download rate",
+  "widgetMoviePlayerSectionPlaybackChain": "Playback chain"
 }

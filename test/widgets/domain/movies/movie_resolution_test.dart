@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/rankings/data/ranked_movie_list_item_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
 import 'package:sakuramedia/theme.dart';
 
@@ -67,6 +68,12 @@ void main() {
           for (final selection in [false, true]) {
             await tester.pumpWidget(
               MaterialApp(
+                locale: const Locale('zh'),
+                localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+                  AppLocalizations.delegate,
+                  ...GlobalMaterialLocalizations.delegates,
+                ],
+                supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
                 theme: sakuraThemeData,
                 home: Scaffold(
                   body: SizedBox(

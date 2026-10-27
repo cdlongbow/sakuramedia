@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/glass/app_media_badge.dart';
@@ -25,6 +26,12 @@ void main() {
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           home: Scaffold(
             body: SizedBox(
@@ -135,6 +142,12 @@ void main() {
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           home: Scaffold(
             body: SizedBox(
@@ -179,6 +192,12 @@ void main() {
         ProviderScope(
           overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraThemeData,
             home: Scaffold(
               body: SizedBox(
@@ -232,6 +251,12 @@ void main() {
         ProviderScope(
           overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraThemeData,
             home: Scaffold(
               body: SizedBox(
@@ -281,6 +306,12 @@ void main() {
         ProviderScope(
           overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraThemeData,
             home: Scaffold(
               body: SizedBox(
@@ -326,6 +357,12 @@ void main() {
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           home: Scaffold(
             body: SizedBox(
@@ -369,6 +406,12 @@ void main() {
         ProviderScope(
           overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraThemeData,
             home: Scaffold(
               body: SizedBox(
@@ -457,6 +500,12 @@ void main() {
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           home: Scaffold(
             body: SizedBox(
@@ -501,6 +550,12 @@ void main() {
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           home: Scaffold(
             body: SizedBox(
@@ -549,6 +604,12 @@ void main() {
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           home: Scaffold(
             body: SizedBox(
@@ -635,6 +696,12 @@ void main() {
           ProviderScope(
             overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
             child: MaterialApp.router(
+              locale: const Locale('zh'),
+              localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+                AppLocalizations.delegate,
+                ...GlobalMaterialLocalizations.delegates,
+              ],
+              supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
               theme: sakuraThemeData,
               routerConfig: router,
             ),
@@ -686,6 +753,12 @@ void main() {
         ProviderScope(
           overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraThemeData,
             home: Scaffold(
               body: SizedBox(
@@ -750,6 +823,12 @@ void main() {
         ProviderScope(
           overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraThemeData,
             home: Scaffold(
               body: SizedBox(
@@ -807,6 +886,12 @@ void main() {
         ProviderScope(
           overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraThemeData,
             home: Scaffold(
               body: Builder(
@@ -860,6 +945,12 @@ void main() {
         ProviderScope(
           overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraThemeData,
             home: Scaffold(
               body: SizedBox(
@@ -911,6 +1002,12 @@ void main() {
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           home: Scaffold(
             body: SizedBox(
@@ -957,6 +1054,12 @@ void main() {
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           home: Scaffold(
             body: SizedBox(
@@ -1021,6 +1124,12 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: Scaffold(
           body: SizedBox(

@@ -3,6 +3,7 @@ import 'package:sakuramedia/features/movies/presentation/controllers/listing/mov
 import 'package:sakuramedia/features/tags/data/tag_list_item_dto.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_state.dart';
 import 'package:sakuramedia/features/tags/presentation/tag_placeholders.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
@@ -27,7 +28,7 @@ class TagSelectorPanel extends StatefulWidget {
     required this.onToggleExpanded,
     required this.onMatchModeChanged,
     required this.onRetry,
-    this.title = '选择标签',
+    this.title,
     this.showMatchModeToggle = true,
     this.collapsibleSearch = false,
     this.collapsedTagCount = 24,
@@ -45,7 +46,8 @@ class TagSelectorPanel extends StatefulWidget {
   final VoidCallback onRetry;
 
   /// 顶部标题：标签页是「选择标签」，作为筛选分节时报「标签」。
-  final String title;
+  /// 为 `null` 时使用当前语言的默认文案。
+  final String? title;
 
   /// 是否展示「任一/全部」匹配模式开关。视频域多标签固定为 OR（后端无 tag_match），
   /// 传 `false` 以隐藏该开关，避免出现无效控件。
@@ -121,6 +123,7 @@ class _TagSelectorPanelState extends State<TagSelectorPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final selection = widget.selection;
     final spacing = context.appSpacing;
 
@@ -130,7 +133,7 @@ class _TagSelectorPanelState extends State<TagSelectorPanel> {
         Row(
           children: [
             Text(
-              widget.title,
+              widget.title ?? l10n.widgetTagSelectorTitle,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s14,
@@ -143,7 +146,7 @@ class _TagSelectorPanelState extends State<TagSelectorPanel> {
               AppIconButton(
                 key: const Key('tags-search-toggle'),
                 icon: const Icon(Icons.search_rounded),
-                semanticLabel: '搜索标签',
+                semanticLabel: l10n.widgetTagSearchHint,
                 size: AppIconButtonSize.mini,
                 isSelected:
                     _searchExpanded || _searchController.text.isNotEmpty,
@@ -163,7 +166,7 @@ class _TagSelectorPanelState extends State<TagSelectorPanel> {
             fieldKey: const Key('tags-search-field'),
             controller: _searchController,
             focusNode: _searchFocusNode,
-            hintText: '搜索标签',
+            hintText: l10n.widgetTagSearchHint,
             prefix: Icon(
               Icons.search,
               size: context.appComponentTokens.iconSizeSm,
@@ -196,6 +199,7 @@ class _TagSelectorPanelState extends State<TagSelectorPanel> {
   }
 
   Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final selection = widget.selection;
     final spacing = context.appSpacing;
 
@@ -210,7 +214,7 @@ class _TagSelectorPanelState extends State<TagSelectorPanel> {
           AppEmptyState(message: selection.errorMessage!),
           SizedBox(height: spacing.sm),
           AppTextButton(
-            label: '重试',
+            label: l10n.commonRetry,
             size: AppTextButtonSize.xSmall,
             onPressed: widget.onRetry,
           ),
@@ -264,7 +268,7 @@ class _TagSelectorPanelState extends State<TagSelectorPanel> {
           ),
         AppTextButton(
           key: const Key('tags-clear-all'),
-          label: '清空',
+          label: AppLocalizations.of(context).widgetTagClearAll,
           size: AppTextButtonSize.xSmall,
           onPressed: widget.onClear,
         ),
@@ -279,7 +283,7 @@ class _TagSelectorPanelState extends State<TagSelectorPanel> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          '匹配',
+          AppLocalizations.of(context).widgetTagMatchLabel,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -308,12 +312,15 @@ class _TagSelectorPanelState extends State<TagSelectorPanel> {
   }
 
   Widget _buildCloudHeader(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final selection = widget.selection;
     final headerLabel = widget.scrollableTagCloud
         ? (selection.isSearching
-              ? '搜索结果 · ${selection.filteredTags.length}'
-              : '全部标签 · ${selection.allTags.length}')
-        : (selection.isSearching ? '搜索结果' : '热门标签');
+              ? l10n.widgetTagSearchResultCount(selection.filteredTags.length)
+              : l10n.widgetTagAllCount(selection.allTags.length))
+        : (selection.isSearching
+            ? l10n.widgetTagSearchResult
+            : l10n.widgetTagPopular);
     return Row(
       children: [
         Text(
@@ -330,7 +337,10 @@ class _TagSelectorPanelState extends State<TagSelectorPanel> {
             !selection.isSearching &&
             selection.filteredTags.length > widget.collapsedTagCount)
           AppTextButton(
-            label: selection.expanded ? '收起' : '展开全部',
+            label:
+                selection.expanded
+                    ? l10n.widgetTagCollapse
+                    : l10n.widgetTagExpandAll,
             size: AppTextButtonSize.xSmall,
             trailingIcon: Icon(
               selection.expanded ? Icons.expand_less : Icons.expand_more,
@@ -398,8 +408,11 @@ class _TagSelectorPanelState extends State<TagSelectorPanel> {
   }
 
   Widget _buildEmptyCloudMessage(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Text(
-      widget.selection.isSearching ? '未找到匹配的标签' : '暂无标签',
+      widget.selection.isSearching
+          ? l10n.widgetTagNoMatch
+          : l10n.widgetTagEmpty,
       style: resolveAppTextStyle(
         context,
         size: AppTextSize.s12,

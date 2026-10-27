@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_grid.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_summary_card.dart';
 
@@ -12,7 +13,7 @@ class ActorSummarySliver extends StatelessWidget {
     this.onActorTap,
     this.onActorSubscriptionTap,
     this.isActorSubscriptionUpdating,
-    this.emptyMessage = '当前没有可展示的女优数据。',
+    this.emptyMessage,
   });
 
   final List<ActorListItemDto> items;
@@ -20,15 +21,18 @@ class ActorSummarySliver extends StatelessWidget {
   final ValueChanged<ActorListItemDto>? onActorTap;
   final ValueChanged<ActorListItemDto>? onActorSubscriptionTap;
   final bool Function(ActorListItemDto actor)? isActorSubscriptionUpdating;
-  final String emptyMessage;
+
+  /// 空态文案；为 `null` 时使用当前语言的默认文案。
+  final String? emptyMessage;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppAdaptiveCardSliver<ActorListItemDto>(
       gridKey: const Key('actor-summary-grid'),
       items: items,
       errorMessage: errorMessage,
-      emptyMessage: emptyMessage,
+      emptyMessage: emptyMessage ?? l10n.widgetActorEmptyList,
       itemBuilder:
           (context, actor, index) => ActorSummaryCard(
             actor: actor,

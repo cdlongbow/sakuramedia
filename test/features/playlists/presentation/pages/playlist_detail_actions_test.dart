@@ -311,6 +311,12 @@ Future<void> _pumpDetail(
         platform: mobile ? AppPlatform.mobile : AppPlatform.desktop,
         child: OKToast(
           child: MaterialApp.router(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: mobile ? sakuraMobileThemeData : sakuraThemeData,
             locale: const Locale('zh'),
             localizationsDelegates: <LocalizationsDelegate<dynamic>>[

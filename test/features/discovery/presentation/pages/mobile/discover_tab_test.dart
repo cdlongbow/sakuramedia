@@ -259,6 +259,12 @@ Future<void> _pumpDiscoveryWidget(
       overrides: bundle.riverpodOverrides(),
       child: OKToast(
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraMobileThemeData,
           locale: const Locale('zh'),
           localizationsDelegates: <LocalizationsDelegate<dynamic>>[
@@ -295,6 +301,12 @@ Future<void> _pumpDiscoveryRouterApp(
         platform: AppPlatform.mobile,
         child: OKToast(
           child: MaterialApp.router(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraMobileThemeData,
             locale: const Locale('zh'),
             localizationsDelegates: <LocalizationsDelegate<dynamic>>[

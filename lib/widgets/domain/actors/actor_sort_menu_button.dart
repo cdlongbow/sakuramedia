@@ -29,6 +29,7 @@ class ActorSortMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final searching = filterState.isSearching;
     final relevance = filterState.usesRelevanceSort;
     return AppSortMenuButton<ActorSortField>(
@@ -42,8 +43,13 @@ class ActorSortMenuButton extends StatelessWidget {
           onChanged(filterState.copyWith(sortDirection: value)),
       useDrawer: useDrawer,
       enabled: !searching,
-      triggerLabel: relevance ? '相关度' : null,
-      tooltip: relevance ? '搜索时按相关度排序' : (searching ? '搜索中暂不可调整排序' : '排序'),
+      triggerLabel: relevance ? l10n.widgetActorSortRelevance : null,
+      tooltip:
+          relevance
+              ? l10n.widgetActorSortRelevanceTooltip
+              : (searching
+                  ? l10n.widgetActorSortDisabledWhileSearching
+                  : l10n.widgetActorSort),
       triggerKey: triggerKey,
       panelKey: panelKey,
       drawerKey: drawerKey,

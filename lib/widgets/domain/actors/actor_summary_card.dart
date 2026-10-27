@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_cover_hover_info.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
@@ -94,6 +95,7 @@ class ActorSummaryCard extends StatelessWidget {
   /// 悬停面板：姓名、资料与订阅 / 取消订阅动作。
   Widget _buildHoverInfo(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final subscribe = onSubscriptionTap;
     final actions = <Widget>[
       if (subscribe != null)
@@ -102,7 +104,10 @@ class ActorSummaryCard extends StatelessWidget {
           icon: actor.isSubscribed
               ? Icons.favorite_rounded
               : Icons.favorite_border_rounded,
-          tooltip: actor.isSubscribed ? '取消订阅' : '订阅演员',
+          tooltip:
+              actor.isSubscribed
+                  ? l10n.widgetActorUnsubscribe
+                  : l10n.widgetActorSubscribe,
           onTap: isSubscriptionUpdating ? null : subscribe,
         ),
     ];
@@ -124,6 +129,7 @@ class ActorSummaryCard extends StatelessWidget {
   /// 悬停资料：列表接口随卡片下发，缺项跳过。
   Widget _buildHoverStats(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final valueStyle = resolveCoverOverlayTextStyle(
       context,
       size: AppTextSize.s10,
@@ -135,14 +141,23 @@ class ActorSummaryCard extends StatelessWidget {
     );
     final birthday = actor.birthday;
     final stats = <(String, String)>[
-      ('影片数', '${actor.movieCount}'),
-      if (actor.age != null) ('年龄', '${actor.age}岁'),
-      if (birthday != null) ('出生年月', '${birthday.year}年${birthday.month}月'),
-      if (actor.heightCm != null) ('身高', '${actor.heightCm} cm'),
-      if (actor.bustCm != null) ('胸围', '${actor.bustCm} cm'),
-      if (actor.waistCm != null) ('腰围', '${actor.waistCm} cm'),
-      if (actor.hipsCm != null) ('臀围', '${actor.hipsCm} cm'),
-      if (actor.cup != null) ('罩杯', actor.cup!),
+      (l10n.widgetActorMovieCountLabel, '${actor.movieCount}'),
+      if (actor.age != null)
+        (l10n.widgetActorAgeLabel, l10n.widgetActorAgeValue(actor.age!)),
+      if (birthday != null)
+        (
+          l10n.widgetActorBirthdayLabel,
+          l10n.widgetActorBirthdayValue(birthday.year, birthday.month),
+        ),
+      if (actor.heightCm != null)
+        (l10n.widgetActorHeightLabel, '${actor.heightCm} cm'),
+      if (actor.bustCm != null)
+        (l10n.widgetActorBustLabel, '${actor.bustCm} cm'),
+      if (actor.waistCm != null)
+        (l10n.widgetActorWaistLabel, '${actor.waistCm} cm'),
+      if (actor.hipsCm != null)
+        (l10n.widgetActorHipsLabel, '${actor.hipsCm} cm'),
+      if (actor.cup != null) (l10n.widgetActorCupLabel, actor.cup!),
     ];
     return Wrap(
       spacing: spacing.lg,

@@ -42,6 +42,12 @@ void main() {
         ),
       ],
       child: MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         locale: const Locale('zh'),
         localizationsDelegates: <LocalizationsDelegate<dynamic>>[
@@ -253,6 +259,12 @@ void main() {
           ),
         ],
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           locale: const Locale('zh'),
           localizationsDelegates: <LocalizationsDelegate<dynamic>>[
@@ -288,6 +300,12 @@ void main() {
           ),
         ],
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           locale: const Locale('zh'),
           localizationsDelegates: <LocalizationsDelegate<dynamic>>[
@@ -344,6 +362,12 @@ void main() {
     addTearDown(loading.dispose);
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         locale: const Locale('zh'),
         localizationsDelegates: <LocalizationsDelegate<dynamic>>[

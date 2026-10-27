@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/media/media_playback_info_button.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
@@ -114,7 +115,7 @@ void main() {
               ...GlobalMaterialLocalizations.delegates,
             ],
             supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
-navigatorKey: navigator,
+            navigatorKey: navigator,
             theme: sakuraThemeData,
             home: const Scaffold(body: Text('window')),
           ),

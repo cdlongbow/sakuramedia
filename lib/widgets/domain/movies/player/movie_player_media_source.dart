@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform;
 import 'package:media_kit/media_kit.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 /// 播放来源类型。播放地址由后端 provider 统一签名，前端不再按存储后端分支。
 enum MoviePlayerMediaSourceKind { unknown }
@@ -18,8 +19,11 @@ Media buildMoviePlayerMedia(String resolvedUrl, {Duration? startPosition}) {
   );
 }
 
-String moviePlayerPlaybackErrorMessage(MoviePlayerMediaSourceKind sourceKind) {
-  return '暂时无法播放此媒体。';
+String moviePlayerPlaybackErrorMessage(
+  MoviePlayerMediaSourceKind sourceKind, {
+  required AppLocalizations l10n,
+}) {
+  return l10n.widgetMoviePlayerPlaybackUnavailable;
 }
 
 PlayerConfiguration buildMoviePlayerConfiguration({TargetPlatform? platform}) {

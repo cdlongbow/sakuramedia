@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_rail.dart';
 
@@ -21,6 +22,12 @@ void main() {
   testWidgets('桌面 rail 卡宽与「相似影片」同规格', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraDesktopThemeData,
         home: const Scaffold(
           body: SizedBox(width: 800, child: MovieSummaryRail(items: [_movie])),
@@ -42,6 +49,12 @@ void main() {
       AppPlatformScope(
         platform: AppPlatform.mobile,
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraMobileThemeData,
           home: const Scaffold(
             body: SizedBox(
@@ -66,6 +79,12 @@ void main() {
     var retried = false;
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: Scaffold(
           body: MovieSummaryRail(
@@ -85,6 +104,12 @@ void main() {
   testWidgets('空态显示调用方文案', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
+        locale: Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: MovieSummaryRail(items: [], emptyMessage: '暂无入库影片，去搜索看看吧'),
         ),

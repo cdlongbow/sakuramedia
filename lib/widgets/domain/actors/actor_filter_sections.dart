@@ -26,6 +26,7 @@ class ActorFilterSectionGroup extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final optionsScope = ActorFilterOptionsScope(
       subscriptionStatus: filterState.subscriptionStatus,
       gender: filterState.gender,
@@ -36,7 +37,7 @@ class ActorFilterSectionGroup extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         MovieFilterChoiceSection<ActorSubscriptionStatus>(
-          title: '订阅筛选',
+          title: l10n.widgetActorFilterSubscriptionTitle,
           options: ActorSubscriptionStatus.values,
           selectedValue: filterState.subscriptionStatus,
           labelBuilder: (value) => value.label(AppLocalizations.of(context)),
@@ -45,7 +46,7 @@ class ActorFilterSectionGroup extends ConsumerWidget {
         ),
         SizedBox(height: context.appSpacing.lg),
         MovieFilterChoiceSection<ActorGender>(
-          title: '性别筛选',
+          title: l10n.widgetActorFilterGenderTitle,
           options: ActorGender.values,
           selectedValue: filterState.gender,
           labelBuilder: (value) => value.label(AppLocalizations.of(context)),
@@ -53,10 +54,13 @@ class ActorFilterSectionGroup extends ConsumerWidget {
         ),
         SizedBox(height: context.appSpacing.lg),
         MovieFilterChoiceSection<bool>(
-          title: '播放筛选',
+          title: l10n.widgetActorFilterPlayableTitle,
           options: const [false, true],
           selectedValue: filterState.hasPlayableMovies,
-          labelBuilder: (value) => value ? '有可播放影片' : '全部',
+          labelBuilder: (value) =>
+              value
+                  ? l10n.widgetActorFilterHasPlayable
+                  : l10n.widgetActorFilterAll,
           optionKeyBuilder: (value) => Key(
             value ? 'actor-filter-playable-only' : 'actor-filter-playable-all',
           ),
@@ -120,7 +124,8 @@ class _ActorProfileFilterSectionsAsyncState
         ),
       ),
       error: (_, _) => _ActorProfileFilterOptionsMessage(
-        message: '资料筛选选项加载失败',
+        message:
+            AppLocalizations.of(context).widgetActorFilterOptionsLoadFailed,
         onRetry: widget.onRetry,
       ),
     );
@@ -151,7 +156,7 @@ class _ActorProfileFilterOptionsMessage extends StatelessWidget {
         if (onRetry != null) ...[
           SizedBox(width: context.appSpacing.sm),
           AppTextButton(
-            label: '重试',
+            label: AppLocalizations.of(context).commonRetry,
             size: AppTextButtonSize.xSmall,
             onPressed: onRetry,
           ),
@@ -175,14 +180,15 @@ class ActorProfileFilterSections extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ActorNumericRangeFilterSection(
-          title: '年龄',
+          title: l10n.widgetActorAgeLabel,
           range: options.age,
-          suffix: '岁',
+          suffix: l10n.widgetActorAgeUnit,
           selectedMin: filterState.ageMin,
           selectedMax: filterState.ageMax,
           onChanged: (range) => onChanged(
@@ -191,7 +197,7 @@ class ActorProfileFilterSections extends StatelessWidget {
         ),
         SizedBox(height: context.appSpacing.lg),
         ActorNumericRangeFilterSection(
-          title: '身高',
+          title: l10n.widgetActorHeightLabel,
           range: options.heightCm,
           suffix: ' cm',
           selectedMin: filterState.heightMin,
@@ -283,13 +289,13 @@ class _ActorNumericRangeFilterSectionState
     }
   }
 
-  String _rangeLabel() {
+  String _rangeLabel(AppLocalizations l10n) {
     final lower = _values.start.round();
     final upper = _values.end.round();
     final min = widget.range.min;
     final max = widget.range.max;
     if (min == null || max == null || (lower == min && upper == max)) {
-      return '不限';
+      return l10n.widgetActorFilterUnlimited;
     }
     if (lower == min) {
       return '≤ $upper${widget.suffix}';
@@ -302,6 +308,7 @@ class _ActorNumericRangeFilterSectionState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final titleStyle = resolveAppTextStyle(
       context,
       size: AppTextSize.s14,
@@ -309,7 +316,10 @@ class _ActorNumericRangeFilterSectionState
       tone: AppTextTone.primary,
     );
     if (!_hasValues) {
-      return Text('${widget.title}暂无可用资料', style: titleStyle);
+      return Text(
+        l10n.widgetActorFilterNoProfileData(widget.title),
+        style: titleStyle,
+      );
     }
     if (widget.range.min == widget.range.max) {
       return Text(
@@ -326,7 +336,7 @@ class _ActorNumericRangeFilterSectionState
           children: [
             Text(widget.title, style: titleStyle),
             Text(
-              _rangeLabel(),
+              _rangeLabel(l10n),
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s12,
@@ -401,11 +411,12 @@ class ActorCupFilterSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '罩杯',
+          l10n.widgetActorCupLabel,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s14,
@@ -416,7 +427,7 @@ class ActorCupFilterSection extends StatelessWidget {
         SizedBox(height: context.appSpacing.sm),
         if (options.isEmpty)
           Text(
-            '暂无可用资料',
+            l10n.widgetActorFilterNoData,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,

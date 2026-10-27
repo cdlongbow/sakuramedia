@@ -111,6 +111,12 @@ void main() {
             overrides: bundle.riverpodOverrides(),
             child: OKToast(
               child: MaterialApp.router(
+                locale: const Locale('zh'),
+                localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+                  AppLocalizations.delegate,
+                  ...GlobalMaterialLocalizations.delegates,
+                ],
+                supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
                 theme: sakuraThemeData,
                 locale: const Locale('zh'),
                 localizationsDelegates: <LocalizationsDelegate<dynamic>>[

@@ -172,7 +172,7 @@ void main() {
     MovieStatusFilter.subscribed,
     MovieStatusFilter.unsubscribed,
   ]) {
-    test('媒体变更移除不符合女优影片 ${status.label} 筛选的条目', () async {
+    test('媒体变更移除不符合女优影片 ${status.apiValue} 筛选的条目', () async {
       const scope = MovieSummaryScope.actor(actorId: 8);
       final subscribed = status != MovieStatusFilter.unsubscribed;
       final movies = [

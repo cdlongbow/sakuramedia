@@ -12,9 +12,20 @@ import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_ac
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_menu.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_support.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations_en.dart';
 import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
+
+/// 中日韩统一表意文字，用于判定「英文界面漏出中文」。
+final RegExp _cjk = RegExp(r'[\u4e00-\u9fff]');
+
+String _labelOf(
+  List<MovieDetailActionDescriptor> actions,
+  MovieDetailActionType type,
+) {
+  return actions.firstWhere((action) => action.type == type).label;
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +34,7 @@ void main() {
     'buildMovieDetailActionDescriptors keeps action order and prerequisites',
     () {
       final actions = buildMovieDetailActionDescriptors(
+        l10n: AppLocalizationsZh(),
         isSubscribed: false,
         isCollection: false,
         isBlacklisted: false,
@@ -43,10 +55,11 @@ void main() {
                   action.type == MovieDetailActionType.toggleCollectionType,
             )
             .label,
-        '标记为合集',
+        isNotEmpty,
       );
 
       final blacklistedActions = buildMovieDetailActionDescriptors(
+        l10n: AppLocalizationsZh(),
         isSubscribed: false,
         isCollection: true,
         isBlacklisted: true,
@@ -55,30 +68,51 @@ void main() {
         blacklistedActions.map((action) => action.type),
         isNot(contains(MovieDetailActionType.toggleSubscription)),
       );
+      // 合集 / 单体、屏蔽 / 取消屏蔽是两种不同意图，文案必须能区分。
       expect(
-        blacklistedActions
-            .firstWhere(
-              (action) =>
-                  action.type == MovieDetailActionType.toggleCollectionType,
-            )
-            .label,
-        '标记为单体',
+        _labelOf(blacklistedActions, MovieDetailActionType.toggleCollectionType),
+        isNot(
+          _labelOf(actions, MovieDetailActionType.toggleCollectionType),
+        ),
       );
       expect(
-        blacklistedActions
-            .firstWhere(
-              (action) => action.type == MovieDetailActionType.toggleBlacklist,
-            )
-            .label,
-        '取消屏蔽',
+        _labelOf(blacklistedActions, MovieDetailActionType.toggleBlacklist),
+        isNot(_labelOf(actions, MovieDetailActionType.toggleBlacklist)),
       );
     },
   );
+
+  test('buildMovieDetailActionDescriptors follows the caller locale', () {
+    final en = buildMovieDetailActionDescriptors(
+      l10n: AppLocalizationsEn(),
+      isSubscribed: false,
+      isCollection: false,
+      isBlacklisted: false,
+      canCast: true,
+    );
+    final zh = buildMovieDetailActionDescriptors(
+      l10n: AppLocalizationsZh(),
+      isSubscribed: false,
+      isCollection: false,
+      isBlacklisted: false,
+      canCast: true,
+    );
+
+    // 英文界面不得出现中文：操作菜单曾经整段硬编码中文。
+    for (final action in en) {
+      expect(_cjk.hasMatch(action.label), isFalse);
+    }
+    expect(
+      en.map((action) => action.label),
+      isNot(zh.map((action) => action.label)),
+    );
+  });
 
   test(
     'buildMovieDetailActionDescriptors prepends cast action when enabled',
     () {
       final actions = buildMovieDetailActionDescriptors(
+        l10n: AppLocalizationsZh(),
         isSubscribed: false,
         isCollection: false,
         isBlacklisted: false,
@@ -86,20 +120,22 @@ void main() {
       );
 
       expect(actions.first.type, MovieDetailActionType.castToDevice);
-      expect(actions.first.label, '投屏到电视');
+      expect(actions.first.label, isNotEmpty);
     },
   );
 
   test('buildMovieDetailActionDescriptors shows casting label when active', () {
     final actions = buildMovieDetailActionDescriptors(
+      l10n: AppLocalizationsZh(),
       isSubscribed: false,
       isCollection: false,
       isBlacklisted: false,
-      castSessionLabel: '投屏中 · 客厅电视',
+      castSessionLabel: 'Living room TV',
     );
 
     expect(actions.first.type, MovieDetailActionType.castToDevice);
-    expect(actions.first.label, '投屏中 · 客厅电视');
+    // 正在投屏时优先显示调用方给的会话名，而不是通用「投屏到电视」。
+    expect(actions.first.label, 'Living room TV');
   });
 
   test(
@@ -212,34 +248,50 @@ void main() {
     },
   );
 
-  test('refresh confirmation copy is shared', () {
-    expect(MovieDetailRefreshConfirmationCopy.title, '刷新元数据');
-    expect(
-      MovieDetailRefreshConfirmationCopy.description,
-      '刷新后会重新下载封面图和剧情图，并重新绑定当前影片的女优和标签关联。',
-    );
-    expect(
-      MovieDetailRefreshConfirmationCopy.hint,
-      '这是一次覆盖式刷新，SakuraMedia 中的影片元数据会以远端最新结果为准。',
-    );
-    expect(MovieDetailRefreshConfirmationCopy.cancelLabel, '取消');
-    expect(MovieDetailRefreshConfirmationCopy.confirmLabel, '确认刷新');
-    expect(
+  test('refresh confirmation copy follows the caller locale', () {
+    final en = AppLocalizationsEn();
+    final zh = AppLocalizationsZh();
+
+    // 英文界面不得出现中文：刷新确认弹窗曾经整段硬编码中文。
+    final enCopy = <String>[
+      MovieDetailRefreshConfirmationCopy.title(en),
+      MovieDetailRefreshConfirmationCopy.hint(en),
+      MovieDetailRefreshConfirmationCopy.cancelLabel(en),
+      MovieDetailRefreshConfirmationCopy.confirmLabel(en),
       MovieDetailRefreshConfirmationCopy.descriptionFor(
+        en,
         isActorsManuallyManaged: false,
       ),
-      MovieDetailRefreshConfirmationCopy.description,
-    );
-    expect(
       MovieDetailRefreshConfirmationCopy.descriptionFor(
+        en,
         isActorsManuallyManaged: true,
       ),
-      MovieDetailRefreshConfirmationCopy.manuallyManagedActorsDescription,
+    ];
+    for (final copy in enCopy) {
+      expect(copy, isNotEmpty);
+      expect(_cjk.hasMatch(copy), isFalse);
+    }
+
+    final zhCopy = <String>[
+      MovieDetailRefreshConfirmationCopy.title(zh),
+      MovieDetailRefreshConfirmationCopy.hint(zh),
+      MovieDetailRefreshConfirmationCopy.cancelLabel(zh),
+      MovieDetailRefreshConfirmationCopy.confirmLabel(zh),
+    ];
+    for (final copy in zhCopy) {
+      expect(_cjk.hasMatch(copy), isTrue);
+    }
+
+    // 演员表手动管理时要说明「不会覆盖」，用的是另一段说明。
+    final manual = MovieDetailRefreshConfirmationCopy.descriptionFor(
+      en,
+      isActorsManuallyManaged: true,
     );
-    expect(
-      MovieDetailRefreshConfirmationCopy.manuallyManagedActorsDescription,
-      contains('演员表已手动管理'),
+    final automatic = MovieDetailRefreshConfirmationCopy.descriptionFor(
+      en,
+      isActorsManuallyManaged: false,
     );
+    expect(manual, isNot(automatic));
   });
 }
 

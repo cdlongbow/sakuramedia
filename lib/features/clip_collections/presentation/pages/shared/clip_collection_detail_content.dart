@@ -645,7 +645,7 @@ class _ClipCollectionDetailContentState
   /// notifier 乐观删除并广播 [ClipMutationEvents.reportDeleted]。与「移出合集」不同。
   Future<void> _deleteClip(MediaClipDto clip) async {
     final l10n = AppLocalizations.of(context);
-    final title = clip.displayTitle.trim();
+    final title = clip.displayTitle(l10n).trim();
     final label = title.isEmpty
         ? l10n.clipCollectionUnnamedClip
         : '“$title”';

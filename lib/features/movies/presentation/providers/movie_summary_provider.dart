@@ -47,7 +47,8 @@ class MovieSummary extends _$MovieSummary
   int get pageSize => scope.pageSize;
 
   @override
-  String get initialLoadErrorText => scope.initialLoadErrorText;
+  String get initialLoadErrorText =>
+      scope.errorText(ref.read(appLocalizationsProvider));
 
   @override
   String get loadMoreErrorText =>

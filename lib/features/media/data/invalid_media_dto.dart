@@ -1,7 +1,6 @@
 import 'package:sakuramedia/core/json/json_parse.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/l10n/app_localizations.dart';
-import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 class InvalidMediaDto {
   const InvalidMediaDto({
@@ -30,13 +29,13 @@ class InvalidMediaDto {
   final int fileSizeBytes;
   final DateTime? updatedAt;
 
-  /// 展示用标题；未传 [l10n] 时回退简体中文，供尚未迁移的调用点使用。
-  String displayTitle({AppLocalizations? l10n}) {
+  /// 展示用标题；未命名时回退语言包里的「未命名媒体」。
+  String displayTitle(AppLocalizations l10n) {
     final title = movieTitle?.trim();
     if (title != null && title.isNotEmpty) {
       return title;
     }
-    return (l10n ?? AppLocalizationsZh()).mediaListUnnamedMedia;
+    return l10n.mediaListUnnamedMedia;
   }
 
   String? get preferredCoverUrl {

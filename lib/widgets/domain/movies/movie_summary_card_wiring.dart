@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_subscription_toggle_provider.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
 
 /// [MovieSummaryCard] 的接线参数（grid / sliver / rail 三个容器同源）。
@@ -97,5 +98,7 @@ Future<void> _toggleDefaultMovieSubscription(
   final result = await ref
       .read(movieSubscriptionToggleProvider.notifier)
       .toggle(movieNumber: movie.movieNumber, isSubscribed: movie.isSubscribed);
-  if (context.mounted) showMovieSubscriptionFeedback(result);
+  if (context.mounted) {
+    showMovieSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
+  }
 }

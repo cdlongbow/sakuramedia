@@ -359,7 +359,7 @@ class _MediaListItemHeading extends StatelessWidget {
       children: [
         Flexible(
           child: Text(
-            item.displayHeading(l10n: l10n),
+            item.displayHeading(l10n),
             key: Key('$keyPrefix-row-heading-${item.id}'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -376,7 +376,7 @@ class _MediaListItemHeading extends StatelessWidget {
         if (item.kind == MediaListItemKind.video) ...[
           SizedBox(width: spacing.sm),
           AppBadge(
-            label: item.kind.label(l10n: l10n),
+            label: item.kind.labelWith(l10n: l10n),
             tone: AppBadgeTone.neutral,
             size: AppBadgeSize.compact,
           ),

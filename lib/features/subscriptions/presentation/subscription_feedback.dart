@@ -6,31 +6,23 @@ import 'package:sakuramedia/features/actors/presentation/providers/actor_subscri
 import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_subscription_toggle_provider.dart';
 import 'package:sakuramedia/l10n/app_localizations.dart';
-import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 
-/// 未传 [l10n] 时回退中文，供尚未迁移的调用方渐进替换。
-final AppLocalizations _zhFallback = AppLocalizationsZh();
-
-AppLocalizations _fallbackLocalizations(AppLocalizations? l10n) =>
-    l10n ?? _zhFallback;
-
 String? movieSubscriptionFeedbackMessage(
   MovieSubscriptionToggleResult result, {
-  AppLocalizations? l10n,
+  required AppLocalizations l10n,
 }) {
-  final messages = _fallbackLocalizations(l10n);
   switch (result.status) {
     case MovieSubscriptionToggleStatus.subscribed:
-      return messages.subscriptionFeedbackMovieSubscribed;
+      return l10n.subscriptionFeedbackMovieSubscribed;
     case MovieSubscriptionToggleStatus.unsubscribed:
-      return messages.subscriptionFeedbackMovieUnsubscribed;
+      return l10n.subscriptionFeedbackMovieUnsubscribed;
     case MovieSubscriptionToggleStatus.blockedByMedia:
-      return messages.subscriptionFeedbackMovieBlockedByMedia;
+      return l10n.subscriptionFeedbackMovieBlockedByMedia;
     case MovieSubscriptionToggleStatus.failed:
       return result.message;
     case MovieSubscriptionToggleStatus.ignored:
@@ -40,14 +32,13 @@ String? movieSubscriptionFeedbackMessage(
 
 String? actorSubscriptionFeedbackMessage(
   ActorSubscriptionToggleResult result, {
-  AppLocalizations? l10n,
+  required AppLocalizations l10n,
 }) {
-  final messages = _fallbackLocalizations(l10n);
   switch (result.status) {
     case ActorSubscriptionToggleStatus.subscribed:
-      return messages.subscriptionFeedbackActorSubscribed;
+      return l10n.subscriptionFeedbackActorSubscribed;
     case ActorSubscriptionToggleStatus.unsubscribed:
-      return messages.subscriptionFeedbackActorUnsubscribed;
+      return l10n.subscriptionFeedbackActorUnsubscribed;
     case ActorSubscriptionToggleStatus.failed:
       return result.message;
     case ActorSubscriptionToggleStatus.ignored:
@@ -57,7 +48,7 @@ String? actorSubscriptionFeedbackMessage(
 
 void showMovieSubscriptionFeedback(
   MovieSubscriptionToggleResult result, {
-  AppLocalizations? l10n,
+  required AppLocalizations l10n,
 }) {
   _showSubscriptionFeedback(
     movieSubscriptionFeedbackMessage(result, l10n: l10n),
@@ -66,7 +57,7 @@ void showMovieSubscriptionFeedback(
 
 void showActorSubscriptionFeedback(
   ActorSubscriptionToggleResult result, {
-  AppLocalizations? l10n,
+  required AppLocalizations l10n,
 }) {
   _showSubscriptionFeedback(
     actorSubscriptionFeedbackMessage(result, l10n: l10n),

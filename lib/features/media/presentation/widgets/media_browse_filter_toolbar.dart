@@ -43,7 +43,7 @@ class MediaBrowseFilterToolbar extends StatelessWidget {
         SizedBox(
           height: context.appComponentTokens.mobileTopTabHeight,
           child: AppFilterPopover(
-            triggerLabel: filterState.triggerLabel(l10n: l10n),
+            triggerLabel: filterState.triggerLabel(l10n),
             panelKey: const Key('media-management-filter-panel'),
             scrollViewKey: const Key('media-management-filter-scroll-view'),
             panelExtraWidth: 240,
@@ -53,7 +53,7 @@ class MediaBrowseFilterToolbar extends StatelessWidget {
             triggerBuilder: (context, isOpen, toggle) => AppFilterEntryButton(
               key: const Key('media-management-filter-trigger'),
               icon: Icons.tune_rounded,
-              label: filterState.triggerLabel(l10n: l10n),
+              label: filterState.triggerLabel(l10n),
               tooltip: l10n.mediaListFilterTooltip,
               trailingIcon: isOpen
                   ? Icons.expand_less_rounded
@@ -111,7 +111,7 @@ class MediaBrowseFilterSectionGroup extends StatelessWidget {
       itemKey: Key('media-kind-jav'),
     ),
     _KindOption(
-      label: MediaListItemKind.video.label(l10n: l10n),
+      label: MediaListItemKind.video.labelWith(l10n: l10n),
       kind: MediaListItemKind.video,
       itemKey: Key('media-kind-video'),
     ),
@@ -192,7 +192,8 @@ class MediaBrowseFilterSectionGroup extends StatelessWidget {
                 key: Key(
                   'media-thumbnail-generation-filter-${filter?.name ?? 'all'}',
                 ),
-                label: filter?.label(l10n: l10n) ?? l10n.mediaListFilterAll,
+                label:
+                    filter?.labelWith(l10n: l10n) ?? l10n.mediaListFilterAll,
                 size: AppTextButtonSize.xSmall,
                 isSelected: filterState.thumbnailGenerationState == filter,
                 onPressed: () => onChanged(

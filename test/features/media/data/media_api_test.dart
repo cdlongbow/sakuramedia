@@ -3,10 +3,12 @@ import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 import '../../../support/fake_http_client_adapter.dart';
 
 void main() {
+  final zh = AppLocalizationsZh();
   late SessionStore sessionStore;
   late ApiClient apiClient;
   late FakeHttpClientAdapter adapter;
@@ -320,7 +322,7 @@ void main() {
     expect(page.items.single.coverImage, isNull);
     expect(page.items.single.thinCoverImage, isNull);
     expect(page.items.single.preferredCoverUrl, isNull);
-    expect(page.items.single.displayTitle(), '未命名媒体');
+    expect(page.items.single.displayTitle(zh), '未命名媒体');
   });
 
   test('getDuplicateMediaGroups maps grouped media and kind query', () async {
@@ -646,7 +648,7 @@ void main() {
     final jav = page.items.first;
     expect(jav.isJav, isTrue);
     expect(jav.movieNumber, 'ABC-001');
-    expect(jav.displayHeading(), 'ABC-001');
+    expect(jav.displayHeading(zh), 'ABC-001');
     expect(jav.displaySubtitle, 'Movie 1');
     expect(jav.heat, 320);
     final video = page.items.last;
@@ -654,7 +656,7 @@ void main() {
     expect(video.videoItemId, 999);
     expect(video.valid, isFalse);
     expect(video.heat, isNull);
-    expect(video.displayHeading(), 'Short video');
+    expect(video.displayHeading(zh), 'Short video');
     expect(video.displaySubtitle, isNull);
     expect(
       jav.thumbnailGenerationState,

@@ -24,10 +24,6 @@ class AppVersionInfoState {
   String tooltipLabelFor(AppLocalizations l10n) =>
       l10n.appVersionTooltip(frontendVersionLabel, backendVersionLabel);
 
-  /// 旧的中文 tooltip，保留给尚未迁移的调用点。
-  String get tooltipLabel =>
-      '客户端 $frontendVersionLabel · 服务端 $backendVersionLabel';
-
   AppVersionInfoState copyWith({
     String? frontendVersion,
     String? backendVersion,

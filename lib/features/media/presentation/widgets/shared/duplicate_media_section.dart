@@ -188,8 +188,8 @@ class DuplicateMediaSection extends HookConsumerWidget {
         },
         itemSupplement: (item) {
           final headingDiffers =
-              item.displayHeading(l10n: l10n) !=
-              first.displayHeading(l10n: l10n);
+              item.displayHeading(l10n) !=
+              first.displayHeading(l10n);
           final showCollections = item.isVideo && item.collections.isNotEmpty;
           if (!headingDiffers && !showCollections) {
             return null;
@@ -203,14 +203,14 @@ class DuplicateMediaSection extends HookConsumerWidget {
                     item.movieNumber != null &&
                     onOpenMovieDetail != null)
                   AppTextButton(
-                    label: item.displayHeading(l10n: l10n),
+                    label: item.displayHeading(l10n),
                     size: AppTextButtonSize.xxSmall,
                     onPressed: () =>
                         onOpenMovieDetail!(context, item.movieNumber!),
                   )
                 else
                   Text(
-                    item.displayHeading(l10n: l10n),
+                    item.displayHeading(l10n),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: resolveAppTextStyle(
@@ -391,7 +391,7 @@ class _DuplicateMediaHeader extends HookConsumerWidget {
             ])
               AppTextButton(
                 key: Key('$keyPrefix-duplicate-kind-${option.name}'),
-                label: option.label(l10n: l10n),
+                label: option.labelWith(l10n: l10n),
                 size: AppTextButtonSize.xSmall,
                 isSelected: selectedKind.value == option,
                 onPressed: () => applyKind(option),
@@ -413,7 +413,7 @@ class _DuplicateMediaHeader extends HookConsumerWidget {
 
     return AppListHeader(
       filterButtonKey: Key('$keyPrefix-duplicates-filter'),
-      filterLabel: kind.label(l10n: l10n),
+      filterLabel: kind.labelWith(l10n: l10n),
       filterPanelKey: Key('$keyPrefix-duplicates-filter-panel'),
       filterPanelBuilder: mobile ? null : filterOptions,
       filterPanelFooter: mobile ? null : filterFooter(),

@@ -355,6 +355,7 @@ class _MovieDetailReviewTabState extends ConsumerState<_MovieDetailReviewTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final state = ref.watch(movieDetailReviewProvider(widget.movieNumber));
     return Padding(
       padding: EdgeInsets.only(
@@ -371,7 +372,7 @@ class _MovieDetailReviewTabState extends ConsumerState<_MovieDetailReviewTab> {
               for (final sort in MovieReviewSort.values)
                 AppTextButton(
                   key: Key('movie-detail-review-sort-${sort.apiValue}'),
-                  label: sort.label,
+                  label: sort.labelWith(l10n),
                   size: AppTextButtonSize.xSmall,
                   isSelected: state.sort == sort,
                   selectedStyle: AppTextButtonSelectedStyle.plain,

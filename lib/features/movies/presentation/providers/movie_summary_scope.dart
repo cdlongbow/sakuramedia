@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 /// 影片摘要分页列表的来源与实例边界。
 ///
@@ -24,7 +25,7 @@ class MovieSummaryScope {
   const MovieSummaryScope._({
     required this.source,
     required this.pageSize,
-    required this.initialLoadErrorText,
+    this.initialLoadErrorTextOverride,
     this.resourceId,
     this.instanceKey,
     this.cacheKey,
@@ -34,11 +35,7 @@ class MovieSummaryScope {
   });
 
   const MovieSummaryScope.latest({int pageSize = 24})
-    : this._(
-        source: MovieSummarySource.latest,
-        pageSize: pageSize,
-        initialLoadErrorText: '最新入库影片加载失败，请稍后重试',
-      );
+    : this._(source: MovieSummarySource.latest, pageSize: pageSize);
 
   /// 普通影片库列表；与概览的 latest endpoint 独立，支持完整 [MovieFilterState]
   /// 筛选。带 [cacheKey] 时由页面通过 RiverpodPageCache 保活。
@@ -47,33 +44,24 @@ class MovieSummaryScope {
         source: MovieSummarySource.movies,
         cacheKey: cacheKey,
         pageSize: pageSize,
-        initialLoadErrorText: '影片列表加载失败，请稍后重试',
       );
 
   const MovieSummaryScope.subscribedActorsLatest({
     int pageSize = 24,
-    String initialLoadErrorText = '关注影片加载失败，请稍后重试',
+    String? initialLoadErrorTextOverride,
   }) : this._(
          source: MovieSummarySource.subscribedActorsLatest,
          pageSize: pageSize,
-         initialLoadErrorText: initialLoadErrorText,
+         initialLoadErrorTextOverride: initialLoadErrorTextOverride,
        );
 
   /// 最近订阅影片：当前仍已订阅的影片，按订阅时间倒序。
   /// 供概览 /「我的」tab 的「最近订阅」区块与其「更多」页共用。
   const MovieSummaryScope.recentlySubscribed({int pageSize = 24})
-    : this._(
-        source: MovieSummarySource.recentlySubscribed,
-        pageSize: pageSize,
-        initialLoadErrorText: '最近订阅影片加载失败，请稍后重试',
-      );
+    : this._(source: MovieSummarySource.recentlySubscribed, pageSize: pageSize);
 
   const MovieSummaryScope.blacklisted({int pageSize = 24})
-    : this._(
-        source: MovieSummarySource.blacklisted,
-        pageSize: pageSize,
-        initialLoadErrorText: '屏蔽影片加载失败，请稍后重试',
-      );
+    : this._(source: MovieSummarySource.blacklisted, pageSize: pageSize);
 
   /// 所选标签下的影片列表。
   ///
@@ -92,7 +80,6 @@ class MovieSummaryScope {
          instanceKey: instanceKey,
          cacheKey: cacheKey,
          pageSize: pageSize,
-         initialLoadErrorText: '标签影片加载失败，请稍后重试',
          initialTagIds: initialTagIds,
          initialTagMatch: initialTagMatch,
        );
@@ -102,7 +89,6 @@ class MovieSummaryScope {
         source: MovieSummarySource.actor,
         resourceId: actorId,
         pageSize: pageSize,
-        initialLoadErrorText: '影片列表加载失败，请稍后重试',
       );
 
   const MovieSummaryScope.playlist({required int playlistId, int pageSize = 24})
@@ -110,7 +96,6 @@ class MovieSummaryScope {
         source: MovieSummarySource.playlist,
         resourceId: playlistId,
         pageSize: pageSize,
-        initialLoadErrorText: '影片列表加载失败，请稍后重试',
       );
 
   const MovieSummaryScope.series({required int seriesId, int pageSize = 24})
@@ -118,7 +103,6 @@ class MovieSummaryScope {
         source: MovieSummarySource.series,
         resourceId: seriesId,
         pageSize: pageSize,
-        initialLoadErrorText: '系列影片加载失败，请稍后重试',
       );
 
   /// 已评分影片：只列个人评分记录，默认按总分倒序、包含合集。
@@ -127,7 +111,6 @@ class MovieSummaryScope {
         source: MovieSummarySource.rated,
         cacheKey: cacheKey,
         pageSize: pageSize,
-        initialLoadErrorText: '我的评分加载失败，请稍后重试',
         initialMovieFilter: const MovieFilterState(
           collectionType: MovieCollectionTypeFilter.all,
           sortField: MovieSortField.myScore,
@@ -144,7 +127,10 @@ class MovieSummaryScope {
   final int? resourceId;
   final String? instanceKey;
   final int pageSize;
-  final String initialLoadErrorText;
+
+  /// 显式覆盖首屏失败文案；为 `null` 时由 [MovieSummaryScopeX.errorText]
+  /// 按当前语言与 [source] 取默认文案。
+  final String? initialLoadErrorTextOverride;
   final String? cacheKey;
 
   /// 首拉就带上的标签条件；空表示先建 provider、由页面 `applyTagFilter` 首拉。
@@ -161,7 +147,7 @@ class MovieSummaryScope {
         other.resourceId == resourceId &&
         other.instanceKey == instanceKey &&
         other.pageSize == pageSize &&
-        other.initialLoadErrorText == initialLoadErrorText &&
+        other.initialLoadErrorTextOverride == initialLoadErrorTextOverride &&
         other.cacheKey == cacheKey &&
         listEquals(other.initialTagIds, initialTagIds) &&
         other.initialTagMatch == initialTagMatch &&
@@ -176,10 +162,36 @@ class MovieSummaryScope {
     resourceId,
     instanceKey,
     pageSize,
-    initialLoadErrorText,
+    initialLoadErrorTextOverride,
     cacheKey,
     Object.hashAll(initialTagIds),
     initialTagMatch,
     initialMovieFilter?.sortExpression,
   );
+}
+
+/// 首屏失败文案的取值入口：显式覆盖优先，否则按 [MovieSummaryScope.source]
+/// 取当前语言的默认文案。
+extension MovieSummaryScopeX on MovieSummaryScope {
+  String errorText(AppLocalizations l10n) {
+    final override = initialLoadErrorTextOverride;
+    if (override != null) {
+      return override;
+    }
+    return switch (source) {
+      MovieSummarySource.latest => l10n.errorLatestMovieListLoadFailed,
+      MovieSummarySource.movies ||
+      MovieSummarySource.actor ||
+      MovieSummarySource.playlist => l10n.errorMovieListLoadFailed,
+      MovieSummarySource.tags => l10n.errorTagMovieListLoadFailed,
+      MovieSummarySource.subscribedActorsLatest =>
+        l10n.errorFollowedMovieListLoadFailed,
+      MovieSummarySource.recentlySubscribed =>
+        l10n.errorRecentlySubscribedMovieListLoadFailed,
+      MovieSummarySource.blacklisted =>
+        l10n.errorBlacklistedMovieListLoadFailed,
+      MovieSummarySource.series => l10n.errorSeriesMovieListLoadFailed,
+      MovieSummarySource.rated => l10n.errorMyRatingMovieListLoadFailed,
+    };
+  }
 }

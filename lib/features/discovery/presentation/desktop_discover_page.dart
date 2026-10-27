@@ -85,7 +85,7 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
         .read(movieSummaryProvider(_followScope).notifier)
         .toggleSubscription(movieNumber);
     if (!mounted) return;
-    showMovieSubscriptionFeedback(result);
+    showMovieSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
   }
 
   @override

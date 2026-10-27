@@ -24,11 +24,12 @@ extension MovieStatusFilterX on MovieStatusFilter {
     MovieStatusFilter.playable => 'playable',
   };
 
-  String get label => switch (this) {
-    MovieStatusFilter.all => '全部',
-    MovieStatusFilter.subscribed => '已订阅',
-    MovieStatusFilter.unsubscribed => '未订阅',
-    MovieStatusFilter.playable => '可播放',
+  /// 当前语言的筛选档位名；展示层用这个取当前语言的文案。
+  String labelWith(AppLocalizations l10n) => switch (this) {
+    MovieStatusFilter.all => l10n.widgetMovieFilterAll,
+    MovieStatusFilter.subscribed => l10n.movieWidgetSubscribed,
+    MovieStatusFilter.unsubscribed => l10n.actorSubscriptionStatusUnsubscribed,
+    MovieStatusFilter.playable => l10n.movieFilterStatusPlayable,
   };
 }
 
@@ -41,10 +42,11 @@ extension MovieNumberSourceFilterX on MovieNumberSourceFilter {
     MovieNumberSourceFilter.fc2 => 'fc2',
   };
 
-  String get label => switch (this) {
-    MovieNumberSourceFilter.all => '全部',
-    MovieNumberSourceFilter.regular => '常规',
-    MovieNumberSourceFilter.fc2 => 'FC2',
+  /// 当前语言的番号来源名；展示层用这个取当前语言的文案。
+  String labelWith(AppLocalizations l10n) => switch (this) {
+    MovieNumberSourceFilter.all => l10n.widgetMovieFilterAll,
+    MovieNumberSourceFilter.regular => l10n.movieFilterNumberSourceRegular,
+    MovieNumberSourceFilter.fc2 => l10n.movieFilterNumberSourceFc2,
   };
 }
 
@@ -56,9 +58,10 @@ extension MovieCollectionTypeFilterX on MovieCollectionTypeFilter {
     MovieCollectionTypeFilter.single => 'single',
   };
 
-  String get label => switch (this) {
-    MovieCollectionTypeFilter.all => '全部',
-    MovieCollectionTypeFilter.single => '单体',
+  /// 当前语言的合集类型名；展示层用这个取当前语言的文案。
+  String labelWith(AppLocalizations l10n) => switch (this) {
+    MovieCollectionTypeFilter.all => l10n.widgetMovieFilterAll,
+    MovieCollectionTypeFilter.single => l10n.movieFilterCollectionTypeSingle,
   };
 }
 
@@ -70,9 +73,10 @@ extension TagMatchModeX on TagMatchMode {
     TagMatchMode.and => 'and',
   };
 
-  String get label => switch (this) {
-    TagMatchMode.or => '任一',
-    TagMatchMode.and => '全部',
+  /// 当前语言的匹配模式名；展示层用这个取当前语言的文案。
+  String labelWith(AppLocalizations l10n) => switch (this) {
+    TagMatchMode.or => l10n.tagMatchModeOr,
+    TagMatchMode.and => l10n.tagMatchModeAnd,
   };
 }
 
@@ -103,17 +107,18 @@ extension MovieSortFieldX on MovieSortField {
     MovieSortField.myScore => 'my_score',
   };
 
-  String get label => switch (this) {
-    MovieSortField.releaseDate => '发行时间',
-    MovieSortField.addedAt => '最近入库',
-    MovieSortField.subscribedAt => '订阅时间',
-    MovieSortField.heat => '热度',
-    MovieSortField.score => '评分',
-    MovieSortField.scoreNumber => '评分人数',
-    MovieSortField.watchedCount => '看过人数',
-    MovieSortField.wantWatchCount => '想看人数',
-    MovieSortField.commentCount => '评论人数',
-    MovieSortField.myScore => '我的评分',
+  /// 当前语言的排序字段名；展示层用这个取当前语言的文案。
+  String labelWith(AppLocalizations l10n) => switch (this) {
+    MovieSortField.releaseDate => l10n.movieSortReleaseDate,
+    MovieSortField.addedAt => l10n.playlistSortAddedAt,
+    MovieSortField.subscribedAt => l10n.subscriptionSortFieldSubscribedAt,
+    MovieSortField.heat => l10n.sharedInteractionHeat,
+    MovieSortField.score => l10n.sharedInteractionScore,
+    MovieSortField.scoreNumber => l10n.sharedInteractionScoreNumber,
+    MovieSortField.watchedCount => l10n.sharedInteractionWatchedCount,
+    MovieSortField.wantWatchCount => l10n.sharedInteractionWantWatchCount,
+    MovieSortField.commentCount => l10n.rankingSortFieldCommentCount,
+    MovieSortField.myScore => l10n.movieSortMyScore,
   };
 }
 
@@ -141,27 +146,31 @@ int? movieActorAgeMaxFromSlider(int value) =>
     value >= movieFilterActorAgeSliderMax ? null : value;
 
 /// 出演年龄范围的展示文案，与热度范围同构。
-String movieActorAgeRangeLabel(int? actorAgeMin, int? actorAgeMax) {
+String movieActorAgeRangeLabel(
+  int? actorAgeMin,
+  int? actorAgeMax,
+  AppLocalizations l10n,
+) {
   if (actorAgeMin != null && actorAgeMax != null) {
-    return '$actorAgeMin ~ $actorAgeMax 岁';
+    return l10n.movieFilterActorAgeRange(actorAgeMin, actorAgeMax);
   }
   if (actorAgeMin != null) {
-    return '≥ $actorAgeMin 岁';
+    return l10n.movieFilterActorAgeMin(actorAgeMin);
   }
   if (actorAgeMax != null) {
-    return '≤ $actorAgeMax 岁';
+    return l10n.movieFilterActorAgeMax(actorAgeMax);
   }
-  return '不限';
+  return l10n.sharedInteractionUnlimited;
 }
 
-/// 年份多选的展示文案：1 个直出，2 个顿号相连，3 个及以上折叠为
+/// 年份多选的展示文案：1 个直出，2 个以分隔符相连，3 个及以上折叠为
 /// 「最新年份 等 N 个年份」；空集返回空串，此时调用方不采用年份标签。
-String movieFilterYearsLabel(Set<int> years) {
+String movieFilterYearsLabel(Set<int> years, AppLocalizations l10n) {
   final ordered = years.toList()..sort((a, b) => b.compareTo(a));
   if (ordered.length <= 2) {
-    return ordered.join('、');
+    return ordered.join(l10n.movieWidgetActorNameSeparator);
   }
-  return '${ordered.first} 等 ${ordered.length} 个年份';
+  return l10n.movieFilterYearsLabel(ordered.first, ordered.length);
 }
 
 List<MovieFilterYearOption> buildDefaultMovieFilterYearOptions({
@@ -260,10 +269,10 @@ class MovieFilterState {
       hasInteractionRange,
       hasActorAgeRange,
     )) {
-      (true, _, _) => movieFilterYearsLabel(years),
+      (true, _, _) => movieFilterYearsLabel(years, l10n),
       (_, true, _) => interaction.localizedSummaryLabel(l10n),
-      (_, _, true) => movieActorAgeRangeLabel(actorAgeMin, actorAgeMax),
-      _ => status.label,
+      (_, _, true) => movieActorAgeRangeLabel(actorAgeMin, actorAgeMax, l10n),
+      _ => status.labelWith(l10n),
     };
     return resolution == null ? label : '$label · ${resolution!.label}';
   }

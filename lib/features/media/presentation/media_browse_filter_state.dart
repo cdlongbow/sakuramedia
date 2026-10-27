@@ -1,7 +1,6 @@
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/features/shared/data/sort_direction.dart';
 import 'package:sakuramedia/l10n/app_localizations.dart';
-import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 /// 「媒体管理」可选的排序字段。`null` 表示不显式指定排序——由后端隐式使用
 /// `created_at:desc`（入库时间倒序）作为默认视图。
@@ -12,12 +11,6 @@ extension MediaBrowseSortFieldX on MediaBrowseSortField {
     MediaBrowseSortField.fileSize => 'file_size_bytes',
     MediaBrowseSortField.heat => 'heat',
   };
-
-  /// 排序字段名（简体中文兜底）。
-  ///
-  /// 共享排序菜单（`lib/widgets/domain/media`）仍按零参 getter 取值，域内
-  /// 调用请改用 [labelWith] 取当前语言文案。
-  String get label => labelWith(l10n: AppLocalizationsZh());
 
   /// 当前语言的排序字段名。
   String labelWith({required AppLocalizations l10n}) => switch (this) {
@@ -46,18 +39,17 @@ extension MediaBrowseThumbnailGenerationFilterX
     MediaBrowseThumbnailGenerationFilter.succeeded => 'succeeded',
   };
 
-  /// 缩略图状态名；未传 [l10n] 时回退简体中文，供尚未迁移的调用点使用。
-  String label({AppLocalizations? l10n}) {
-    final l = l10n ?? AppLocalizationsZh();
-    return switch (this) {
-      MediaBrowseThumbnailGenerationFilter.pending => l.mediaListThumbnailPending,
-      MediaBrowseThumbnailGenerationFilter.retryWait =>
-        l.mediaListThumbnailRetryWait,
-      MediaBrowseThumbnailGenerationFilter.terminal => l.mediaListThumbnailFailed,
-      MediaBrowseThumbnailGenerationFilter.succeeded =>
-        l.mediaListThumbnailCompleted,
-    };
-  }
+  /// 缩略图状态名（语言包）。
+  String labelWith({required AppLocalizations l10n}) => switch (this) {
+    MediaBrowseThumbnailGenerationFilter.pending =>
+      l10n.mediaListThumbnailPending,
+    MediaBrowseThumbnailGenerationFilter.retryWait =>
+      l10n.mediaListThumbnailRetryWait,
+    MediaBrowseThumbnailGenerationFilter.terminal =>
+      l10n.mediaListThumbnailFailed,
+    MediaBrowseThumbnailGenerationFilter.succeeded =>
+      l10n.mediaListThumbnailCompleted,
+  };
 }
 
 /// 「媒体管理」筛选状态：不可变值对象，UI 改后调
@@ -102,12 +94,12 @@ class MediaBrowseFilterState {
 
   /// 触发按钮上显示的当前筛选摘要。只反映「归属」维度——库和排序有独立分节，
   /// 不再堆在 trigger 上避免文字变长。归属为 null 时用「全部媒体」占位。
-  String triggerLabel({AppLocalizations? l10n}) {
+  String triggerLabel(AppLocalizations l10n) {
     final kindValue = kind;
     if (kindValue == null || kindValue == MediaListItemKind.unknown) {
-      return (l10n ?? AppLocalizationsZh()).mediaListFilterAllMedia;
+      return l10n.mediaListFilterAllMedia;
     }
-    return kindValue.label(l10n: l10n);
+    return kindValue.labelWith(l10n: l10n);
   }
 
   /// 可选筛选使用哨兵：省略 = 保持；传 `null` = 清空。

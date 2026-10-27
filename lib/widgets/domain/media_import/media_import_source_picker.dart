@@ -507,7 +507,7 @@ class _MediaImportSourcePickerState
               .map(
                 (disposition) => DropdownMenuItem<SourceDisposition>(
                   value: disposition,
-                  child: Text(disposition.label),
+                  child: Text(disposition.labelWith(l10n: l10n)),
                 ),
               )
               .toList(growable: false),
@@ -519,7 +519,7 @@ class _MediaImportSourcePickerState
         ),
         SizedBox(height: context.appSpacing.xs),
         Text(
-          selectedDisposition.description,
+          selectedDisposition.descriptionWith(l10n: l10n),
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,

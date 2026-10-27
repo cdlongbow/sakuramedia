@@ -158,8 +158,8 @@ class ClipGridCard extends StatelessWidget {
       children: [
         AppCoverHoverInfoRow(
           key: Key('clip-grid-card-info-${clip.clipId}'),
-          label: clip.displayTitle,
-          meta: clip.metaLine,
+          label: clip.displayTitle(l10n),
+          meta: clip.metaLine(l10n),
         ),
         if (actions.isNotEmpty) ...[
           SizedBox(height: spacing.sm),

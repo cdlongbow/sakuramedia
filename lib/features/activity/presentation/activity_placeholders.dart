@@ -1,6 +1,7 @@
 import 'package:sakuramedia/features/activity/data/activity_notification_dto.dart';
 import 'package:sakuramedia/features/activity/data/job_metadata_dto.dart';
 import 'package:sakuramedia/features/activity/data/task_run_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 /// 活动/通知加载态占位数据：真实 DTO + [BoneMock] 文案，
@@ -51,7 +52,11 @@ List<JobMetadataDto> jobMetadataPlaceholders({int count = 3}) {
   );
 }
 
-List<TaskRunDto> taskRunPlaceholders({int count = 3, bool finished = true}) {
+List<TaskRunDto> taskRunPlaceholders({
+  int count = 3,
+  bool finished = true,
+  required AppLocalizations l10n,
+}) {
   return List<TaskRunDto>.generate(
     count,
     (index) => TaskRunDto(
@@ -64,7 +69,9 @@ List<TaskRunDto> taskRunPlaceholders({int count = 3, bool finished = true}) {
       progressCurrent: 10,
       progressTotal: 10,
       progressText: null,
-      resultText: finished ? '完成' : '失败',
+      resultText: finished
+          ? l10n.activityTaskStateCompleted
+          : l10n.activityTaskStateFailed,
       resultSummary: null,
       errorMessage: null,
       startedAt: DateTime(2026, 1, 1),

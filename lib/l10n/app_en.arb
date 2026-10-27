@@ -5144,5 +5144,74 @@
   "shellNavNotifications": "Notifications",
   "shellWindowClose": "Close",
   "shellWindowMinimize": "Minimize",
-  "shellWindowFullscreen": "Full screen"
+  "shellWindowFullscreen": "Full screen",
+  "movieActionRefreshMetadata": "Refresh metadata",
+  "movieActionRecomputeHeat": "Recompute heat",
+  "movieActionRefreshMetadataDescription": "Refreshing re-downloads the cover and plot images, and re-links this movie's actors and tags.",
+  "movieActionRefreshMetadataDescriptionManualActors": "Refreshing re-downloads the cover and plot images, and re-links this movie's tags. The actor list is managed manually, so it will not be overwritten.",
+  "movieActionRefreshMetadataHint": "This is an overwrite refresh: the movie metadata in SakuraMedia will be replaced by the latest remote result.",
+  "movieActionRefreshMetadataConfirm": "Refresh",
+  "errorLatestMovieListLoadFailed": "Failed to load the latest movies. Please try again later.",
+  "errorMovieListLoadFailed": "Failed to load the movie list. Please try again later.",
+  "errorTagMovieListLoadFailed": "Failed to load the movies of this tag. Please try again later.",
+  "errorFollowedMovieListLoadFailed": "Failed to load the followed movies. Please try again later.",
+  "errorRecentlySubscribedMovieListLoadFailed": "Failed to load the recently subscribed movies. Please try again later.",
+  "errorBlacklistedMovieListLoadFailed": "Failed to load the blocked movies. Please try again later.",
+  "errorSeriesMovieListLoadFailed": "Failed to load the movies of this series. Please try again later.",
+  "errorMyRatingMovieListLoadFailed": "Failed to load the movies you rated. Please try again later.",
+  "movieFilterStatusPlayable": "Playable",
+  "movieFilterNumberSourceRegular": "Regular",
+  "movieFilterNumberSourceFc2": "FC2",
+  "movieFilterCollectionTypeSingle": "Single movie",
+  "movieSortReleaseDate": "Release date",
+  "movieSortMyScore": "My rating",
+  "movieFilterActorAgeRange": "{min} ~ {max} yrs",
+  "@movieFilterActorAgeRange": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "movieFilterActorAgeMin": "≥ {min} yrs",
+  "@movieFilterActorAgeMin": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "movieFilterActorAgeMax": "≤ {max} yrs",
+  "@movieFilterActorAgeMax": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "movieFilterYearsLabel": "{first} and {count} years",
+  "@movieFilterYearsLabel": {
+    "placeholders": {
+      "first": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "movieReviewSortHotly": "Hottest",
+  "movieReviewSortRecently": "Newest",
+  "movieMagnetSortSeeders": "Seeders",
+  "movieSubtitleFallbackName": "Subtitle {id}",
+  "@movieSubtitleFallbackName": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  }
 }

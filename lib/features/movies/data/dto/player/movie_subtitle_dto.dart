@@ -1,3 +1,5 @@
+import 'package:sakuramedia/l10n/app_localizations.dart';
+
 class MovieSubtitleListDto {
   const MovieSubtitleListDto({
     required this.movieNumber,
@@ -43,9 +45,9 @@ class MovieSubtitleItemDto {
   final DateTime? createdAt;
   final String url;
 
-  String get displayName {
+  String displayName(AppLocalizations l10n) {
     final value = fileName.trim();
-    return value.isEmpty ? '字幕 $subtitleId' : value;
+    return value.isEmpty ? l10n.movieSubtitleFallbackName(subtitleId) : value;
   }
 
   factory MovieSubtitleItemDto.fromJson(Map<String, dynamic> json) {

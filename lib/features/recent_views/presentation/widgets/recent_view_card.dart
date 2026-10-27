@@ -9,6 +9,7 @@ import 'package:sakuramedia/features/movies/presentation/actions/movie_collectio
 import 'package:sakuramedia/features/movies/presentation/providers/movie_subscription_toggle_provider.dart';
 import 'package:sakuramedia/features/recent_views/data/dto/recent_view_dto.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_summary_card.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
 
@@ -79,7 +80,9 @@ Future<void> _toggleMovieSubscription(
   final result = await ref
       .read(movieSubscriptionToggleProvider.notifier)
       .toggle(movieNumber: movie.movieNumber, isSubscribed: movie.isSubscribed);
-  if (context.mounted) showMovieSubscriptionFeedback(result);
+  if (context.mounted) {
+    showMovieSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
+  }
 }
 
 Future<void> _toggleActorSubscription(
@@ -90,5 +93,7 @@ Future<void> _toggleActorSubscription(
   final result = await ref
       .read(actorSubscriptionToggleProvider.notifier)
       .toggle(actorId: actor.id, isSubscribed: actor.isSubscribed);
-  if (context.mounted) showActorSubscriptionFeedback(result);
+  if (context.mounted) {
+    showActorSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
+  }
 }

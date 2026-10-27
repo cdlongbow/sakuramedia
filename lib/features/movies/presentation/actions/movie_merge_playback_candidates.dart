@@ -1,4 +1,5 @@
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 List<MovieMediaItemDto> movieMergedPlaybackMedia(
   MovieDetailDto movie,
@@ -17,6 +18,7 @@ List<MovieMediaItemDto> movieMergedPlaybackMedia(
 List<MovieMergePlaybackCandidateDto> resolveMovieMergePlaybackCandidates(
   MovieDetailDto movie, {
   required bool useExternalPlayer,
+  required AppLocalizations l10n,
 }) {
   if (useExternalPlayer) return movie.mergePlaybackCandidates;
   final libraryIds =
@@ -37,7 +39,7 @@ List<MovieMergePlaybackCandidateDto> resolveMovieMergePlaybackCandidates(
                   .where((candidate) => candidate.libraryId == libraryId)
                   .firstOrNull
                   ?.libraryName ??
-              '媒体库 $libraryId',
+              l10n.movieWidgetMediaLibraryFallback(libraryId),
           providerKey: medias.first.providerKey ?? '',
           segmentCount: medias.length,
         ),

@@ -36,16 +36,17 @@ class VideoCollectionSortMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppSortMenuButton<VideoSortField>(
       fields: VideoSortField.values,
       selectedField: sort.field,
-      fieldLabelBuilder: (value) => value.label,
+      fieldLabelBuilder: (value) => value.labelWith(l10n),
       onFieldChanged: (value) => onChanged(field: value),
       selectedDirection: sort.direction,
       onDirectionChanged: (value) =>
           onChanged(field: sort.field, direction: value),
       allowDefaultOption: true,
-      defaultOptionLabel: AppLocalizations.of(context).widgetVideoSortManual,
+      defaultOptionLabel: l10n.widgetVideoSortManual,
       directionVisibleWhen: (field) => field != null,
       useDrawer: useDrawer,
       triggerKey: triggerKey,

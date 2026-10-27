@@ -120,7 +120,9 @@ Future<void> _toggleMovieSubscription(
   final result = await ref
       .read(movieSubscriptionToggleProvider.notifier)
       .toggle(movieNumber: movie.movieNumber, isSubscribed: movie.isSubscribed);
-  if (context.mounted) showMovieSubscriptionFeedback(result);
+  if (context.mounted) {
+    showMovieSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
+  }
 }
 
 class _MovieSimilarMovieStripScroller extends StatelessWidget {

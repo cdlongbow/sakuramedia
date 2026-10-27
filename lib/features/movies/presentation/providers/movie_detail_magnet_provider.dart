@@ -5,6 +5,7 @@ import 'package:sakuramedia/app/language/providers/app_localizations_provider.da
 import 'package:sakuramedia/features/downloads/data/download_candidate_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 part 'movie_detail_magnet_provider.g.dart';
 
@@ -13,9 +14,10 @@ enum MovieDetailMagnetSortField { sizeBytes, seeders }
 enum MovieDetailMagnetSortDirection { asc, desc }
 
 extension MovieDetailMagnetSortFieldValue on MovieDetailMagnetSortField {
-  String get label => switch (this) {
-    MovieDetailMagnetSortField.sizeBytes => '文件大小',
-    MovieDetailMagnetSortField.seeders => '做种人数',
+  /// 当前语言的排序字段名；展示层用这个取当前语言的文案。
+  String labelWith(AppLocalizations l10n) => switch (this) {
+    MovieDetailMagnetSortField.sizeBytes => l10n.mediaListSortFileSize,
+    MovieDetailMagnetSortField.seeders => l10n.movieMagnetSortSeeders,
   };
 }
 

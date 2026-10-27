@@ -11,6 +11,7 @@ import 'package:sakuramedia/features/search/presentation/providers/catalog_searc
 import 'package:sakuramedia/features/search/presentation/providers/catalog_search_scope.dart';
 import 'package:sakuramedia/features/search/presentation/providers/catalog_search_state.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
@@ -224,7 +225,7 @@ class _MobileCatalogSearchPageState
     if (!mounted) {
       return;
     }
-    showMovieSubscriptionFeedback(result);
+    showMovieSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
   }
 
   Future<void> _toggleActorSubscription(int actorId) async {
@@ -234,7 +235,7 @@ class _MobileCatalogSearchPageState
     if (!mounted) {
       return;
     }
-    showActorSubscriptionFeedback(result);
+    showActorSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
   }
 
   String _resolveCachePath() {

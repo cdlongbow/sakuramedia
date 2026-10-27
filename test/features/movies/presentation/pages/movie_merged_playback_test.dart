@@ -18,6 +18,7 @@ import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_deta
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_merged_play_content.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_merged_playback_factory_provider.dart';
 import 'package:sakuramedia/l10n/app_localizations.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 import 'package:sakuramedia/routes/desktop_routes.dart' as desktop;
 import 'package:sakuramedia/routes/mobile_routes.dart' as mobile_routes;
 import 'package:sakuramedia/theme.dart';
@@ -65,6 +66,8 @@ Map<String, dynamic> _movie() => {
 };
 
 void main() {
+  final zh = AppLocalizationsZh();
+
   test('内置按同库有效可播媒体分组排序，不要求后端合并能力', () {
     final movie = MovieDetailDto.fromJson({
       ..._movie(),
@@ -77,6 +80,7 @@ void main() {
     final candidates = resolveMovieMergePlaybackCandidates(
       movie,
       useExternalPlayer: false,
+      l10n: zh,
     );
     expect(candidates.single.libraryId, 7);
     expect(candidates.single.segmentCount, 2);
@@ -85,7 +89,11 @@ void main() {
       2,
     ]);
     expect(
-      resolveMovieMergePlaybackCandidates(movie, useExternalPlayer: true),
+      resolveMovieMergePlaybackCandidates(
+        movie,
+        useExternalPlayer: true,
+        l10n: zh,
+      ),
       isEmpty,
     );
   });
@@ -103,7 +111,11 @@ void main() {
       ],
     });
     expect(
-      resolveMovieMergePlaybackCandidates(movie, useExternalPlayer: true),
+      resolveMovieMergePlaybackCandidates(
+        movie,
+        useExternalPlayer: true,
+        l10n: zh,
+      ),
       same(movie.mergePlaybackCandidates),
     );
   });

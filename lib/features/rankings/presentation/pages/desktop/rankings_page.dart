@@ -100,7 +100,7 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
     if (!mounted) {
       return;
     }
-    showMovieSubscriptionFeedback(result);
+    showMovieSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
   }
 
   void _applyFilterChange(Future<void> Function() action) {

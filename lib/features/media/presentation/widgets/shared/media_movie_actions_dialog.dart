@@ -117,7 +117,7 @@ class _MediaMovieActionsContent extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          item.displayHeading(l10n: AppLocalizations.of(context)),
+          item.displayHeading(AppLocalizations.of(context)),
           key: const Key('media-row-movie-actions-title'),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,

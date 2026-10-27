@@ -230,7 +230,7 @@ class _MovieSummaryListContentState
     if (!mounted) {
       return;
     }
-    showMovieSubscriptionFeedback(result);
+    showMovieSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
   }
 
   Future<void> _handleRefresh() async {
@@ -285,7 +285,7 @@ class _MovieSummaryListContentState
         !view.hasErrorNoValue &&
         (view.isInitialLoading || view.currentPage == 0);
     final initialErrorMessage = view.hasErrorNoValue
-        ? widget.scope.initialLoadErrorText
+        ? widget.scope.errorText(AppLocalizations.of(context))
         : null;
 
     final tagSelectionScope = widget.tagSelectionScope;

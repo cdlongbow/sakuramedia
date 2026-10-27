@@ -138,7 +138,10 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage> {
         AppSkeletonizer.sliver(
           enabled: true,
           child: _ActiveRunsSection(
-            runs: taskRunPlaceholders(count: 2),
+            runs: taskRunPlaceholders(
+              count: 2,
+              l10n: AppLocalizations.of(context),
+            ),
             highlightedId: null,
           ),
         ),
@@ -149,7 +152,11 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage> {
         AppSkeletonizer.sliver(
           enabled: true,
           child: _HistoryRunsList(
-            runs: taskRunPlaceholders(count: 3, finished: false),
+            runs: taskRunPlaceholders(
+              count: 3,
+              finished: false,
+              l10n: AppLocalizations.of(context),
+            ),
             highlightedId: null,
           ),
         ),

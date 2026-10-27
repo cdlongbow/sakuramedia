@@ -88,7 +88,7 @@ class AppearanceSettingsContent extends ConsumerWidget {
             for (final themeColor in AppThemeColor.values)
               AppSettingCell(
                 key: Key('appearance-theme-color-${themeColor.id}'),
-                title: themeColor.label,
+                title: themeColor.labelFor(l10n),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

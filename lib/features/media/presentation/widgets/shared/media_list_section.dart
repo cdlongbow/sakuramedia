@@ -363,7 +363,7 @@ class _MediaListHeader extends ConsumerWidget {
           libraries: librariesState.libraries,
           ref: ref,
         ),
-        filterLabel: filter.triggerLabel(l10n: l10n),
+        filterLabel: filter.triggerLabel(l10n),
         filterButtonKey: Key('$keyPrefix-filter-trigger'),
         filterTooltip: l10n.mediaListFilterTooltip,
         filterUpdate:

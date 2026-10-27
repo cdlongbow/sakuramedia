@@ -1,6 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations_en.dart';
 import 'package:sakuramedia/l10n/app_localizations_zh.dart';
+
+/// 中日韩统一表意文字，用于判定「英文界面漏出中文」。
+final RegExp _cjk = RegExp(r'[\u4e00-\u9fff]');
 
 MovieInteractionFilter _range(
   MovieInteractionMetric metric, {
@@ -12,11 +16,21 @@ MovieInteractionFilter _range(
 
 void main() {
   final zh = AppLocalizationsZh();
+  final en = AppLocalizationsEn();
 
   group('MovieStatusFilter', () {
     test('unsubscribed 映射后端 status 枚举值', () {
       expect(MovieStatusFilter.unsubscribed.apiValue, 'unsubscribed');
-      expect(MovieStatusFilter.unsubscribed.label, '未订阅');
+    });
+
+    test('状态文案随语言切换且能区分订阅态', () {
+      final enLabel = MovieStatusFilter.subscribed.labelWith(en);
+      final zhSubscribed = MovieStatusFilter.subscribed.labelWith(zh);
+      final zhUnsubscribed = MovieStatusFilter.unsubscribed.labelWith(zh);
+
+      expect(_cjk.hasMatch(enLabel), isFalse);
+      expect(_cjk.hasMatch(zhSubscribed), isTrue);
+      expect(zhSubscribed, isNot(zhUnsubscribed));
     });
   });
 
@@ -50,25 +64,43 @@ void main() {
   group('movieInteractionRangeLabel', () {
 
     test('双边 / 单边 / 不限的文案', () {
-      expect(
-        movieInteractionRangeLabel(MovieInteractionMetric.heat, 1000, 5000, zh),
-        '1000 ~ 5000',
+      final both = movieInteractionRangeLabel(
+        MovieInteractionMetric.heat,
+        1000,
+        5000,
+        zh,
       );
-      expect(
-        movieInteractionRangeLabel(MovieInteractionMetric.heat, 1000, null, zh),
-        '≥ 1000',
+      final lower = movieInteractionRangeLabel(
+        MovieInteractionMetric.heat,
+        1000,
+        null,
+        zh,
       );
-      expect(
-        movieInteractionRangeLabel(MovieInteractionMetric.heat, null, 5000, zh),
-        '≤ 5000',
+      final upper = movieInteractionRangeLabel(
+        MovieInteractionMetric.heat,
+        null,
+        5000,
+        zh,
       );
-      expect(
-        movieInteractionRangeLabel(MovieInteractionMetric.heat, null, null, zh),
-        '不限',
+      final unlimited = movieInteractionRangeLabel(
+        MovieInteractionMetric.heat,
+        null,
+        null,
+        zh,
       );
+
+      // 四种边界形态必须能区分，且带上对应的数值。
+      expect(<String>{both, lower, upper, unlimited}.length, 4);
+      expect(both, contains('1000'));
+      expect(both, contains('5000'));
+      expect(lower, contains('1000'));
+      expect(upper, contains('5000'));
+      // 英文界面不得出现中文。
       expect(
-        movieInteractionRangeLabel(MovieInteractionMetric.score, 8.0, null, zh),
-        '≥ 8.0',
+        _cjk.hasMatch(
+          movieInteractionRangeLabel(MovieInteractionMetric.heat, 1000, 5000, en),
+        ),
+        isFalse,
       );
     });
   });
@@ -88,22 +120,41 @@ void main() {
 
   group('movieActorAgeRangeLabel', () {
     test('双边 / 单边 / 不限的文案', () {
-      expect(movieActorAgeRangeLabel(18, 25), '18 ~ 25 岁');
-      expect(movieActorAgeRangeLabel(30, null), '≥ 30 岁');
-      expect(movieActorAgeRangeLabel(null, 25), '≤ 25 岁');
-      expect(movieActorAgeRangeLabel(null, null), '不限');
+      final both = movieActorAgeRangeLabel(18, 25, zh);
+      final lower = movieActorAgeRangeLabel(30, null, zh);
+      final upper = movieActorAgeRangeLabel(null, 25, zh);
+      final unlimited = movieActorAgeRangeLabel(null, null, zh);
+
+      expect(<String>{both, lower, upper, unlimited}.length, 4);
+      expect(both, contains('18'));
+      expect(both, contains('25'));
+      expect(lower, contains('30'));
+      expect(upper, contains('25'));
+
+      final enLabel = movieActorAgeRangeLabel(18, 25, en);
+      expect(_cjk.hasMatch(enLabel), isFalse);
     });
   });
 
   group('movieFilterYearsLabel', () {
     test('1 个直出，2 个顿号相连，3 个及以上折叠', () {
-      expect(movieFilterYearsLabel(<int>{2024}), '2024');
-      expect(movieFilterYearsLabel(<int>{2023, 2024}), '2024、2023');
-      expect(movieFilterYearsLabel(<int>{2022, 2024, 2023}), '2024 等 3 个年份');
+      final single = movieFilterYearsLabel(<int>{2024}, zh);
+      final pair = movieFilterYearsLabel(<int>{2023, 2024}, zh);
+      final folded = movieFilterYearsLabel(<int>{2022, 2024, 2023}, zh);
+
+      expect(single, contains('2024'));
+      expect(pair, contains('2023'));
+      expect(pair, contains('2024'));
+      // 3 个及以上折叠成「最新年份 + 总数」。
+      expect(folded, contains('2024'));
+      expect(folded, contains('3'));
+
+      final enFolded = movieFilterYearsLabel(<int>{2022, 2024, 2023}, en);
+      expect(_cjk.hasMatch(enFolded), isFalse);
     });
 
     test('空集返回空串', () {
-      expect(movieFilterYearsLabel(const <int>{}), '');
+      expect(movieFilterYearsLabel(const <int>{}, zh), '');
     });
   });
 

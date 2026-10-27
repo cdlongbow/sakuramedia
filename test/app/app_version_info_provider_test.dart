@@ -7,8 +7,13 @@ import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/status/data/status_api.dart';
 import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations_en.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 import '../support/fake_http_client_adapter.dart';
+
+/// 中日韩统一表意文字，用于判定「英文界面漏出中文」。
+final RegExp _cjk = RegExp(r'[\u4e00-\u9fff]');
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -74,7 +79,12 @@ void main() {
       var state = container.read(appVersionInfoProvider).requireValue;
       expect(state.frontendVersionLabel, '0.2.3');
       expect(state.backendVersionLabel, 'v0.2.0');
-      expect(state.tooltipLabel, '客户端 0.2.3 · 服务端 v0.2.0');
+      expect(state.tooltipLabelFor(AppLocalizationsZh()), contains('0.2.3'));
+      expect(state.tooltipLabelFor(AppLocalizationsZh()), contains('v0.2.0'));
+      final enTooltip = state.tooltipLabelFor(AppLocalizationsEn());
+      expect(enTooltip, contains('0.2.3'));
+      expect(enTooltip, contains('v0.2.0'));
+      expect(_cjk.hasMatch(enTooltip), isFalse);
       expect(packageLoadCount, 1);
       expect(adapter.hitCount('GET', '/status'), 1);
 

@@ -530,21 +530,15 @@ class StatusInsightsDto {
 
 /// 观看趋势时间窗口；粒度由后端随窗口推导（7d/30d/90d 按天，1y/all 按月）。
 enum WatchTrendRange {
-  last7Days('7d', '近 7 天', '7天'),
-  last30Days('30d', '近 30 天', '30天'),
-  last90Days('90d', '近 90 天', '90天'),
-  lastYear('1y', '近一年', '1年'),
-  all('all', '全部时间', '全部');
+  last7Days('7d'),
+  last30Days('30d'),
+  last90Days('90d'),
+  lastYear('1y'),
+  all('all');
 
-  const WatchTrendRange(this.apiValue, this.periodLabel, this.shortLabel);
+  const WatchTrendRange(this.apiValue);
 
   final String apiValue;
-
-  /// 用于「近 30 天看过 N 部」这类完整描述。
-  final String periodLabel;
-
-  /// 用于分段控件这类窄空间。
-  final String shortLabel;
 }
 
 class WatchTrendBucketDto {

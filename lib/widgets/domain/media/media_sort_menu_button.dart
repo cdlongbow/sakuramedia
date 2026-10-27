@@ -29,17 +29,18 @@ class MediaSortMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppSortMenuButton<MediaBrowseSortField>(
       fields: MediaBrowseSortField.values,
       selectedField: filterState.sortField,
-      fieldLabelBuilder: (value) => value.label,
+      fieldLabelBuilder: (value) => value.labelWith(l10n: l10n),
       onFieldChanged: (value) =>
           onChanged(filterState.copyWith(sortField: value)),
       selectedDirection: filterState.sortDirection,
       onDirectionChanged: (value) =>
           onChanged(filterState.copyWith(sortDirection: value)),
       allowDefaultOption: true,
-      defaultOptionLabel: AppLocalizations.of(context).widgetMediaSortDefault,
+      defaultOptionLabel: l10n.widgetMediaSortDefault,
       directionVisibleWhen: (field) => field != null,
       useDrawer: useDrawer,
       triggerKey: triggerKey,

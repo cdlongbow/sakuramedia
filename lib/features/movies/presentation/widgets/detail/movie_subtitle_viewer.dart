@@ -58,7 +58,7 @@ class _MovieSubtitleViewerContentState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          widget.item.displayName,
+          widget.item.displayName(AppLocalizations.of(context)),
           key: const Key('movie-subtitle-viewer-title'),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,

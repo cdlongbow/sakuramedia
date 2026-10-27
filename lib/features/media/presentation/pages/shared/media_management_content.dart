@@ -628,7 +628,7 @@ class MediaManagementContent extends HookConsumerWidget {
     };
     final action = await showMediaManagementRowActions(
       context: context,
-      title: item.displayHeading(l10n: l10n),
+      title: item.displayHeading(l10n),
       titleSubtitle: item.displaySubtitle,
       retryThumbnailsLabel: retryLabel,
       retryThumbnailsSubtitle: switch (state) {

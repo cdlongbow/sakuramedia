@@ -1,17 +1,25 @@
+import 'package:sakuramedia/l10n/app_localizations.dart';
+
+/// 「刷新元数据」二次确认的文案，按当前语言取值。
 class MovieDetailRefreshConfirmationCopy {
   const MovieDetailRefreshConfirmationCopy._();
 
-  static const String title = '刷新元数据';
-  static const String description = '刷新后会重新下载封面图和剧情图，并重新绑定当前影片的女优和标签关联。';
-  static const String manuallyManagedActorsDescription =
-      '刷新后会重新下载封面图和剧情图，并重新绑定当前影片的标签关联；演员表已手动管理，本次刷新不会覆盖。';
-  static const String hint = '这是一次覆盖式刷新，SakuraMedia 中的影片元数据会以远端最新结果为准。';
-  static const String cancelLabel = '取消';
-  static const String confirmLabel = '确认刷新';
+  static String title(AppLocalizations l10n) => l10n.movieActionRefreshMetadata;
 
-  static String descriptionFor({required bool isActorsManuallyManaged}) {
+  static String hint(AppLocalizations l10n) =>
+      l10n.movieActionRefreshMetadataHint;
+
+  static String cancelLabel(AppLocalizations l10n) => l10n.commonCancel;
+
+  static String confirmLabel(AppLocalizations l10n) =>
+      l10n.movieActionRefreshMetadataConfirm;
+
+  static String descriptionFor(
+    AppLocalizations l10n, {
+    required bool isActorsManuallyManaged,
+  }) {
     return isActorsManuallyManaged
-        ? manuallyManagedActorsDescription
-        : description;
+        ? l10n.movieActionRefreshMetadataDescriptionManualActors
+        : l10n.movieActionRefreshMetadataDescription;
   }
 }

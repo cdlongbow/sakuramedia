@@ -150,7 +150,7 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
                   isSubscribed: movie.isSubscribed,
                 ),
             onMovieSubscriptionTap: (movie) =>
-                _toggleFollowSubscription(ref, movie.movieNumber),
+                _toggleFollowSubscription(context, ref, movie.movieNumber),
             isMovieSubscriptionUpdating: (movie) =>
                 follow?.isSubscriptionUpdating(movie.movieNumber) ?? false,
           ),
@@ -160,13 +160,15 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
   }
 
   Future<void> _toggleFollowSubscription(
+    BuildContext context,
     WidgetRef ref,
     String movieNumber,
   ) async {
     final result = await ref
         .read(movieSummaryProvider(_followScope).notifier)
         .toggleSubscription(movieNumber);
-    showMovieSubscriptionFeedback(result);
+    if (!context.mounted) return;
+    showMovieSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
   }
 
   Widget _buildHotActressSection(

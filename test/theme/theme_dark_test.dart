@@ -7,7 +7,6 @@ import 'package:sakuramedia/theme.dart';
 
 const _testThemeColor = AppThemeColor(
   id: 'test-accent',
-  label: '测试色',
   light: AppBrandColors(
     primary: Color(0xFF126B3A),
     onPrimary: Color(0xFFFFFFFF),

@@ -282,7 +282,7 @@ Future<void> _handleToggleSubscriptionAction({
         );
   }
 
-  showMovieSubscriptionFeedback(result);
+  showMovieSubscriptionFeedback(result, l10n: l10n);
 }
 
 Future<void> _handleCollectionTypeToggleAction({

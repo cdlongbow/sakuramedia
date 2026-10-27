@@ -145,7 +145,7 @@ class MovieMagnetSearchContent extends ConsumerWidget {
                 .map(
                   (value) => DropdownMenuItem<MovieDetailMagnetSortField>(
                     value: value,
-                    child: Text(value.label),
+                    child: Text(value.labelWith(l10n)),
                   ),
                 )
                 .toList(growable: false),

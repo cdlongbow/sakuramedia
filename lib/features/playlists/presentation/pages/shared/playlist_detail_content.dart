@@ -188,7 +188,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
                       ? movieListItemPlaceholders(count: 24)
                       : paged?.items ?? const [],
                   errorMessage: moviesAsync.hasError && movies == null
-                      ? _scope.initialLoadErrorText
+                      ? _scope.errorText(AppLocalizations.of(context))
                       : null,
                   onMovieTap: widget.onMovieTap,
                   onMovieMenuRequest: (movie, globalPosition) =>
@@ -446,7 +446,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
     if (!mounted) {
       return;
     }
-    showMovieSubscriptionFeedback(result);
+    showMovieSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
   }
 
   Widget? _buildLoadMoreFooter(

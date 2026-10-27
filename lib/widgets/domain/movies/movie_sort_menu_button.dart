@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_sort_menu_button.dart';
 
 /// 影片筛选状态的排序入口适配器。
@@ -26,10 +27,11 @@ class MovieSortMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppSortMenuButton<MovieSortField>(
       fields: MovieSortField.values,
       selectedField: filterState.sortField,
-      fieldLabelBuilder: (value) => value.label,
+      fieldLabelBuilder: (value) => value.labelWith(l10n),
       onFieldChanged: (value) => onChanged(
         filterState.copyWith(sortField: value!, dimensionSortId: null),
       ),

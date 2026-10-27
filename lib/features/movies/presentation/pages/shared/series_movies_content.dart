@@ -153,7 +153,7 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
     if (!mounted) {
       return;
     }
-    showMovieSubscriptionFeedback(result);
+    showMovieSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
   }
 
   Future<void> _handleRefresh() async {
@@ -325,7 +325,9 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            AppEmptyState(message: _scope.initialLoadErrorText),
+            AppEmptyState(
+              message: _scope.errorText(AppLocalizations.of(context)),
+            ),
             SizedBox(height: context.appSpacing.md),
             Center(
               child: TextButton(

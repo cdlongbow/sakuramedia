@@ -203,10 +203,11 @@ class _ClipCollectionPlayContentState
   }
 
   String _currentClipTitle() {
+    final l10n = AppLocalizations.of(context);
     if (currentIndex < 0 || currentIndex >= _clips.length) {
-      return AppLocalizations.of(context).clipCollectionContinuousPlay;
+      return l10n.clipCollectionContinuousPlay;
     }
-    return _clips[currentIndex].displayTitle;
+    return _clips[currentIndex].displayTitle(l10n);
   }
 
   Widget _buildBody(BuildContext context) {
@@ -260,7 +261,7 @@ class _ClipCollectionPlayContentState
                 itemKey: Key('clip-collection-play-queue-item-$index'),
                 coverUrl: clip.coverImage?.origin,
                 coverStyle: CollectionQueueCoverStyle.cover,
-                title: clip.displayTitle,
+                title: clip.displayTitle(AppLocalizations.of(context)),
                 subtitle: formatMediaTimecode(clip.durationSeconds),
                 isCurrent: index == currentIndex,
                 onTap: () {

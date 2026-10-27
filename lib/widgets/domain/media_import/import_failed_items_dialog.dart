@@ -244,7 +244,7 @@ class _FailedItemRow extends StatelessWidget {
         AppSettingCell(
           title: item.fileName,
           subtitle:
-              '${describeImportFailureReason(item.reason)} · '
+              '${describeImportFailureReason(item.reason, l10n)} · '
               '${formatFileSize(item.sizeBytes)}',
           trailing: Row(
             mainAxisSize: MainAxisSize.min,

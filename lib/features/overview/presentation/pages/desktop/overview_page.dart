@@ -83,6 +83,7 @@ class DesktopOverviewPage extends ConsumerWidget {
   }
 
   Future<void> _toggleMovieSubscription(
+    BuildContext context,
     WidgetRef ref,
     MovieSummaryScope scope,
     String movieNumber,
@@ -90,7 +91,8 @@ class DesktopOverviewPage extends ConsumerWidget {
     final result = await ref
         .read(movieSummaryProvider(scope).notifier)
         .toggleSubscription(movieNumber);
-    showMovieSubscriptionFeedback(result);
+    if (!context.mounted) return;
+    showMovieSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
   }
 
   @override
@@ -206,7 +208,7 @@ class DesktopOverviewPage extends ConsumerWidget {
                     summary: latest,
                     isLoading: latestAsync.isLoading && latest == null,
                     errorMessage: latestAsync.hasError && latest == null
-                        ? _latestScope.initialLoadErrorText
+                        ? _latestScope.errorText(l10n)
                         : null,
                     emptyMessage: l10n.overviewNoLatestMovies,
                   ),
@@ -238,7 +240,7 @@ class DesktopOverviewPage extends ConsumerWidget {
                     errorMessage:
                         recentlySubscribedAsync.hasError &&
                             recentlySubscribedAsync.value == null
-                        ? _recentlySubscribedScope.initialLoadErrorText
+                        ? _recentlySubscribedScope.errorText(l10n)
                         : null,
                     emptyMessage: l10n.overviewNoSubscribedMovies,
                   ),
@@ -276,7 +278,7 @@ class DesktopOverviewPage extends ConsumerWidget {
                       errorMessage:
                           (recentAsync?.hasError ?? false) &&
                               recentAsync?.value == null
-                          ? recentScope.initialLoadErrorText
+                          ? recentScope.errorText(l10n)
                           : null,
                       emptyMessage: l10n.overviewNoWatchHistory,
                     ),
@@ -333,7 +335,7 @@ class DesktopOverviewPage extends ConsumerWidget {
               isSubscribed: movie.isSubscribed,
             ),
         onMovieSubscriptionTap: (movie) =>
-            _toggleMovieSubscription(ref, scope, movie.movieNumber),
+            _toggleMovieSubscription(context, ref, scope, movie.movieNumber),
         isMovieSubscriptionUpdating: (movie) =>
             summary?.isSubscriptionUpdating(movie.movieNumber) ?? false,
         emptyMessage: emptyMessage,

@@ -1078,7 +1078,7 @@ class _RowConsumer extends HookConsumerWidget {
         case MovieSubscriptionRowAction.deleteDownloads:
           await deleteDownloads();
         case MovieSubscriptionRowAction.unsubscribe:
-          await _unsubscribeRow(ref, item.movieNumber);
+          await _unsubscribeRow(context, ref, item.movieNumber);
       }
     }
 
@@ -1102,19 +1102,25 @@ class _RowConsumer extends HookConsumerWidget {
       onDeleteDownloads: tasks == null || tasks.isEmpty
           ? null
           : deleteDownloads,
-      onUnsubscribe: () => unawaited(_unsubscribeRow(ref, item.movieNumber)),
+      onUnsubscribe: () =>
+          unawaited(_unsubscribeRow(context, ref, item.movieNumber)),
     );
   }
 }
 
 /// 单条取消订阅不弹确认：它是可逆的（重新订阅即可）、也不删任何文件，
 /// 二次确认只会让日常清理变啰嗦。批量才确认——那一下影响面大得多。
-Future<void> _unsubscribeRow(WidgetRef ref, String movieNumber) async {
+Future<void> _unsubscribeRow(
+  BuildContext context,
+  WidgetRef ref,
+  String movieNumber,
+) async {
+  final l10n = AppLocalizations.of(context);
   final managerProvider = movieSubscriptionManagerProvider(
     ref.read(movieSubscriptionStatusSelectionProvider),
   );
   final result = await ref
       .read(managerProvider.notifier)
       .unsubscribe(movieNumber);
-  showMovieSubscriptionFeedback(result);
+  showMovieSubscriptionFeedback(result, l10n: l10n);
 }

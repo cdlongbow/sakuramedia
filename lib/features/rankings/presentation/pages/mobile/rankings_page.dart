@@ -100,7 +100,7 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
     if (!mounted) {
       return;
     }
-    showMovieSubscriptionFeedback(result);
+    showMovieSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
   }
 
   @override

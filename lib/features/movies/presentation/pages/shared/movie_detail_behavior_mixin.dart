@@ -647,7 +647,7 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
     setState(() {
       isSubscriptionUpdating = false;
     });
-    showMovieSubscriptionFeedback(result);
+    showMovieSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
     return result.status == MovieSubscriptionToggleStatus.subscribed ||
         result.status == MovieSubscriptionToggleStatus.unsubscribed;
   }
@@ -991,22 +991,24 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
   Future<void> confirmRefreshMetadata({
     bool isActorsManuallyManaged = false,
   }) async {
+    final l10n = AppLocalizations.of(context);
     await showAppConfirmDialog(
       context,
-      title: MovieDetailRefreshConfirmationCopy.title,
+      title: MovieDetailRefreshConfirmationCopy.title(l10n),
       message: MovieDetailRefreshConfirmationCopy.descriptionFor(
+        l10n,
         isActorsManuallyManaged: isActorsManuallyManaged,
       ),
       extraContent: Text(
-        MovieDetailRefreshConfirmationCopy.hint,
+        MovieDetailRefreshConfirmationCopy.hint(l10n),
         style: resolveAppTextStyle(
           context,
           size: AppTextSize.s12,
           tone: AppTextTone.muted,
         ),
       ),
-      confirmLabel: MovieDetailRefreshConfirmationCopy.confirmLabel,
-      cancelLabel: MovieDetailRefreshConfirmationCopy.cancelLabel,
+      confirmLabel: MovieDetailRefreshConfirmationCopy.confirmLabel(l10n),
+      cancelLabel: MovieDetailRefreshConfirmationCopy.cancelLabel(l10n),
       dialogKey: const Key('movie-detail-refresh-metadata-dialog'),
       confirmKey: const Key('movie-detail-refresh-metadata-confirm'),
       cancelKey: const Key('movie-detail-refresh-metadata-cancel'),

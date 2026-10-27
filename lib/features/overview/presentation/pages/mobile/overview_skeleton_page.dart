@@ -428,7 +428,9 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
                           .toList() ??
                       const <MovieListItemDto>[],
             errorMessage: async.hasError && summary == null
-                ? _recentlySubscribedScope.initialLoadErrorText
+                ? _recentlySubscribedScope.errorText(
+                    AppLocalizations.of(context),
+                  )
                 : null,
             emptyMessage: AppLocalizations.of(
               context,

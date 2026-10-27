@@ -279,11 +279,12 @@ class _TagSelectorPanelState extends State<TagSelectorPanel> {
   Widget _buildMatchModeToggle(BuildContext context) {
     final selection = widget.selection;
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          AppLocalizations.of(context).widgetTagMatchLabel,
+          l10n.widgetTagMatchLabel,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -294,7 +295,7 @@ class _TagSelectorPanelState extends State<TagSelectorPanel> {
         SizedBox(width: spacing.sm),
         AppTextButton(
           key: const Key('tags-match-or'),
-          label: TagMatchMode.or.label,
+          label: TagMatchMode.or.labelWith(l10n),
           size: AppTextButtonSize.xSmall,
           isSelected: selection.matchMode == TagMatchMode.or,
           onPressed: () => widget.onMatchModeChanged(TagMatchMode.or),
@@ -302,7 +303,7 @@ class _TagSelectorPanelState extends State<TagSelectorPanel> {
         SizedBox(width: spacing.sm),
         AppTextButton(
           key: const Key('tags-match-and'),
-          label: TagMatchMode.and.label,
+          label: TagMatchMode.and.labelWith(l10n),
           size: AppTextButtonSize.xSmall,
           isSelected: selection.matchMode == TagMatchMode.and,
           onPressed: () => widget.onMatchModeChanged(TagMatchMode.and),

@@ -10,33 +10,30 @@ import 'package:sakuramedia/l10n/app_localizations.dart';
 class AppThemeColor {
   const AppThemeColor({
     required this.id,
-    required this.label,
     required this.light,
     required this.dark,
   });
 
   final String id;
-  final String label;
   final AppBrandColors light;
   final AppBrandColors dark;
 
   /// 主题色显示名；按当前语言渲染。
   ///
-  /// [label] 是与 token 绑定的中文常量，保留给尚未迁移的调用点；新代码用
-  /// 本方法取当前语言的名称。
+  /// 主题色是封闭集合（见 [values]），正常不会命中兜底分支；万一命中，
+  /// 回退的是机器标识 [id]（英文），不是硬编码中文。
   String labelFor(AppLocalizations l10n) => switch (id) {
     burgundyId => l10n.themeColorBurgundyLabel,
     crimsonId => l10n.themeColorCrimsonLabel,
     kleinBlueId => l10n.themeColorKleinBlueLabel,
     silhouetteId => l10n.themeColorSilhouetteLabel,
-    _ => label,
+    _ => id,
   };
 
   static const String burgundyId = 'burgundy';
 
   static const AppThemeColor burgundy = AppThemeColor(
     id: burgundyId,
-    label: '酒红',
     light: AppBrandColors(
       primary: Color(0xFF6B2D2A),
       onPrimary: Color(0xFFFFFFFF),
@@ -84,7 +81,6 @@ class AppThemeColor {
   /// 绛红：网易云经典红相沉一档，饱和但不刺眼。
   static const AppThemeColor crimson = AppThemeColor(
     id: crimsonId,
-    label: '绛红',
     light: AppBrandColors(
       primary: Color(0xFFA8201F),
       onPrimary: Color(0xFFFFFFFF),
@@ -132,7 +128,6 @@ class AppThemeColor {
   /// 克莱因蓝：国际克莱因蓝相，偏艺术感的深蓝。
   static const AppThemeColor kleinBlue = AppThemeColor(
     id: kleinBlueId,
-    label: '克莱因蓝',
     light: AppBrandColors(
       primary: Color(0xFF1F42A5),
       onPrimary: Color(0xFFFFFFFF),
@@ -180,7 +175,6 @@ class AppThemeColor {
   /// 映辉：冷调深暖灰，低饱和中性主题。
   static const AppThemeColor silhouette = AppThemeColor(
     id: silhouetteId,
-    label: '映辉',
     light: AppBrandColors(
       primary: Color(0xFF3E322F),
       onPrimary: Color(0xFFFFFFFF),

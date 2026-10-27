@@ -407,7 +407,10 @@ class _DownloadTasksBodySliver extends ConsumerWidget {
           .ceil()
           .clamp(3, 8)
           .toInt();
-      final placeholders = downloadTaskPlaceholders(count: placeholderCount);
+      final placeholders = downloadTaskPlaceholders(
+        count: placeholderCount,
+        l10n: AppLocalizations.of(context),
+      );
       return AppSkeletonizer.sliver(
         enabled: true,
         child: SliverList(

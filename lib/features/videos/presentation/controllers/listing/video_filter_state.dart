@@ -24,15 +24,6 @@ extension VideoSortFieldX on VideoSortField {
     VideoSortField.duration => l10n.videoSortDuration,
     VideoSortField.fileSize => l10n.videoSortFileSize,
   };
-
-  /// 无语言包的旧入口：唯一消费方是 `lib/widgets/domain/videos` 下的排序菜单
-  /// 适配器（属其它迁移批次）。该批次改用 [labelWith] 后即可删除本 getter。
-  String get label => switch (this) {
-    VideoSortField.createdAt => '入库时间',
-    VideoSortField.title => '标题',
-    VideoSortField.duration => '时长',
-    VideoSortField.fileSize => '文件大小',
-  };
 }
 
 /// 视频列表的排序与合集归属筛选。标签/人物/关键词筛选由各自的选择器/查询持有，

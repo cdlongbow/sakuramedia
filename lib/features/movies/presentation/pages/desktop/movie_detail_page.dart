@@ -149,11 +149,12 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
     final canLaunchMergedPlayback =
         const ExternalPlayerChannel().isSupported &&
         externalPlayerSelection?.hasExternalPlayer == true;
+    final l10n = AppLocalizations.of(context);
     final mergePlaybackCandidates = resolveMovieMergePlaybackCandidates(
       movie,
       useExternalPlayer: canLaunchMergedPlayback,
+      l10n: l10n,
     );
-    final l10n = AppLocalizations.of(context);
     final mergePlaybackLabel = mergePlaybackCandidates.isEmpty
         ? null
         : mergePlaybackCandidates.length == 1
@@ -332,6 +333,7 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
       context: context,
       globalPosition: globalPosition,
       actions: buildMovieDetailActionDescriptors(
+        l10n: AppLocalizations.of(context),
         isSubscribed: isSubscribed,
         isCollection: isCollection,
         isBlacklisted: isBlacklisted,

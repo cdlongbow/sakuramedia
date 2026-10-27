@@ -3,7 +3,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_provider.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
-import 'package:sakuramedia/features/tags/presentation/tag_match_mode_label.dart';
 import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
@@ -66,9 +65,7 @@ class TagSelectionSummary extends ConsumerWidget {
     );
     final matchToggle = AppTextButton(
       key: const Key('tags-summary-match'),
-      label: l10n.tagSummaryMatchMode(
-        tagMatchModeLabel(selection.matchMode, l10n),
-      ),
+      label: l10n.tagSummaryMatchMode(selection.matchMode.labelWith(l10n)),
       size: AppTextButtonSize.xSmall,
       onPressed: () => notifier.setMatchMode(
         selection.matchMode == TagMatchMode.or

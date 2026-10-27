@@ -93,6 +93,7 @@ class ClipActionsPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     final colors = context.appColors;
+    final l10n = AppLocalizations.of(context);
     final coverUrl = clip.coverImage?.origin;
 
     return SingleChildScrollView(
@@ -125,7 +126,7 @@ class ClipActionsPanel extends StatelessWidget {
           ),
           SizedBox(height: spacing.md),
           Text(
-            clip.displayTitle,
+            clip.displayTitle(l10n),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: resolveAppTextStyle(
@@ -137,7 +138,7 @@ class ClipActionsPanel extends StatelessWidget {
           ),
           SizedBox(height: spacing.xs),
           Text(
-            clip.metaLine,
+            clip.metaLine(l10n),
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,

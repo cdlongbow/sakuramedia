@@ -31,6 +31,7 @@ class MovieDetailActionDescriptor {
 }
 
 List<MovieDetailActionDescriptor> buildMovieDetailActionDescriptors({
+  required AppLocalizations l10n,
   required bool isSubscribed,
   required bool isCollection,
   required bool isBlacklisted,
@@ -41,26 +42,30 @@ List<MovieDetailActionDescriptor> buildMovieDetailActionDescriptors({
     if (canCast || castSessionLabel != null)
       MovieDetailActionDescriptor(
         type: MovieDetailActionType.castToDevice,
-        label: castSessionLabel ?? '投屏到电视',
+        label: castSessionLabel ?? l10n.castPickerTitle,
         icon: Icons.cast_rounded,
       ),
     if (!isBlacklisted)
       MovieDetailActionDescriptor(
         type: MovieDetailActionType.toggleSubscription,
-        label: isSubscribed ? '取消订阅' : '订阅影片',
+        label: isSubscribed
+            ? l10n.movieActionUnsubscribeMovie
+            : l10n.movieActionSubscribeMovie,
         icon: isSubscribed
             ? Icons.favorite_border_rounded
             : Icons.favorite_rounded,
         tone: isSubscribed ? AppTextTone.error : AppTextTone.primary,
       ),
-    const MovieDetailActionDescriptor(
+    MovieDetailActionDescriptor(
       type: MovieDetailActionType.openMagnetSearch,
-      label: '搜索资源',
+      label: l10n.widgetMovieMagnetSearchResources,
       icon: Icons.search_rounded,
     ),
     MovieDetailActionDescriptor(
       type: MovieDetailActionType.toggleCollectionType,
-      label: isCollection ? '标记为单体' : '标记为合集',
+      label: isCollection
+          ? l10n.movieActionMarkAsSingle
+          : l10n.movieActionMarkAsCollection,
       icon: isCollection
           ? Icons.video_library_outlined
           : Icons.collections_bookmark_outlined,
@@ -68,18 +73,20 @@ List<MovieDetailActionDescriptor> buildMovieDetailActionDescriptors({
     if (isBlacklisted || !isSubscribed)
       MovieDetailActionDescriptor(
         type: MovieDetailActionType.toggleBlacklist,
-        label: isBlacklisted ? '取消屏蔽' : '屏蔽影片',
+        label: isBlacklisted
+            ? l10n.moviePageUnblacklistAction
+            : l10n.movieActionBlacklistMovie,
         icon: isBlacklisted ? Icons.undo_rounded : Icons.block_rounded,
         tone: isBlacklisted ? AppTextTone.primary : AppTextTone.error,
       ),
-    const MovieDetailActionDescriptor(
+    MovieDetailActionDescriptor(
       type: MovieDetailActionType.refreshMetadata,
-      label: '刷新元数据',
+      label: l10n.movieActionRefreshMetadata,
       icon: Icons.sync_rounded,
     ),
-    const MovieDetailActionDescriptor(
+    MovieDetailActionDescriptor(
       type: MovieDetailActionType.recomputeHeat,
-      label: '计算热度',
+      label: l10n.movieActionRecomputeHeat,
       icon: Icons.local_fire_department_outlined,
     ),
   ];

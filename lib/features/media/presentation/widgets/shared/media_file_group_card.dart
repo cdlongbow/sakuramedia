@@ -154,7 +154,7 @@ class _GroupHeader extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  movie.displayHeading(l10n: AppLocalizations.of(context)),
+                  movie.displayHeading(AppLocalizations.of(context)),
                   key: Key('$keyPrefix-row-heading-${movie.id}'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

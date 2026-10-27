@@ -16,7 +16,7 @@ class MobileFollowPage extends StatelessWidget {
     return MovieSummaryListContent(
       scope: MovieSummaryScope.subscribedActorsLatest(
         pageSize: 18,
-        initialLoadErrorText: l10n.subscriptionFollowLoadFailed,
+        initialLoadErrorTextOverride: l10n.subscriptionFollowLoadFailed,
       ),
       surfaceColor: context.appColors.surfaceCard,
       contentKey: const Key('mobile-follow-page'),

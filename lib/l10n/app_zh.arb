@@ -5297,5 +5297,74 @@
   "shellNavNotifications": "消息",
   "shellWindowClose": "关闭",
   "shellWindowMinimize": "最小化",
-  "shellWindowFullscreen": "全屏"
+  "shellWindowFullscreen": "全屏",
+  "movieActionRefreshMetadata": "刷新元数据",
+  "movieActionRecomputeHeat": "计算热度",
+  "movieActionRefreshMetadataDescription": "刷新后会重新下载封面图和剧情图，并重新绑定当前影片的女优和标签关联。",
+  "movieActionRefreshMetadataDescriptionManualActors": "刷新后会重新下载封面图和剧情图，并重新绑定当前影片的标签关联；演员表已手动管理，本次刷新不会覆盖。",
+  "movieActionRefreshMetadataHint": "这是一次覆盖式刷新，SakuraMedia 中的影片元数据会以远端最新结果为准。",
+  "movieActionRefreshMetadataConfirm": "确认刷新",
+  "errorLatestMovieListLoadFailed": "最新入库影片加载失败，请稍后重试",
+  "errorMovieListLoadFailed": "影片列表加载失败，请稍后重试",
+  "errorTagMovieListLoadFailed": "标签影片加载失败，请稍后重试",
+  "errorFollowedMovieListLoadFailed": "关注影片加载失败，请稍后重试",
+  "errorRecentlySubscribedMovieListLoadFailed": "最近订阅影片加载失败，请稍后重试",
+  "errorBlacklistedMovieListLoadFailed": "屏蔽影片加载失败，请稍后重试",
+  "errorSeriesMovieListLoadFailed": "系列影片加载失败，请稍后重试",
+  "errorMyRatingMovieListLoadFailed": "我的评分加载失败，请稍后重试",
+  "movieFilterStatusPlayable": "可播放",
+  "movieFilterNumberSourceRegular": "常规",
+  "movieFilterNumberSourceFc2": "FC2",
+  "movieFilterCollectionTypeSingle": "单体",
+  "movieSortReleaseDate": "发行时间",
+  "movieSortMyScore": "我的评分",
+  "movieFilterActorAgeRange": "{min} ~ {max} 岁",
+  "@movieFilterActorAgeRange": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "movieFilterActorAgeMin": "≥ {min} 岁",
+  "@movieFilterActorAgeMin": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "movieFilterActorAgeMax": "≤ {max} 岁",
+  "@movieFilterActorAgeMax": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "movieFilterYearsLabel": "{first} 等 {count} 个年份",
+  "@movieFilterYearsLabel": {
+    "placeholders": {
+      "first": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "movieReviewSortHotly": "最热",
+  "movieReviewSortRecently": "最新",
+  "movieMagnetSortSeeders": "做种人数",
+  "movieSubtitleFallbackName": "字幕 {id}",
+  "@movieSubtitleFallbackName": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  }
 }

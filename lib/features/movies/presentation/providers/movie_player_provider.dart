@@ -408,7 +408,7 @@ class MoviePlayer extends _$MoviePlayer {
     if (resolvedUrl == null || resolvedUrl.isEmpty) {
       return null;
     }
-    final label = item.displayName;
+    final label = item.displayName(ref.read(appLocalizationsProvider));
     return MoviePlayerSubtitleOption(
       subtitleId: item.subtitleId,
       label: label,

@@ -649,7 +649,9 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
                                 ? movieListItemPlaceholders(count: 24)
                                 : movies?.paged.items ?? const [],
                             errorMessage: moviesAsync.hasError && movies == null
-                                ? _scope.initialLoadErrorText
+                                ? _scope.errorText(
+                                    AppLocalizations.of(context),
+                                  )
                                 : null,
                             onMovieTap: (movie) =>
                                 widget.onMovieTap(context, movie.movieNumber),

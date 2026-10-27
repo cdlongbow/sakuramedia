@@ -62,14 +62,15 @@ class MovieSubtitleSection extends StatelessWidget {
     BuildContext context,
     List<MovieSubtitleItemDto> pills,
   ) {
+    final l10n = AppLocalizations.of(context);
     return MovieDetailPillWrap(
       key: const Key('movie-subtitles-list'),
-      emptyMessage: AppLocalizations.of(context).movieWidgetNoSubtitles,
+      emptyMessage: l10n.movieWidgetNoSubtitles,
       items: [
         for (final item in pills)
           MovieDetailPillItem(
             key: Key('movie-subtitle-item-${item.subtitleId}'),
-            label: item.displayName,
+            label: item.displayName(l10n),
             onTap: onOpenSubtitle == null
                 ? null
                 : () => unawaited(onOpenSubtitle!(item)),

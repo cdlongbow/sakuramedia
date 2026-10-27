@@ -64,8 +64,8 @@ class _SidebarVersionFooterState extends ConsumerState<SidebarVersionFooter> {
     final oneLine =
         '${versionInfo.frontendVersionLabel} · ${versionInfo.backendVersionLabel}';
     final tooltip = hasUpdates
-        ? l10n.shellVersionTooltipUpdate(versionInfo.tooltipLabel)
-        : versionInfo.tooltipLabel;
+        ? l10n.shellVersionTooltipUpdate(versionInfo.tooltipLabelFor(l10n))
+        : versionInfo.tooltipLabelFor(l10n);
 
     return AppAnchoredPopover(
       controller: _popoverController,

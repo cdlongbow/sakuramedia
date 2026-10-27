@@ -8,7 +8,6 @@ import 'package:sakuramedia/features/tags/data/tag_list_item_dto.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_provider.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_state.dart';
-import 'package:sakuramedia/features/tags/presentation/tag_match_mode_label.dart';
 import 'package:sakuramedia/features/tags/presentation/tag_placeholders.dart';
 import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
@@ -780,7 +779,7 @@ class _MatchModeToggle extends StatelessWidget {
         ],
         AppTextButton(
           key: const Key('tags-browse-match-or'),
-          label: tagMatchModeLabel(TagMatchMode.or, l10n),
+          label: TagMatchMode.or.labelWith(l10n),
           size: AppTextButtonSize.xSmall,
           isSelected: selection.matchMode == TagMatchMode.or,
           onPressed: () => notifier.setMatchMode(TagMatchMode.or),
@@ -788,7 +787,7 @@ class _MatchModeToggle extends StatelessWidget {
         SizedBox(width: spacing.xs),
         AppTextButton(
           key: const Key('tags-browse-match-and'),
-          label: tagMatchModeLabel(TagMatchMode.and, l10n),
+          label: TagMatchMode.and.labelWith(l10n),
           size: AppTextButtonSize.xSmall,
           isSelected: selection.matchMode == TagMatchMode.and,
           onPressed: () => notifier.setMatchMode(TagMatchMode.and),

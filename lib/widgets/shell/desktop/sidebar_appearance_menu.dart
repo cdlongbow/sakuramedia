@@ -220,7 +220,7 @@ class _ThemeColorOptionState extends State<_ThemeColorOption> {
     return Semantics(
       button: true,
       selected: widget.selected,
-      label: widget.themeColor.label,
+      label: widget.themeColor.labelFor(AppLocalizations.of(context)),
       child: InkWell(
         key: Key('sidebar-theme-color-${widget.themeColor.id}'),
         onTap: widget.onTap,
@@ -260,7 +260,7 @@ class _ThemeColorOptionState extends State<_ThemeColorOption> {
               ),
               SizedBox(height: spacing.xs),
               Text(
-                widget.themeColor.label,
+                widget.themeColor.labelFor(AppLocalizations.of(context)),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: resolveAppTextStyle(

@@ -66,7 +66,7 @@ class MovieFilterSectionGroup extends StatelessWidget {
           title: l10n.widgetMovieFilterStatusTitle,
           options: MovieStatusFilter.values,
           selectedValue: filterState.status,
-          labelBuilder: (value) => value.label,
+          labelBuilder: (value) => value.labelWith(l10n),
           onSelected: (value) => onChanged(filterState.copyWith(status: value)),
         ),
         SizedBox(height: context.appSpacing.lg),
@@ -84,7 +84,7 @@ class MovieFilterSectionGroup extends StatelessWidget {
           title: l10n.widgetMovieFilterCollectionTypeTitle,
           options: MovieCollectionTypeFilter.values,
           selectedValue: filterState.collectionType,
-          labelBuilder: (value) => value.label,
+          labelBuilder: (value) => value.labelWith(l10n),
           onSelected: (value) =>
               onChanged(filterState.copyWith(collectionType: value)),
         ),
@@ -93,7 +93,7 @@ class MovieFilterSectionGroup extends StatelessWidget {
           title: l10n.widgetMovieFilterNumberSourceTitle,
           options: MovieNumberSourceFilter.values,
           selectedValue: filterState.numberSource,
-          labelBuilder: (value) => value.label,
+          labelBuilder: (value) => value.labelWith(l10n),
           onSelected: (value) =>
               onChanged(filterState.copyWith(numberSource: value)),
         ),
@@ -626,7 +626,7 @@ class _MovieActorAgeRangeFilterSectionState
               ),
             ),
             Text(
-              movieActorAgeRangeLabel(actorAgeMin, actorAgeMax),
+              movieActorAgeRangeLabel(actorAgeMin, actorAgeMax, l10n),
               key: const Key('movie-filter-actor-age-range-label'),
               style: resolveAppTextStyle(
                 context,

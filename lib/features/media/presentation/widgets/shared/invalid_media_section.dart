@@ -403,7 +403,7 @@ class _InvalidMediaRowConsumer extends ConsumerWidget {
     final confirmed = await showAppConfirmDialog(
       context,
       title: l10n.mediaListInvalidDeleteTitle,
-      message: l10n.mediaListInvalidDeleteMessage(item.displayTitle(l10n: l10n)),
+      message: l10n.mediaListInvalidDeleteMessage(item.displayTitle(l10n)),
       confirmLabel: l10n.commonDelete,
       danger: true,
       dialogKey: const Key('invalid-media-delete-confirm-dialog'),

@@ -808,7 +808,16 @@ void main() {
       movieNumber: 'ABC-005',
       isSubscribed: true,
     );
-    await _waitFor(() => adapter.hitCount('GET', '/movies') == 3);
+    // 等暖刷新真正落到状态上：只等请求发起会在负载下读到旧列表。
+    await _waitFor(
+      () =>
+          container
+              .read(movieSummaryProvider(scope))
+              .value
+              ?.paged.items
+              .any((item) => item.movieNumber == 'ABC-005') ??
+          false,
+    );
     await _settleEvents();
 
     final state = container.read(movieSummaryProvider(scope)).requireValue;
@@ -843,7 +852,9 @@ void main() {
         .read(actorSubscriptionEventsProvider.notifier)
         .reportChange(actorId: 3, isSubscribed: false);
     await _waitFor(
-      () => adapter.hitCount('GET', '/movies/subscribed-actors/latest') == 2,
+      () =>
+          container.read(movieSummaryProvider(scope)).value?.paged.items.isEmpty ??
+          false,
     );
     await _settleEvents();
 
@@ -984,7 +995,7 @@ Future<void> _settleEvents() async {
 
 Future<void> _waitFor(bool Function() condition) async {
   for (var attempt = 0; attempt < 200 && !condition(); attempt++) {
-    await Future<void>.delayed(const Duration(milliseconds: 1));
+    await Future<void>.delayed(const Duration(milliseconds: 5));
   }
 }
 

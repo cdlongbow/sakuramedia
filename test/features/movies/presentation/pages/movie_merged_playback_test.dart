@@ -26,7 +26,6 @@ import 'package:sakuramedia/widgets/domain/media/movie_player_thumbnail_panel.da
 import 'package:sakuramedia/widgets/domain/movies/player/merged_position_indicator.dart';
 import '../../../../support/test_api_bundle.dart';
 import '../../../../support/test_playlist_player.dart';
-import 'package:sakuramedia/l10n/app_localizations.dart';
 
 class _VideoController extends Fake implements VideoController {
   _VideoController(this.player);
@@ -144,12 +143,6 @@ void main() {
           ),
         ],
         child: MaterialApp(
-          locale: const Locale('zh'),
-          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-            AppLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           locale: const Locale('zh'),
           localizationsDelegates: <LocalizationsDelegate<dynamic>>[
@@ -316,12 +309,6 @@ void main() {
                   ],
                   supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
                   theme: mobile ? sakuraMobileThemeData : sakuraThemeData,
-                  locale: const Locale('zh'),
-                  localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-                    AppLocalizations.delegate,
-                    ...GlobalMaterialLocalizations.delegates,
-                  ],
-                  supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
                   routerConfig: router,
                 ),
               ),

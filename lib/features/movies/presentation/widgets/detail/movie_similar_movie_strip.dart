@@ -6,6 +6,7 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_subscription_toggle_provider.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
@@ -67,15 +68,15 @@ class MovieSimilarMovieStrip extends ConsumerWidget {
       return _MovieSimilarMovieFeedback(
         feedbackKey: const Key('movie-similar-strip-error'),
         message: errorMessage!,
-        actionLabel: '重试',
+        actionLabel: AppLocalizations.of(context).commonRetry,
         onAction: onRetry,
       );
     }
 
     if (movies.isEmpty) {
-      return const _MovieSimilarMovieFeedback(
-        feedbackKey: Key('movie-similar-strip-empty'),
-        message: '暂无相似影片',
+      return _MovieSimilarMovieFeedback(
+        feedbackKey: const Key('movie-similar-strip-empty'),
+        message: AppLocalizations.of(context).movieWidgetNoSimilarMovies,
       );
     }
 

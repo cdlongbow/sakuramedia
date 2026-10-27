@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_actor_wrap.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('movie actor wrap uses airy actor spacing within the section', (
@@ -11,6 +12,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: sakuraThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: MovieActorWrap(
             actors: const <MovieActorDto>[

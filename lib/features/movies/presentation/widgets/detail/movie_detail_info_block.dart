@@ -3,6 +3,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/layout/glass/app_glass_surface.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_panel.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 /// 影片详情照片下方的标题操作信息块：标题全宽在上，
 /// 下方宽屏左右双列（左操作列 = 分体播放键 + 六键一行 / 右信息）、窄屏上下堆叠。
@@ -25,7 +26,7 @@ class MovieDetailInfoBlock extends StatelessWidget {
     this.onFavoriteTap,
     this.isFavoriteUpdating = false,
     this.onPlaylistTap,
-    this.playlistTooltip = '播放列表',
+    this.playlistTooltip,
     this.onMoreActionsTap,
     this.isMoreActionsUpdating = false,
     this.mergePlaybackLabel,
@@ -65,8 +66,8 @@ class MovieDetailInfoBlock extends StatelessWidget {
   final bool isFavoriteUpdating;
   final VoidCallback? onPlaylistTap;
 
-  /// 播放列表键的无障碍提示（加入/管理），默认“播放列表”。
-  final String playlistTooltip;
+  /// 播放列表键的无障碍提示（加入/管理）；为 null 时用当前语言的“播放列表”。
+  final String? playlistTooltip;
   final Future<void> Function(Offset globalPosition)? onMoreActionsTap;
   final bool isMoreActionsUpdating;
 
@@ -96,6 +97,9 @@ class MovieDetailInfoBlock extends StatelessWidget {
     final spacing = context.appSpacing;
     final info = _heroInfo;
     final hasInfo = !info.isEmpty;
+    final playlistTooltip =
+        this.playlistTooltip ??
+        AppLocalizations.of(context).movieWidgetPlaylistTooltip;
     return LayoutBuilder(
       builder: (context, constraints) {
         // 宽窄判定用**实际可用宽度**：桌面壳层侧栏会吃掉窗口宽度，只看
@@ -444,10 +448,13 @@ class _InfoActionsColumn extends StatelessWidget {
     final spacing = context.appSpacing;
     final tokens = context.appComponentTokens;
     final inspectorPaneTap = onInspectorPaneTap;
+    final l10n = AppLocalizations.of(context);
     final keys = <Widget>[
       _InfoActionKey(
         key: const Key('movie-detail-hero-subscription-icon'),
-        tooltip: isSubscribed ? '已订阅' : '订阅',
+        tooltip: isSubscribed
+            ? l10n.movieWidgetSubscribed
+            : l10n.movieWidgetSubscribe,
         onTap: isSubscriptionUpdating ? null : onSubscriptionTap,
         child: isSubscriptionUpdating
             ? SizedBox(
@@ -484,7 +491,9 @@ class _InfoActionsColumn extends StatelessWidget {
       // 收藏快捷键替换原磁力搜索位；磁力搜索已收进「更多」。
       _InfoActionKey(
         key: const Key('movie-detail-hero-favorite-icon'),
-        tooltip: isFavorite ? '取消收藏' : '收藏影片',
+        tooltip: isFavorite
+            ? l10n.movieWidgetRemoveFavorite
+            : l10n.movieWidgetFavoriteMovie,
         onTap: isFavoriteUpdating ? null : onFavoriteTap,
         child: isFavoriteUpdating
             ? SizedBox(
@@ -511,7 +520,7 @@ class _InfoActionsColumn extends StatelessWidget {
       if (inspectorPaneTap != null) ...<Widget>[
         _InfoActionKey(
           key: const Key('movie-detail-hero-review-icon'),
-          tooltip: '评论',
+          tooltip: l10n.movieWidgetReview,
           onTap: () => inspectorPaneTap(MovieDetailInspectorPane.review),
           child: Icon(
             Icons.chat_bubble_outline_rounded,
@@ -521,7 +530,7 @@ class _InfoActionsColumn extends StatelessWidget {
         ),
         _InfoActionKey(
           key: const Key('movie-detail-hero-thumbnail-icon'),
-          tooltip: '缩略图',
+          tooltip: l10n.movieWidgetThumbnail,
           onTap: () => inspectorPaneTap(MovieDetailInspectorPane.thumbnail),
           child: Icon(
             Icons.photo_library_outlined,
@@ -637,7 +646,7 @@ class _InfoSplitPlayButton extends StatelessWidget {
                       ),
                       SizedBox(width: tokens.buttonGapMd),
                       Text(
-                        '播放',
+                        AppLocalizations.of(context).movieWidgetPlay,
                         style: resolveAppTextStyle(
                           context,
                           size: AppTextSize.s14,
@@ -690,7 +699,7 @@ class _InfoSplitPlayButton extends StatelessWidget {
                               ),
                               SizedBox(width: tokens.buttonGapMd),
                               Text(
-                                '合并',
+                                AppLocalizations.of(context).movieWidgetMerge,
                                 style: resolveAppTextStyle(
                                   context,
                                   size: AppTextSize.s14,
@@ -778,11 +787,14 @@ class _InfoMoreKey extends StatelessWidget {
     );
 
     if (onTap == null || isUpdating) {
-      return Tooltip(message: '更多操作', child: button);
+      return Tooltip(
+        message: AppLocalizations.of(context).movieWidgetMoreActions,
+        child: button,
+      );
     }
 
     return Tooltip(
-      message: '更多操作',
+      message: AppLocalizations.of(context).movieWidgetMoreActions,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: GestureDetector(

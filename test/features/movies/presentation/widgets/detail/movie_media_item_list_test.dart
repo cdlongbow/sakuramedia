@@ -9,6 +9,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_pill_wrap.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_media_item_list.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 void main() {
   testWidgets(
@@ -470,6 +471,12 @@ Widget _testApp({required Widget child}) {
     overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
     child: MaterialApp(
       theme: sakuraThemeData,
+      locale: const Locale('zh'),
+      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
       home: Scaffold(body: child),
     ),
   );

@@ -33,6 +33,7 @@ import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_action_support.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_tab.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_magnet_search_content.dart';
 
 /// 检查器承载的功能：评论 / 磁力搜索 / 缩略图。
@@ -193,7 +194,7 @@ class _MovieDetailInspectorPanelState
     if (!mounted || created == null) {
       return;
     }
-    showToast('切片已生成');
+    showToast(AppLocalizations.of(context).movieWidgetClipCreated);
     // 退出圈选模式并清空已选点。
     _thumbnailController.toggleClipSelectionMode();
   }
@@ -230,10 +231,10 @@ class _MovieDetailInspectorPanelState
     );
   }
 
-  String get _title => switch (widget.pane) {
-    MovieDetailInspectorPane.review => '评论',
-    MovieDetailInspectorPane.magnetSearch => '磁力搜索',
-    MovieDetailInspectorPane.thumbnail => '缩略图',
+  String _title(AppLocalizations l10n) => switch (widget.pane) {
+    MovieDetailInspectorPane.review => l10n.movieWidgetReview,
+    MovieDetailInspectorPane.magnetSearch => l10n.movieWidgetMagnetSearch,
+    MovieDetailInspectorPane.thumbnail => l10n.movieWidgetThumbnail,
   };
 
   Widget _buildContent() {
@@ -268,7 +269,7 @@ class _MovieDetailInspectorPanelState
             end: context.appComponentTokens.buttonHeightMd,
           ),
           child: Text(
-            _title,
+            _title(AppLocalizations.of(context)),
             key: const Key('movie-detail-inspector-title'),
             style: resolveAppTextStyle(
               context,
@@ -344,8 +345,11 @@ class _MovieDetailReviewTabState extends ConsumerState<_MovieDetailReviewTab> {
       ),
     );
     if (result == null || !mounted) return;
+    final l10n = AppLocalizations.of(context);
     showToast(
-      result.response.created ? '已提交到 ${result.clientName}' : '下载任务已存在',
+      result.response.created
+          ? l10n.movieWidgetDownloadSubmitted(result.clientName)
+          : l10n.movieWidgetDownloadTaskExists,
     );
   }
 
@@ -420,7 +424,7 @@ class _MovieDetailReviewTabState extends ConsumerState<_MovieDetailReviewTab> {
             SizedBox(height: context.appSpacing.md),
             AppButton(
               key: const Key('movie-detail-review-retry-button'),
-              label: '重试',
+              label: AppLocalizations.of(context).commonRetry,
               variant: AppButtonVariant.secondary,
               onPressed: _controller.loadInitial,
             ),
@@ -430,7 +434,11 @@ class _MovieDetailReviewTabState extends ConsumerState<_MovieDetailReviewTab> {
     }
 
     if (state.items.isEmpty) {
-      return const Center(child: AppEmptyState(message: '暂无评论'));
+      return Center(
+        child: AppEmptyState(
+          message: AppLocalizations.of(context).movieWidgetNoReviews,
+        ),
+      );
     }
 
     return AppSelectableTextScrollConfiguration(
@@ -501,7 +509,9 @@ class _MovieDetailReviewCard extends StatelessWidget {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
-                review.username.trim().isEmpty ? '匿名用户' : review.username,
+                review.username.trim().isEmpty
+                    ? AppLocalizations.of(context).movieWidgetAnonymousUser
+                    : review.username,
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s14,
@@ -562,7 +572,9 @@ class _MovieDetailReviewCard extends StatelessWidget {
           ),
           SizedBox(height: context.appSpacing.xs),
           SelectableText(
-            review.content.trim().isEmpty ? '暂无评论内容' : review.content,
+            review.content.trim().isEmpty
+                ? AppLocalizations.of(context).movieWidgetNoReviewContent
+                : review.content,
             key: const Key('movie-detail-review-content'),
             style: resolveAppTextStyle(
               context,
@@ -582,7 +594,9 @@ class _MovieDetailReviewCard extends StatelessWidget {
                 buttonItems.insert(
                   0,
                   ContextMenuButtonItem(
-                    label: '搜索番号',
+                    label: AppLocalizations.of(
+                      context,
+                    ).movieWidgetSearchMovieNumber,
                     onPressed: () {
                       // 工具栏挂在 Overlay 上，不先收起会浮在目标路由上方。
                       editableTextState.hideToolbar();
@@ -614,8 +628,12 @@ class _MovieDetailReviewCard extends StatelessWidget {
                       '${review.id}-$magnetIndex',
                     ),
                     label: magnets.length == 1
-                        ? '添加磁力下载'
-                        : '添加磁力 ${magnetIndex + 1}',
+                        ? AppLocalizations.of(
+                            context,
+                          ).movieWidgetAddMagnetDownload
+                        : AppLocalizations.of(
+                            context,
+                          ).movieWidgetAddMagnetIndexed(magnetIndex + 1),
                     icon: const Icon(Icons.download_rounded),
                     size: AppTextButtonSize.xSmall,
                     emphasis: AppTextButtonEmphasis.accent,
@@ -668,7 +686,7 @@ class _MovieDetailReviewFooter extends StatelessWidget {
           SizedBox(height: context.appSpacing.sm),
           AppButton(
             key: const Key('movie-detail-review-load-more-retry-button'),
-            label: '重试加载更多',
+            label: AppLocalizations.of(context).movieWidgetRetryLoadMore,
             size: AppButtonSize.xSmall,
             variant: AppButtonVariant.secondary,
             onPressed: onRetryLoadMore,

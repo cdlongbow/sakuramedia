@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_pill_wrap.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 class MovieTagWrap extends StatelessWidget {
   const MovieTagWrap({super.key, required this.tags, this.onTagTap});
@@ -20,7 +21,7 @@ class MovieTagWrap extends StatelessWidget {
             ),
           )
           .toList(growable: false),
-      emptyMessage: '暂无标签',
+      emptyMessage: AppLocalizations.of(context).movieWidgetNoTags,
     );
   }
 }

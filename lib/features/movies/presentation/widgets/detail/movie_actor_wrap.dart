@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_avatar.dart';
 
@@ -32,6 +33,7 @@ class MovieActorWrap extends StatelessWidget {
     final spacing = context.appSpacing;
     final tokens = context.appComponentTokens;
     final onRemoveTap = this.onRemoveTap;
+    final l10n = AppLocalizations.of(context);
 
     final cards = actors
         .map((actor) {
@@ -114,7 +116,7 @@ class MovieActorWrap extends StatelessWidget {
 
           return Tooltip(
             message: editing
-                ? '从演员表移除 ${actor.displayName}'
+                ? l10n.movieWidgetRemoveActorFromCast(actor.displayName)
                 : actor.displayName,
             child: Builder(
               builder: (context) {
@@ -141,7 +143,7 @@ class MovieActorWrap extends StatelessWidget {
       children: [
         if (actors.isEmpty) ...[
           Text(
-            '暂无演员',
+            l10n.movieWidgetNoActors,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s14,

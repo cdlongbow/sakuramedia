@@ -7,6 +7,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/playlists/presentation/pages/desktop/playlist_detail_page.dart';
 import 'package:sakuramedia/features/playlists/presentation/pages/mobile/playlist_detail_page.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../../../support/logged_in_session_store.dart';
@@ -311,6 +312,12 @@ Future<void> _pumpDetail(
         child: OKToast(
           child: MaterialApp.router(
             theme: mobile ? sakuraMobileThemeData : sakuraThemeData,
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             routerConfig: router,
           ),
         ),

@@ -4,6 +4,7 @@ import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_c
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/clips/presentation/actions/clip_playback_launcher.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -31,7 +32,7 @@ class DesktopClipCollectionDetailPage extends StatelessWidget {
       playAllBuilder: (context, {required enabled, required onPlayFrom}) {
         return AppButton(
           key: const Key('clip-collection-play-all-button'),
-          label: '播放全部',
+          label: AppLocalizations.of(context).clipCollectionPlayAll,
           variant: AppButtonVariant.primary,
           onPressed: enabled ? onPlayFrom : null,
         );
@@ -71,7 +72,9 @@ class DesktopClipCollectionDetailPage extends StatelessWidget {
             confirmLabel: confirmLabel,
             confirmKey: confirmKey,
             onConfirm: onConfirm,
-            failureFallback: '删除失败，请重试',
+            failureFallback: AppLocalizations.of(
+              context,
+            ).clipCollectionDeleteFailed,
           ),
       onEditCollection: (context, collection) async {
         return showEditClipCollectionDialog(context, collection: collection);

@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/playlists/presentation/controllers/playlist_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
 
 /// 播放列表影片筛选的所有 section（分辨率）的纵向 Column。
@@ -19,11 +20,12 @@ class PlaylistFilterSectionGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return MovieFilterChoiceSection<PlaylistResolutionFilter?>(
-      title: '分辨率',
+      title: l10n.playlistFilterResolution,
       options: const [null, ...PlaylistResolutionFilter.values],
       selectedValue: filterState.resolution,
-      labelBuilder: (value) => value?.label ?? '全部',
+      labelBuilder: (value) => value?.label ?? l10n.playlistFilterAll,
       optionKeyBuilder: (value) =>
           Key('playlist-filter-resolution-${value?.apiValue ?? 'all'}'),
       onSelected: (value) => onChanged(filterState.copyWith(resolution: value)),

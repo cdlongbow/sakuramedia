@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/clip_collections/presentation/providers/cli
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_overview_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -74,6 +75,7 @@ class _MobileClipCollectionsPageState
     final spacing = context.appSpacing;
     final colors = context.appColors;
     final async = ref.watch(clipCollectionsOverviewProvider);
+    final l10n = AppLocalizations.of(context);
 
     return ColoredBox(
       key: const Key('mobile-clip-collections-page'),
@@ -85,7 +87,7 @@ class _MobileClipCollectionsPageState
             child: AppSearchField(
               fieldKey: const Key('mobile-clip-collections-search-field'),
               controller: _searchController,
-              hintText: '搜索合集',
+              hintText: l10n.clipCollectionSearchHint,
               onChanged: (value) =>
                   setState(() => _keyword = value.trim().toLowerCase()),
               clearKey: const Key('mobile-clip-collections-search-clear'),
@@ -102,7 +104,7 @@ class _MobileClipCollectionsPageState
               width: double.infinity,
               child: AppButton(
                 key: const Key('mobile-clip-collections-create-button'),
-                label: '新建合集',
+                label: l10n.clipCollectionCreate,
                 variant: AppButtonVariant.primary,
                 icon: const Icon(Icons.add_rounded),
                 onPressed: _createCollection,
@@ -120,6 +122,7 @@ class _MobileClipCollectionsPageState
   ) {
     final isLoading = async.isLoading && async.value == null;
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final allCollections = isLoading
         ? clipCollectionPlaceholders()
         : async.value ?? const <ClipCollectionDto>[];
@@ -143,19 +146,19 @@ class _MobileClipCollectionsPageState
               child: AppEmptyState(
                 message: apiErrorMessage(
                   async.error!,
-                  fallback: '合集暂时无法加载，请稍后重试',
+                  fallback: l10n.clipCollectionLoadFailed,
                 ),
               ),
             )
           else if (allCollections.isEmpty)
-            const SliverFillRemaining(
+            SliverFillRemaining(
               hasScrollBody: false,
-              child: AppEmptyState(message: '还没有合集，点下方「新建合集」开始吧'),
+              child: AppEmptyState(message: l10n.clipCollectionEmptyMobile),
             )
           else if (collections.isEmpty)
-            const SliverFillRemaining(
+            SliverFillRemaining(
               hasScrollBody: false,
-              child: AppEmptyState(message: '没有匹配的合集'),
+              child: AppEmptyState(message: l10n.clipCollectionNoMatch),
             )
           else
             SliverPadding(
@@ -195,7 +198,7 @@ class _MobileClipCollectionsPageState
     ref
         .read(clipCollectionsOverviewProvider.notifier)
         .insertCollection(created);
-    showToast('已创建合集');
+    showToast(AppLocalizations.of(context).clipCollectionCreatedToast);
   }
 
   Future<void> _editCollection(ClipCollectionDto collection) async {
@@ -210,19 +213,20 @@ class _MobileClipCollectionsPageState
     ref
         .read(clipCollectionsOverviewProvider.notifier)
         .replaceCollection(updated);
-    showToast('已保存');
+    showToast(AppLocalizations.of(context).commonSaved);
   }
 
   Future<void> _deleteCollection(ClipCollectionDto collection) async {
+    final l10n = AppLocalizations.of(context);
     final name = collection.name.trim().isEmpty
-        ? '该合集'
+        ? l10n.clipCollectionUnnamed
         : '“${collection.name.trim()}”';
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除合集',
-      message: '确认删除$name？只会删除合集本身，合集内的切片不会被删除。',
+      title: l10n.clipCollectionDeleteTitle,
+      message: l10n.clipCollectionDeleteMessage(name),
       danger: true,
-      confirmLabel: '删除',
+      confirmLabel: l10n.commonDelete,
       dialogKey: const Key('mobile-clip-collection-delete-drawer'),
       confirmKey: const Key('mobile-clip-collection-delete-confirm-button'),
     );
@@ -237,10 +241,12 @@ class _MobileClipCollectionsPageState
           .read(clipCollectionsOverviewProvider.notifier)
           .removeCollection(collection.id);
       if (mounted) {
-        showToast('已删除合集');
+        showToast(l10n.clipCollectionDeletedToast);
       }
     } catch (error) {
-      showToast(apiErrorMessage(error, fallback: '删除失败，请重试'));
+      showToast(
+        apiErrorMessage(error, fallback: l10n.clipCollectionDeleteFailed),
+      );
     }
   }
 }

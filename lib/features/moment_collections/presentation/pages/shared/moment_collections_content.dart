@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/moment_collections/presentation/providers/m
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_api_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_overview_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/moment_collection_editor.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
@@ -52,6 +53,7 @@ class _MomentCollectionsContentState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     ref.listen(momentCollectionMutationEventsProvider, (_, next) {
       if (next.value != null) {
         unawaited(
@@ -71,7 +73,7 @@ class _MomentCollectionsContentState
               child: AppSearchField(
                 fieldKey: const Key('mobile-moment-collections-search-field'),
                 controller: _searchController,
-                hintText: '搜索合集',
+                hintText: l10n.momentCollectionSearchHint,
                 onChanged: (value) =>
                     setState(() => _keyword = value.trim().toLowerCase()),
                 clearKey: const Key('mobile-moment-collections-search-clear'),
@@ -90,7 +92,7 @@ class _MomentCollectionsContentState
                 width: double.infinity,
                 child: AppButton(
                   key: const Key('mobile-moment-collections-create-button'),
-                  label: '新建合集',
+                  label: l10n.momentCollectionCreateTitle,
                   variant: AppButtonVariant.primary,
                   icon: const Icon(Icons.add_rounded),
                   onPressed: () => _edit(context, ref),
@@ -111,7 +113,7 @@ class _MomentCollectionsContentState
             Row(
               children: [
                 Text(
-                  '时刻合集',
+                  l10n.momentCollectionSectionTitle,
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s18,
@@ -122,7 +124,7 @@ class _MomentCollectionsContentState
                 const Spacer(),
                 AppTextButton(
                   key: const Key('moment-collections-create-button'),
-                  label: '新建合集',
+                  label: l10n.momentCollectionCreateTitle,
                   size: AppTextButtonSize.small,
                   onPressed: () => _edit(context, ref),
                 ),
@@ -132,7 +134,7 @@ class _MomentCollectionsContentState
             AppSearchField(
               fieldKey: const Key('moment-collections-search-field'),
               controller: _searchController,
-              hintText: '搜索合集',
+              hintText: l10n.momentCollectionSearchHint,
               onChanged: (value) =>
                   setState(() => _keyword = value.trim().toLowerCase()),
               clearKey: const Key('moment-collections-search-clear'),
@@ -151,17 +153,21 @@ class _MomentCollectionsContentState
     AsyncValue<List<MomentCollectionDto>> async,
   ) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final isLoading = async.isLoading && async.value == null;
     if (!isLoading && async.hasError && async.value == null) {
       return AppEmptyState(
-        message: apiErrorMessage(async.error!, fallback: '合集暂时无法加载，请稍后重试'),
+        message: apiErrorMessage(
+          async.error!,
+          fallback: l10n.momentErrorCollectionLoadFailed,
+        ),
       );
     }
     final allCollections = isLoading
         ? momentCollectionPlaceholders(count: 8)
         : async.value ?? const <MomentCollectionDto>[];
     if (allCollections.isEmpty) {
-      return const AppEmptyState(message: '还没有合集，点右上角「新建合集」开始吧');
+      return AppEmptyState(message: l10n.momentCollectionEmptyDesktop);
     }
     final collections = isLoading || _keyword.isEmpty
         ? allCollections
@@ -172,7 +178,7 @@ class _MomentCollectionsContentState
               )
               .toList(growable: false);
     if (collections.isEmpty) {
-      return const AppEmptyState(message: '没有匹配的合集');
+      return AppEmptyState(message: l10n.momentCollectionNoMatch);
     }
     return AppSkeletonizer(
       enabled: isLoading,
@@ -206,6 +212,7 @@ class _MomentCollectionsContentState
   ) {
     final isLoading = async.isLoading && async.value == null;
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final allCollections = isLoading
         ? momentCollectionPlaceholders()
         : async.value ?? const <MomentCollectionDto>[];
@@ -229,19 +236,19 @@ class _MomentCollectionsContentState
               child: AppEmptyState(
                 message: apiErrorMessage(
                   async.error!,
-                  fallback: '合集暂时无法加载，请稍后重试',
+                  fallback: l10n.momentErrorCollectionLoadFailed,
                 ),
               ),
             )
           else if (allCollections.isEmpty)
-            const SliverFillRemaining(
+            SliverFillRemaining(
               hasScrollBody: false,
-              child: AppEmptyState(message: '还没有合集，点下方「新建合集」开始吧'),
+              child: AppEmptyState(message: l10n.momentCollectionEmptyMobile),
             )
           else if (collections.isEmpty)
-            const SliverFillRemaining(
+            SliverFillRemaining(
               hasScrollBody: false,
-              child: AppEmptyState(message: '没有匹配的合集'),
+              child: AppEmptyState(message: l10n.momentCollectionNoMatch),
             )
           else
             SliverPadding(
@@ -270,6 +277,7 @@ class _MomentCollectionsContentState
     WidgetRef ref, {
     MomentCollectionDto? collection,
   }) async {
+    final l10n = AppLocalizations.of(context);
     final result = await showMomentCollectionEditor(
       context,
       collection: collection,
@@ -278,10 +286,10 @@ class _MomentCollectionsContentState
     final notifier = ref.read(momentCollectionsOverviewProvider.notifier);
     if (collection == null) {
       notifier.insertCollection(result);
-      showToast('已创建合集');
+      showToast(l10n.momentCollectionCreatedToast);
     } else {
       notifier.replaceCollection(result);
-      showToast('已保存');
+      showToast(l10n.commonSaved);
     }
   }
 
@@ -290,15 +298,16 @@ class _MomentCollectionsContentState
     WidgetRef ref,
     MomentCollectionDto collection,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final name = collection.name.trim().isEmpty
-        ? '该合集'
+        ? l10n.momentCollectionUnnamed
         : '“${collection.name.trim()}”';
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除合集',
-      message: '确认删除$name？只会删除合集本身，合集内的时刻不会被删除。',
+      title: l10n.momentCollectionDeleteTitle,
+      message: l10n.momentCollectionDeleteMessage(name),
       danger: true,
-      confirmLabel: '删除',
+      confirmLabel: l10n.commonDelete,
       confirmKey: const Key('moment-collection-delete-confirm-button'),
     );
     if (!confirmed) return;
@@ -309,9 +318,9 @@ class _MomentCollectionsContentState
       ref
           .read(momentCollectionsOverviewProvider.notifier)
           .removeCollection(collection.id);
-      showToast('已删除合集');
+      showToast(l10n.momentCollectionDeletedToast);
     } catch (error) {
-      showToast(apiErrorMessage(error, fallback: '删除失败，请重试'));
+      showToast(apiErrorMessage(error, fallback: l10n.momentErrorDeleteFailed));
     }
   }
 }

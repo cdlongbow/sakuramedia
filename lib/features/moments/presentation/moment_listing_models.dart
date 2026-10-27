@@ -1,29 +1,39 @@
 import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 /// moments 列表的值类型集合(原与 `PagedMomentController` 同文件,控制器迁
 /// Riverpod 后独立成文件):排序/内容类型枚举、筛选值对象、列表项 ViewModel。
 /// `MomentListItem` 被 discovery 域与 `widgets/domain/moments/` 复用。
 
 enum MomentSortOrder {
-  latest(label: '最新', apiValue: 'created_at:desc'),
-  earliest(label: '最早', apiValue: 'created_at:asc');
+  latest(apiValue: 'created_at:desc'),
+  earliest(apiValue: 'created_at:asc');
 
-  const MomentSortOrder({required this.label, required this.apiValue});
+  const MomentSortOrder({required this.apiValue});
 
-  final String label;
   final String apiValue;
+
+  String label(AppLocalizations l10n) => switch (this) {
+    MomentSortOrder.latest => l10n.momentSortLatest,
+    MomentSortOrder.earliest => l10n.momentSortEarliest,
+  };
 }
 
 enum MomentKindFilter {
-  jav(label: 'JAV', apiValue: 'jav'),
-  video(label: '视频', apiValue: 'video');
+  jav(apiValue: 'jav'),
+  video(apiValue: 'video');
 
-  const MomentKindFilter({required this.label, required this.apiValue});
+  const MomentKindFilter({required this.apiValue});
 
-  final String label;
   final String apiValue;
+
+  /// `JAV` 是内容类型代号，中英文一致，不进语言包。
+  String label(AppLocalizations l10n) => switch (this) {
+    MomentKindFilter.jav => 'JAV',
+    MomentKindFilter.video => l10n.momentKindVideo,
+  };
 }
 
 /// 时刻列表筛选值对象:`==` 即「筛选未变」,驱动
@@ -85,25 +95,35 @@ class MomentListItem {
   bool get isVideo => videoItemId != null && videoItemId! > 0;
 
   // 卡片标签 / 播放器标题 / 副标题统一走这里，避免三处各拼一遍导致 pointId / videoItemId 不一致。
-  String get displayLabel {
+  //
+  // 不传 [l10n] 时保留旧的中文兜底，供尚未迁移的 `widgets/domain/moments` 卡片渐进替换。
+  String get displayLabel => _displayLabel(null);
+
+  String localizedDisplayLabel(AppLocalizations l10n) => _displayLabel(l10n);
+
+  String _displayLabel(AppLocalizations? l10n) {
     final number = movieNumber;
     if (number != null && number.isNotEmpty) {
       return number;
     }
     final videoId = videoItemId;
     if (videoId != null && videoId > 0) {
-      return '视频 #$videoId';
+      return l10n?.momentVideoLabel(videoId) ?? '视频 #$videoId';
     }
-    return '时刻 #$pointId';
+    return l10n?.momentLabel(pointId) ?? '时刻 #$pointId';
   }
 
   /// 卡片悬停面板的副信息：`JAV / 视频 · 时刻位置`；来源媒体已删除（[mediaId]
   /// <= 0）时补提示，与预览里的播放入口语义一致。
-  String get hoverMeta {
-    final kind = isVideo ? '视频' : 'JAV';
+  String get hoverMeta => _hoverMeta(null);
+
+  String localizedHoverMeta(AppLocalizations l10n) => _hoverMeta(l10n);
+
+  String _hoverMeta(AppLocalizations? l10n) {
+    final kind = isVideo ? (l10n?.momentKindVideo ?? '视频') : 'JAV';
     final buffer = StringBuffer('$kind · ${formatMediaTimecode(offsetSeconds)}');
     if (mediaId <= 0) {
-      buffer.write(' · 来源已删除');
+      buffer.write(' · ${l10n?.momentSourceDeleted ?? '来源已删除'}');
     }
     return buffer.toString();
   }

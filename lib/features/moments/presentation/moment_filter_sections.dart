@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_mobile_filter_drawer_scaffold.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -30,20 +31,21 @@ class MomentFilterSectionGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         MovieFilterChoiceSection<MomentKindFilter>(
-          title: '内容类型',
+          title: l10n.momentFilterKindTitle,
           options: MomentKindFilter.values,
           selectedValue: kindFilter,
           optionKeyBuilder: (value) => Key('$keyPrefix-kind-${value.apiValue}'),
-          labelBuilder: (value) => value.label,
+          labelBuilder: (value) => value.label(l10n),
           onSelected: onKindChanged,
         ),
         SizedBox(height: context.appSpacing.lg),
         MovieFilterChoiceSection<MomentSortOrder>(
-          title: '排序',
+          title: l10n.momentFilterSortTitle,
           options: MomentSortOrder.values,
           selectedValue: sortOrder,
           optionKeyBuilder:
@@ -51,7 +53,7 @@ class MomentFilterSectionGroup extends StatelessWidget {
                 '$keyPrefix-sort-'
                 '${value == MomentSortOrder.latest ? 'latest' : 'earliest'}',
               ),
-          labelBuilder: (value) => value.label,
+          labelBuilder: (value) => value.label(l10n),
           onSelected: onSortChanged,
         ),
       ],

@@ -11,6 +11,7 @@ import 'package:sakuramedia/features/moment_collections/presentation/providers/m
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/moment_collection_editor.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
@@ -120,7 +121,12 @@ class _AddToMomentCollectionDialogState
     } catch (error) {
       if (mounted) {
         setState(() {
-          _error = apiErrorMessage(error, fallback: '合集加载失败');
+          _error = apiErrorMessage(
+            error,
+            fallback: AppLocalizations.of(
+              context,
+            ).momentErrorCollectionsLoadFailed,
+          );
           _isLoading = false;
         });
       }
@@ -142,6 +148,7 @@ class _AddToMomentCollectionDialogState
     required double maxListHeight,
   }) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -155,7 +162,7 @@ class _AddToMomentCollectionDialogState
                 children: [
                   Expanded(
                     child: Text(
-                      '加入合集',
+                      l10n.momentAddToCollection,
                       style: resolveAppTextStyle(
                         context,
                         size: AppTextSize.s16,
@@ -166,7 +173,7 @@ class _AddToMomentCollectionDialogState
                   ),
                   AppIconButton(
                     key: const Key('add-to-moment-collection-create-button'),
-                    tooltip: '新建合集',
+                    tooltip: l10n.momentCollectionCreateTitle,
                     onPressed: _isLoading || _isUpdating
                         ? null
                         : _createCollection,
@@ -178,7 +185,7 @@ class _AddToMomentCollectionDialogState
               AppSearchField(
                 fieldKey: const Key('add-to-moment-collection-search-field'),
                 controller: _searchController,
-                hintText: '搜索合集',
+                hintText: l10n.momentCollectionSearchHint,
                 onChanged: (value) =>
                     setState(() => _keyword = value.trim().toLowerCase()),
                 clearKey: const Key('add-to-moment-collection-search-clear'),
@@ -213,16 +220,20 @@ class _AddToMomentCollectionDialogState
       return SizedBox(height: 160, child: AppEmptyState(message: _error!));
     }
     if (_collections.isEmpty) {
-      return const SizedBox(
+      return SizedBox(
         height: 160,
-        child: Center(child: Text('还没有合集，点右上角「+」新建')),
+        child: Center(
+          child: Text(
+            AppLocalizations.of(context).momentCollectionEmptyAddDialog,
+          ),
+        ),
       );
     }
     final visibleCollections = _visibleCollections;
     if (visibleCollections.isEmpty) {
-      return const SizedBox(
+      return SizedBox(
         height: 160,
-        child: Center(child: Text('没有匹配的合集')),
+        child: Center(child: Text(AppLocalizations.of(context).momentCollectionNoMatch)),
       );
     }
     final spacing = context.appSpacing;
@@ -251,6 +262,7 @@ class _AddToMomentCollectionDialogState
   }
 
   Future<void> _toggle(MomentCollectionDto collection, bool selected) async {
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _isUpdating = true;
       if (selected) {
@@ -306,7 +318,12 @@ class _AddToMomentCollectionDialogState
         });
       }
       showToast(
-        apiErrorMessage(error, fallback: selected ? '移出合集失败' : '加入合集失败'),
+        apiErrorMessage(
+          error,
+          fallback: selected
+              ? l10n.momentErrorRemoveFromCollectionBriefFailed
+              : l10n.momentErrorAddToCollectionFailed,
+        ),
       );
     } finally {
       if (mounted) setState(() => _isUpdating = false);

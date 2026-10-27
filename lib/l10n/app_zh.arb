@@ -1265,5 +1265,176 @@
       }
     }
   },
-  "pluginMarketInstallablePlugins": "可安装插件"
+  "pluginMarketInstallablePlugins": "可安装插件",
+  "momentConfirm": "确认",
+  "momentAddAction": "添加",
+  "momentRemoveAction": "移除",
+  "momentSelectAction": "选择",
+  "momentSelectAll": "全选",
+  "momentDeselectAll": "取消全选",
+  "momentSelectedCount": "已选 {count} 个",
+  "@momentSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "momentCountLabel": "{count} 个时刻",
+  "@momentCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "momentCreateAction": "创建",
+  "momentViewAll": "查看全部",
+  "momentAddToCollection": "加入合集",
+  "momentKindVideo": "视频",
+  "momentKindAll": "全部",
+  "momentSortLatest": "最新",
+  "momentSortEarliest": "最早",
+  "momentFilterKindTitle": "内容类型",
+  "momentFilterSortTitle": "排序",
+  "momentLabel": "时刻 #{id}",
+  "@momentLabel": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "momentVideoLabel": "视频 #{id}",
+  "@momentVideoLabel": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "momentSourceDeleted": "来源已删除",
+  "momentSourceMovie": "影片",
+  "momentDeleteTitle": "删除时刻",
+  "momentDeletedToast": "已删除时刻",
+  "momentAddedToast": "已加入",
+  "momentMovedOutToast": "已移出",
+  "momentDeleteConfirmMessage": "确认删除“{label}”？该时刻标记会被永久删除，该操作不可恢复。",
+  "@momentDeleteConfirmMessage": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "momentDeleteMarkerConfirmMessage": "确认删除“{label}”？该时刻标记会被永久删除，不会删除原视频或切片。",
+  "@momentDeleteMarkerConfirmMessage": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "momentBatchDeleteConfirmMessage": "确认删除选中的 {count} 个时刻？该操作不可恢复。",
+  "@momentBatchDeleteConfirmMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "momentBatchDeleteMarkerConfirmMessage": "确认删除选中的 {count} 个时刻？这些时刻标记会被永久删除，不会删除原视频或切片。",
+  "@momentBatchDeleteMarkerConfirmMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "momentEmptyList": "暂无时刻数据",
+  "momentPickerCountAvailable": "已加入 {added} · 可添加 {total}",
+  "@momentPickerCountAvailable": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "momentPickerCountTotal": "已加入 {added} · 共 {total}",
+  "@momentPickerCountTotal": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "momentPickerSearchHint": "搜番号 / 标题",
+  "momentPickerOnlyUnadded": "仅看未加入",
+  "momentEmptyNoMatchTitle": "没有匹配的时刻",
+  "momentEmptyNoMatchMessage": "换个番号或关键词试试",
+  "momentEmptyKindTitle": "这组内容里没有时刻",
+  "momentEmptyKindMessage": "试试其他的内容类型",
+  "momentEmptyAllAddedTitle": "可添加的都已加入",
+  "momentEmptyAllAddedMessage": "这个合集已经收齐了，切到「全部」可以管理已加入的时刻",
+  "momentEmptyNoMomentsTitle": "还没有时刻",
+  "momentEmptyNoMomentsMessage": "去播放器圈选生成吧",
+  "momentErrorCollectionLoadFailed": "合集暂时无法加载，请稍后重试",
+  "momentErrorCollectionDetailLoadFailed": "合集详情暂时无法加载，请稍后重试",
+  "momentErrorCollectionsLoadFailed": "合集加载失败",
+  "momentErrorPointsLoadFailed": "时刻加载失败",
+  "momentErrorDeleteFailed": "删除失败，请重试",
+  "momentErrorRemoveFromCollectionFailed": "移出合集失败，请重试",
+  "momentErrorRemoveFromCollectionBriefFailed": "移出合集失败",
+  "momentErrorAddToCollectionFailed": "加入合集失败",
+  "momentErrorSaveFailed": "保存失败",
+  "momentErrorCreateFailed": "创建失败",
+  "momentErrorInfoLoadFailed": "时刻信息加载失败，请稍后重试",
+  "momentErrorGone": "该时刻已不存在，无法加入合集",
+  "momentErrorResultImageLoadFailed": "读取结果图片失败，请稍后重试",
+  "momentErrorRefreshFailed": "刷新失败",
+  "momentCollectionSectionTitle": "时刻合集",
+  "momentCollectionCreateTitle": "新建合集",
+  "momentCollectionEditTitle": "编辑合集",
+  "momentCollectionSearchHint": "搜索合集",
+  "momentCollectionNameHint": "例如：周末回看",
+  "momentCollectionNameRequired": "请输入合集名称",
+  "momentCollectionDescriptionHint": "描述可选",
+  "momentCollectionUnnamed": "该合集",
+  "momentCollectionDeleteTitle": "删除合集",
+  "momentCollectionDeleteMessage": "确认删除{name}？只会删除合集本身，合集内的时刻不会被删除。",
+  "@momentCollectionDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "momentCollectionCreatedToast": "已创建合集",
+  "momentCollectionCreatedFromMomentsToast": "已创建时刻合集",
+  "momentCollectionDeletedToast": "已删除合集",
+  "momentCollectionRemovedToast": "已从合集移除",
+  "momentCollectionRemoveAction": "从合集移除",
+  "momentCollectionBatchRemoveMessage": "确认从合集移除选中的 {count} 个时刻？时刻本身不会被删除。",
+  "@momentCollectionBatchRemoveMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "momentCollectionEmptyDesktop": "还没有合集，点右上角「新建合集」开始吧",
+  "momentCollectionEmptyMobile": "还没有合集，点下方「新建合集」开始吧",
+  "momentCollectionEmptyHint": "还没有合集，点「新建」把喜欢的时刻攒成一个合集吧",
+  "momentCollectionEmptyAddDialog": "还没有合集，点右上角「+」新建",
+  "momentCollectionNoMatch": "没有匹配的合集",
+  "momentCollectionEmptyDetailMobile": "合集还没有时刻，点右上角「添加」加入吧",
+  "momentCollectionEmptyDetailDesktop": "合集还没有时刻，去「时刻」里加入吧",
+  "momentAddMomentsAction": "添加时刻",
+  "momentNewAction": "新建"
 }

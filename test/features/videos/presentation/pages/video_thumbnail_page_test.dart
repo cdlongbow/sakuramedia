@@ -193,12 +193,6 @@ void main() {
         ],
         supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
-        locale: const Locale('zh'),
-        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-          AppLocalizations.delegate,
-          ...GlobalMaterialLocalizations.delegates,
-        ],
-        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: DesktopVideoActionsDialogBody(
             video: video,
@@ -222,12 +216,6 @@ void main() {
         ],
         supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraMobileThemeData,
-        locale: const Locale('zh'),
-        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-          AppLocalizations.delegate,
-          ...GlobalMaterialLocalizations.delegates,
-        ],
-        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: MobileVideoActionsSheet(
             video: video,
@@ -307,12 +295,6 @@ Future<void> _pumpVideoThumbnailPage(
           ],
           supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: mobile ? sakuraMobileThemeData : sakuraThemeData,
-          locale: const Locale('zh'),
-          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-            AppLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           home: page,
         ),
       ),

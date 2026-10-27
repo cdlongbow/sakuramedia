@@ -129,12 +129,6 @@ void main() {
               ],
               supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
               theme: mobile ? sakuraMobileThemeData : sakuraThemeData,
-              locale: const Locale('zh'),
-              localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-                AppLocalizations.delegate,
-                ...GlobalMaterialLocalizations.delegates,
-              ],
-              supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
               home: VideoCollectionPlayContent(
                 collectionId: 3,
                 startIndex: 2,

@@ -3,6 +3,7 @@ import 'package:sakuramedia/features/overview/presentation/overview_system_info_
 import 'package:sakuramedia/features/overview/presentation/widgets/external_data_source_status_chips.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
 import 'package:sakuramedia/features/status/presentation/status_placeholders.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -32,6 +33,7 @@ class ServiceHealthCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final showSkeleton = isLoading && imageSearchStatus == null;
     final status = showSkeleton
         ? imageSearchStatusPlaceholder()
@@ -45,28 +47,30 @@ class ServiceHealthCard extends StatelessWidget {
       enabled: showSkeleton,
       child: AppContentCard(
         key: const Key('mobile-service-health-card'),
-        title: '服务健康',
+        title: l10n.overviewServiceHealth,
         padding: EdgeInsets.all(context.appSpacing.lg),
         headerBottomSpacing: context.appSpacing.xs,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             _HealthRow(
-              label: '嵌入服务',
-              value: embeddingServiceHealthLabel(status),
+              label: l10n.overviewEmbeddingService,
+              value: embeddingServiceHealthLabel(status, l10n),
               valueTone: embeddingServiceHealthTone(status),
               rowKey: const Key('mobile-service-health-embedding'),
             ),
             const _HealthDivider(),
             _HealthRow(
-              label: '图搜索索引',
-              value: imageSearchIndexSpaceLabel(status),
+              label: l10n.systemMaintenanceImageSearchTitle,
+              value: imageSearchIndexSpaceLabel(status, l10n),
               valueTone: imageSearchIndexSpaceTone(status),
               rowKey: const Key('mobile-service-health-index'),
               action: requiresRebuild || isRebuilding
                   ? AppButton(
                       key: const Key('mobile-service-health-rebuild-button'),
-                      label: isRebuilding ? '重建中' : '重建',
+                      label: isRebuilding
+                          ? l10n.systemMaintenanceRebuilding
+                          : l10n.overviewRebuild,
                       size: AppButtonSize.small,
                       isLoading: isRebuilding,
                       onPressed: isRebuilding ? null : onRebuildIndex,
@@ -75,7 +79,7 @@ class ServiceHealthCard extends StatelessWidget {
             ),
             const _HealthDivider(),
             _HealthRow(
-              label: '外部数据源',
+              label: l10n.overviewExternalDataSources,
               rowKey: const Key('mobile-service-health-external'),
               valueWidget: ExternalDataSourceStatusChips(
                 javdbHealthy: javdbHealthy,
@@ -84,7 +88,9 @@ class ServiceHealthCard extends StatelessWidget {
               ),
               action: AppButton(
                 key: const Key('mobile-service-health-test-button'),
-                label: isTestingExternalDataSources ? '检测中' : '检测',
+                label: isTestingExternalDataSources
+                    ? l10n.overviewTesting
+                    : l10n.overviewTest,
                 size: AppButtonSize.small,
                 isLoading: isTestingExternalDataSources,
                 onPressed: isTestingExternalDataSources

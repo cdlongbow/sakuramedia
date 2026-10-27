@@ -60,12 +60,13 @@ void main() {
       );
     });
 
-    test('blocked factory 必须给 blockedByLabel，summary 自动兜底', () {
+    test('blocked factory 必须给 blockedByLabel 和 summary', () {
       final state = DiagnosticItemState.blocked(
         kind: DiagnosticItemKind.indexer,
         itemKey: 'indexer',
         displayName: '索引器',
         blockedByLabel: '媒体库',
+        summary: '等待 媒体库 就绪',
       );
       expect(state.status, DiagnosticItemStatus.blocked);
       expect(state.blockedByLabel, '媒体库');

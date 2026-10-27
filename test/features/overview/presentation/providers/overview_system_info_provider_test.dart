@@ -6,6 +6,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/overview/presentation/overview_system_info_format.dart';
 import 'package:sakuramedia/features/overview/presentation/providers/overview_system_info_provider.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
@@ -135,25 +136,28 @@ void main() {
     expect(state.watchTrendError, isNull);
   });
 
-  test('setWatchTrendRange requests the new range once and ignores repeats', () async {
-    _enqueueOverviewStatus(adapter);
-    keepAlive();
-    await settle();
+  test(
+    'setWatchTrendRange requests the new range once and ignores repeats',
+    () async {
+      _enqueueOverviewStatus(adapter);
+      keepAlive();
+      await settle();
 
-    _enqueueWatchTrend(adapter, range: '7d', watchedMovieCount: 3);
-    await notifier().setWatchTrendRange(WatchTrendRange.last7Days);
+      _enqueueWatchTrend(adapter, range: '7d', watchedMovieCount: 3);
+      await notifier().setWatchTrendRange(WatchTrendRange.last7Days);
 
-    var state = container.read(overviewSystemInfoProvider);
-    expect(state.watchTrendRange, WatchTrendRange.last7Days);
-    expect(state.watchTrend?.watchedMovieCount, 3);
-    expect(adapter.hitCount('GET', '/status/watch-trend'), 2);
-    expect(adapter.requests.last.uri.queryParameters['range'], '7d');
+      var state = container.read(overviewSystemInfoProvider);
+      expect(state.watchTrendRange, WatchTrendRange.last7Days);
+      expect(state.watchTrend?.watchedMovieCount, 3);
+      expect(adapter.hitCount('GET', '/status/watch-trend'), 2);
+      expect(adapter.requests.last.uri.queryParameters['range'], '7d');
 
-    await notifier().setWatchTrendRange(WatchTrendRange.last7Days);
-    expect(adapter.hitCount('GET', '/status/watch-trend'), 2);
-    state = container.read(overviewSystemInfoProvider);
-    expect(state.watchTrendRange, WatchTrendRange.last7Days);
-  });
+      await notifier().setWatchTrendRange(WatchTrendRange.last7Days);
+      expect(adapter.hitCount('GET', '/status/watch-trend'), 2);
+      state = container.read(overviewSystemInfoProvider);
+      expect(state.watchTrendRange, WatchTrendRange.last7Days);
+    },
+  );
 
   test('refresh resets loading flags and clears previous error', () async {
     adapter.enqueueJson(
@@ -221,7 +225,7 @@ void main() {
       },
     });
 
-    expect(imageSearchIndexSpaceLabel(status), '重建中');
+    expect(imageSearchIndexSpaceLabel(status, AppLocalizationsZh()), '重建中');
     expect(imageSearchIndexSpaceTone(status), AppTextTone.info);
     expect(pendingIndexCount(null), 0);
   });
@@ -246,9 +250,7 @@ void _enqueueInsights(FakeHttpClientAdapter adapter) {
   adapter.enqueueJson(
     method: 'GET',
     path: '/status/insights',
-    body: <String, dynamic>{
-      'media_libraries': <dynamic>[],
-    },
+    body: <String, dynamic>{'media_libraries': <dynamic>[]},
   );
 }
 
@@ -268,4 +270,3 @@ void _enqueueWatchTrend(
     },
   );
 }
-

@@ -5,6 +5,7 @@ import 'package:sakuramedia/features/overview/presentation/widgets/overview_card
 import 'package:sakuramedia/features/overview/presentation/widgets/overview_card_states.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
 import 'package:sakuramedia/features/status/presentation/status_placeholders.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
@@ -31,7 +32,7 @@ class StorageUsageCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppContentCard(
       key: const Key('overview-storage-usage-card'),
-      title: '存储分布',
+      title: AppLocalizations.of(context).overviewStorageDistribution,
       titleStyle: resolveAppTextStyle(
         context,
         size: AppTextSize.s16,
@@ -63,7 +64,7 @@ class StorageUsageCard extends StatelessWidget {
     final items = libraries ?? const <MediaLibraryUsageDto>[];
     if (items.isEmpty) {
       return Text(
-        '暂无媒体库',
+        AppLocalizations.of(context).overviewNoMediaLibraries,
         style: resolveAppTextStyle(
           context,
           size: AppTextSize.s12,
@@ -115,6 +116,7 @@ class _StorageUsageRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final breakdown = this.breakdown;
+    final l10n = AppLocalizations.of(context);
     return Column(
       key: Key('overview-storage-library-${library.libraryId}'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -139,9 +141,11 @@ class _StorageUsageRow extends StatelessWidget {
             SizedBox(width: context.appSpacing.md),
             Text(
               breakdown == null
-                  ? '${formatCount(library.fileCount)} 个文件 · '
-                        '${formatFileSize(library.totalSizeBytes)}'
-                  : '${formatCount(library.fileCount)} 个文件',
+                  ? l10n.overviewFilesAndSize(
+                      formatCount(library.fileCount),
+                      formatFileSize(library.totalSizeBytes),
+                    )
+                  : l10n.overviewFiles(formatCount(library.fileCount)),
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s12,
@@ -257,6 +261,7 @@ class _StorageUsageLegend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Wrap(
       spacing: context.appSpacing.md,
       runSpacing: context.appSpacing.xs,
@@ -267,12 +272,12 @@ class _StorageUsageLegend extends StatelessWidget {
           color: Theme.of(context).colorScheme.primary,
         ),
         _StorageLegendItem(
-          label: '其他',
+          label: l10n.overviewOther,
           bytes: breakdown.otherBytes,
           color: context.appTextPalette.muted,
         ),
         _StorageLegendItem(
-          label: '空闲',
+          label: l10n.overviewFree,
           bytes: breakdown.freeBytes,
           color: context.appColors.borderSubtle,
         ),

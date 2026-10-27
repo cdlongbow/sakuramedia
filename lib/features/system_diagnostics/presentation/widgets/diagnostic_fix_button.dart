@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/configuration_tab_request_provider.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_fix_target.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -18,7 +19,7 @@ class DiagnosticFixButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AppButton(
-      label: '去修复',
+      label: AppLocalizations.of(context).diagnosticFixAction,
       variant: AppButtonVariant.secondary,
       size: AppButtonSize.small,
       trailingIcon: const Icon(Icons.arrow_forward),

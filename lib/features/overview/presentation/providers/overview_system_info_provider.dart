@@ -1,3 +1,4 @@
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/features/overview/presentation/providers/overview_system_info_state.dart';
@@ -61,7 +62,11 @@ class OverviewSystemInfo extends _$OverviewSystemInfo {
       state = state.copyWith(status: nextStatus, statusError: null);
     } catch (_) {
       if (_disposed) return;
-      state = state.copyWith(statusError: '媒体资产加载失败，请稍后重试');
+      state = state.copyWith(
+        statusError: ref
+            .read(appLocalizationsProvider)
+            .overviewStatusLoadFailed,
+      );
     } finally {
       if (!_disposed) {
         state = state.copyWith(isLoadingStatus: false);
@@ -76,7 +81,11 @@ class OverviewSystemInfo extends _$OverviewSystemInfo {
       state = state.copyWith(insights: next, insightsError: null);
     } catch (_) {
       if (_disposed) return;
-      state = state.copyWith(insightsError: '统计数据加载失败');
+      state = state.copyWith(
+        insightsError: ref
+            .read(appLocalizationsProvider)
+            .overviewInsightsLoadFailed,
+      );
     } finally {
       if (!_disposed) {
         state = state.copyWith(isLoadingInsights: false);
@@ -93,7 +102,11 @@ class OverviewSystemInfo extends _$OverviewSystemInfo {
       state = state.copyWith(watchTrend: next, watchTrendError: null);
     } catch (_) {
       if (_disposed || version != _watchTrendRequestVersion) return;
-      state = state.copyWith(watchTrendError: '观看趋势加载失败');
+      state = state.copyWith(
+        watchTrendError: ref
+            .read(appLocalizationsProvider)
+            .overviewWatchTrendLoadFailed,
+      );
     } finally {
       if (!_disposed && version == _watchTrendRequestVersion) {
         state = state.copyWith(isLoadingWatchTrend: false);

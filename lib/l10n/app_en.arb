@@ -3884,7 +3884,6 @@
   "widgetMomentActionMovie": "Movie",
   "widgetMomentActionAddToCollection": "Add to collection",
   "widgetMomentActionDelete": "Delete",
-  "widgetPlaylistSortDefault": "Recently active",
   "widgetRankingSortDefault": "Default (rank)",
   "widgetVideoSortManual": "Manual order",
   "widgetTasteMatchedMovies": "{count, plural, =1{1 movie linked} other{{count} movies linked}}",

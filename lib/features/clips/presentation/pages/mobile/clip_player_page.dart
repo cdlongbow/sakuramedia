@@ -16,6 +16,7 @@ import 'package:sakuramedia/widgets/base/media/video/player_app_fullscreen.dart'
 import 'package:sakuramedia/widgets/base/media/video/themed_video_player.dart';
 
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 /// 移动端单切片全屏横屏播放页：进入锁定横屏沉浸式、退出恢复原方向。
 ///
@@ -92,11 +93,14 @@ class _MobileClipPlayerPageState extends ConsumerState<MobileClipPlayerPage> {
   }
 
   Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (!_hasResolvedUrl) {
       return wrapWithMoviePlayerBackButton(
         onBackPressed: _handleBack,
         backButtonKey: const Key('mobile-clip-player-back-button'),
-        child: const Center(child: AppEmptyState(message: '无效的播放地址')),
+        child: Center(
+          child: AppEmptyState(message: l10n.clipInvalidPlaybackUrl),
+        ),
       );
     }
     final controller = _controller;
@@ -121,7 +125,9 @@ class _MobileClipPlayerPageState extends ConsumerState<MobileClipPlayerPage> {
       videoKey: const Key('mobile-clip-player-video'),
       topControls: [
         ...buildMoviePlayerTopControls(
-          movieNumber: title.isEmpty ? '切片' : title,
+          movieNumber: title.isEmpty
+              ? AppLocalizations.of(context).clipFallbackTitle
+              : title,
           onBackPressed: _handleBack,
         ),
         const Spacer(),

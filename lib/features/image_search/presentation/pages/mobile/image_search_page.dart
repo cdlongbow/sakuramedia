@@ -13,6 +13,7 @@ import 'package:sakuramedia/features/image_search/presentation/pages/shared/imag
 import 'package:sakuramedia/features/image_search/presentation/providers/image_search_draft_store_provider.dart';
 import 'package:sakuramedia/features/image_search/presentation/providers/image_search_state.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 
@@ -65,7 +66,14 @@ class MobileImageSearchPage extends StatelessWidget {
       return true;
     } catch (error) {
       if (context.mounted) {
-        showToast(apiErrorMessage(error, fallback: '读取结果图片失败，请稍后重试'));
+        final l10n = AppLocalizations.of(context);
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: l10n.imageSearchReadResultImageFailed,
+            l10n: l10n,
+          ),
+        );
       }
       return false;
     }
@@ -96,7 +104,7 @@ class MobileImageSearchPage extends StatelessWidget {
       currentMovieNumber: currentMovieNumber,
       initialCurrentMovieScope: initialCurrentMovieScope,
       initialInputKind: initialInputKind,
-      imagePicker: pickMobileImageSearchFile,
+      imagePicker: (l10n) => pickMobileImageSearchFile(l10n: l10n),
       onSearchSimilar: _searchSimilar,
       onOpenPlayer: _openPlayer,
       onOpenMovieDetail: _openMovieDetail,

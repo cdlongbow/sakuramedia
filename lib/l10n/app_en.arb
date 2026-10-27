@@ -2789,5 +2789,152 @@
       }
     }
   },
-  "downloadTaskAlreadyExists": "Download task already exists"
+  "downloadTaskAlreadyExists": "Download task already exists",
+  "clipCollectionsTitle": "Clip collections",
+  "clipCollectionsEmptyHint": "No collections yet. Tap “New” to turn clips you like into a playlist.",
+  "clipCollectionsLoadFailedFallback": "Collections are temporarily unavailable. Please try again later.",
+  "clipCollectionCreated": "Collection created",
+  "clipEmpty": "No clips yet. Select a range in the player to create one.",
+  "clipSortLatest": "Latest",
+  "clipSortEarliest": "Earliest",
+  "clipEnterSelection": "Select",
+  "clipSelectionCount": "{count} selected",
+  "@clipSelectionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clipSelectAll": "Select all",
+  "clipDeselectAll": "Deselect all",
+  "clipAddToCollection": "Add to collection",
+  "clipRenamed": "Renamed",
+  "clipRenameFailed": "Rename failed. Please try again.",
+  "clipDeleteTitle": "Delete clip",
+  "clipDeleteMessage": "Delete “{title}”? The clip file will be deleted as well. This cannot be undone.",
+  "@clipDeleteMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "clipDeleteUnnamedMessage": "Delete this clip? The clip file will be deleted as well. This cannot be undone.",
+  "clipBatchDeleteMessage": "{count, plural, =1{Delete the selected clip? Its file will be deleted as well. This cannot be undone.} other{Delete the {count} selected clips? Their files will be deleted as well. This cannot be undone.}}",
+  "@clipBatchDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clipDeleteFailed": "Delete failed. Please try again.",
+  "clipDeleted": "Clip deleted",
+  "clipFallbackTitle": "Clip",
+  "clipInvalidPlaybackUrl": "Invalid playback URL",
+  "clipCreateTitle": "New clip",
+  "clipCreateRangeLabel": "{start} – {end} · Duration {duration}",
+  "@clipCreateRangeLabel": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "clipCreateTitleHint": "Clip title (optional)",
+  "clipCreateNotice": "The server creates the clip synchronously; longer ranges may take a while.",
+  "clipCreateAction": "Create",
+  "clipCreateTimeout": "This clip is taking a while. Check “My clips” later.",
+  "clipCreateRangeTooLong": "Range is too long (15 minutes max)",
+  "clipCreateInvalidRange": "Choose different start and end points",
+  "clipCreateFailed": "Clipping failed. Please try again.",
+  "clipCreateThumbnailExpired": "The thumbnail has expired. Please select again.",
+  "clipCreateFailedFallback": "Failed to create the clip. Please try again.",
+  "clipRenameTitle": "Rename clip",
+  "clipRenameHint": "Clip title (leave empty to clear)",
+  "imageSearchCapabilitiesLoadFailed": "Failed to load feature status",
+  "imageSearchCapabilitiesLoadFailedMessage": "Check the server connection and try again.",
+  "imageSearchDisabledTitle": "Image and text search are disabled",
+  "imageSearchDisabledMessageMobile": "An administrator must enable it on the server and restart the backend container.",
+  "imageSearchDisabledMessageDesktop": "Enable it in “System settings → Advanced → Image search / Similarity”, then restart the backend container.",
+  "imageSearchRecheck": "Check again",
+  "imageSearchModeImage": "Image",
+  "imageSearchModeText": "Text",
+  "imageSearchAdvancedFilter": "Advanced filters",
+  "imageSearchFilterDisabledHint": "Available after a search",
+  "imageSearchPickImage": "Choose image",
+  "imageSearchChangeImage": "Change",
+  "imageSearchCollapsePreview": "Collapse preview",
+  "imageSearchExpandPreview": "Expand preview",
+  "imageSearchPreviewTitle": "Image preview",
+  "imageSearchTextHint": "e.g. long hair, white dress, seaside",
+  "imageSearchSearchAction": "Search",
+  "imageSearchEmpty": "No matching results",
+  "imageSearchAutoLoadPaused": "Auto-loading paused",
+  "imageSearchContinueLoading": "Load more",
+  "imageSearchLoadMoreFailed": "Failed to load more. Please try again later.",
+  "imageSearchPickImageFailed": "Failed to choose the image",
+  "imageSearchTextRequired": "Enter a text description",
+  "imageSearchReadResultImageFailed": "Failed to read the result image. Please try again later.",
+  "imageSearchPickUnreadable": "Could not read the image. Try another one.",
+  "imageSearchPickerUnavailable": "The image picker is not ready. Fully restart the app and try again.",
+  "imageSearchPickerOpenFailed": "Failed to open the image picker. Please try again later.",
+  "imageSearchSimilarAction": "Similar images",
+  "imageSearchSaveToLocal": "Save to device",
+  "imageSearchAddMark": "Add mark",
+  "imageSearchRemoveMark": "Remove mark",
+  "imageSearchAddToCollection": "Add to collection",
+  "imageSearchPlay": "Play",
+  "imageSearchMovieDetail": "Movie details",
+  "imageSearchImageSaved": "Image saved",
+  "imageSearchSaveFailed": "Failed to save. Please try again later.",
+  "imageSearchMarkAdded": "Mark added",
+  "imageSearchMarkRemoved": "Mark removed",
+  "imageSearchMarkUpdateFailed": "Failed to update the mark",
+  "imageSearchSimilarityLabel": "Match {score}",
+  "@imageSearchSimilarityLabel": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "imageSearchMaterialTitle": "Search material",
+  "imageSearchMovieScopeTitle": "Movie scope",
+  "imageSearchActorScopeTitle": "Actor scope",
+  "imageSearchSelectSubscribedActors": "Select subscribed actors",
+  "imageSearchSelectedActorsCount": "{count} selected",
+  "@imageSearchSelectedActorsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "imageSearchSelectAtLeastOneActor": "Select at least one actor",
+  "imageSearchReset": "Reset",
+  "imageSearchApplyAndSearch": "Apply and search",
+  "imageSearchActorFilterNone": "No filter",
+  "imageSearchActorFilterInclude": "Only selected",
+  "imageSearchActorFilterExclude": "Exclude selected",
+  "imageSearchMovieScopeAll": "All",
+  "imageSearchMovieScopeOnlyCurrent": "Current movie only",
+  "imageSearchMovieScopeExcludeCurrent": "Exclude current movie",
+  "imageSearchTargetThumbnail": "Thumbnail",
+  "imageSearchTargetPlot": "Plot image",
+  "imageSearchSubscribedActorsLoadFailed": "Failed to load subscribed actors",
+  "imageSearchNoMoviesForActors": "None of the selected actors have movies available for filtering",
+  "imageSearchImageSearchFailed": "Image search failed. Please try again later.",
+  "imageSearchTextSearchFailed": "Text search failed. Please try again later.",
+  "imageSearchIndexRebuildRequired": "The embedding space changed. Rebuild the image search index first.",
+  "imageSearchNoSubscribedActors": "No subscribed actors",
+  "imageSearchClose": "Close",
+  "imageSearchClearSelection": "Clear selection"
 }

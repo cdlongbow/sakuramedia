@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
@@ -70,6 +71,7 @@ class _ImageSearchActorSelectorBodyState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
     final actorList = Scrollbar(
       controller: _scrollController,
@@ -132,7 +134,7 @@ class _ImageSearchActorSelectorBodyState
     final body = widget.actors.isEmpty
         ? Center(
             child: Text(
-              '暂无已订阅女优',
+              l10n.imageSearchNoSubscribedActors,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s14,
@@ -150,7 +152,7 @@ class _ImageSearchActorSelectorBodyState
           children: [
             Expanded(
               child: Text(
-                '选择已订阅女优',
+                l10n.imageSearchSelectSubscribedActors,
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s16,
@@ -160,7 +162,7 @@ class _ImageSearchActorSelectorBodyState
             ),
             AppIconButton(
               key: const Key('image-search-actor-close-button'),
-              tooltip: '关闭',
+              tooltip: l10n.imageSearchClose,
               onPressed: widget.onClose,
               icon: const Icon(Icons.close_rounded),
             ),
@@ -184,7 +186,7 @@ class _ImageSearchActorSelectorBodyState
         Divider(color: context.appColors.divider, height: spacing.lg),
         AppTextButton(
           key: const Key('image-search-actor-clear-button'),
-          label: '清空已选',
+          label: l10n.imageSearchClearSelection,
           icon: const Icon(Icons.clear_all_rounded),
           onPressed: _selectedActorIds.isEmpty ? null : _clearSelection,
         ),

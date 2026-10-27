@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -19,16 +20,15 @@ Future<String?> showRenameClipDialog(
     case RenameClipDialogPresentation.dialog:
       return showDialog<String>(
         context: context,
-        builder:
-            (dialogContext) => RenameClipDialog(initialTitle: initialTitle),
+        builder: (dialogContext) =>
+            RenameClipDialog(initialTitle: initialTitle),
       );
     case RenameClipDialogPresentation.bottomDrawer:
       return showAppBottomDrawer<String>(
         context: context,
         drawerKey: const Key('rename-clip-bottom-sheet'),
         maxHeightFactor: 0.5,
-        builder:
-            (sheetContext) => RenameClipDialog(
+        builder: (sheetContext) => RenameClipDialog(
               initialTitle: initialTitle,
               presentation: RenameClipDialogPresentation.bottomDrawer,
             ),
@@ -81,13 +81,14 @@ class _RenameClipDialogState extends State<RenameClipDialog> {
   }
 
   Widget _buildContent(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '重命名切片',
+          l10n.clipRenameTitle,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s16,
@@ -99,7 +100,7 @@ class _RenameClipDialogState extends State<RenameClipDialog> {
         AppTextField(
           fieldKey: const Key('rename-clip-title-field'),
           controller: _titleController,
-          hintText: '切片标题（可留空）',
+          hintText: l10n.clipRenameHint,
           textInputAction: TextInputAction.done,
           onFieldSubmitted: (_) => _submit(),
         ),
@@ -108,7 +109,7 @@ class _RenameClipDialogState extends State<RenameClipDialog> {
           children: [
             Expanded(
               child: AppButton(
-                label: '取消',
+                label: l10n.commonCancel,
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ),
@@ -116,7 +117,7 @@ class _RenameClipDialogState extends State<RenameClipDialog> {
             Expanded(
               child: AppButton(
                 key: const Key('rename-clip-submit-button'),
-                label: '保存',
+                label: l10n.commonSave,
                 variant: AppButtonVariant.primary,
                 onPressed: _submit,
               ),

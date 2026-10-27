@@ -2789,5 +2789,152 @@
       }
     }
   },
-  "downloadTaskAlreadyExists": "下载任务已存在"
+  "downloadTaskAlreadyExists": "下载任务已存在",
+  "clipCollectionsTitle": "切片合集",
+  "clipCollectionsEmptyHint": "还没有合集，点「新建」把喜欢的切片攒成一个连播合集吧",
+  "clipCollectionsLoadFailedFallback": "合集暂时无法加载，请稍后重试",
+  "clipCollectionCreated": "已创建合集",
+  "clipEmpty": "还没有切片，去播放器圈选生成吧",
+  "clipSortLatest": "最新",
+  "clipSortEarliest": "最早",
+  "clipEnterSelection": "选择",
+  "clipSelectionCount": "已选 {count} 个",
+  "@clipSelectionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clipSelectAll": "全选",
+  "clipDeselectAll": "取消全选",
+  "clipAddToCollection": "加入合集",
+  "clipRenamed": "已重命名",
+  "clipRenameFailed": "重命名失败，请重试",
+  "clipDeleteTitle": "删除切片",
+  "clipDeleteMessage": "确认删除“{title}”？切片文件会被一并删除，该操作不可恢复。",
+  "@clipDeleteMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "clipDeleteUnnamedMessage": "确认删除该切片？切片文件会被一并删除，该操作不可恢复。",
+  "clipBatchDeleteMessage": "确认删除选中的 {count} 个切片？切片文件会被一并删除，该操作不可恢复。",
+  "@clipBatchDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clipDeleteFailed": "删除失败，请重试",
+  "clipDeleted": "已删除切片",
+  "clipFallbackTitle": "切片",
+  "clipInvalidPlaybackUrl": "无效的播放地址",
+  "clipCreateTitle": "新建切片",
+  "clipCreateRangeLabel": "{start} – {end} · 时长 {duration}",
+  "@clipCreateRangeLabel": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "clipCreateTitleHint": "切片标题（可选）",
+  "clipCreateNotice": "切片由服务器同步生成，较长区间可能需要等待。",
+  "clipCreateAction": "创建",
+  "clipCreateTimeout": "切片耗时较长，请稍后在「我的切片」查看",
+  "clipCreateRangeTooLong": "区间过长（最长 15 分钟）",
+  "clipCreateInvalidRange": "请选择不同的起止点",
+  "clipCreateFailed": "切片失败，请重试",
+  "clipCreateThumbnailExpired": "缩略图已失效，请重新选择",
+  "clipCreateFailedFallback": "创建切片失败，请重试",
+  "clipRenameTitle": "重命名切片",
+  "clipRenameHint": "切片标题（可留空）",
+  "imageSearchCapabilitiesLoadFailed": "功能状态加载失败",
+  "imageSearchCapabilitiesLoadFailedMessage": "请检查服务器连接后重试",
+  "imageSearchDisabledTitle": "图片与文字搜图未启用",
+  "imageSearchDisabledMessageMobile": "需要管理员在服务器端开启并重启后端容器。",
+  "imageSearchDisabledMessageDesktop": "可在「系统设置 → 高级设置 → 图搜 / 相似度」中开启，保存后重启后端容器。",
+  "imageSearchRecheck": "重新检测",
+  "imageSearchModeImage": "图片",
+  "imageSearchModeText": "文字",
+  "imageSearchAdvancedFilter": "高级筛选",
+  "imageSearchFilterDisabledHint": "搜索完成后可筛选",
+  "imageSearchPickImage": "选择图片",
+  "imageSearchChangeImage": "更换",
+  "imageSearchCollapsePreview": "收起大图",
+  "imageSearchExpandPreview": "展示大图",
+  "imageSearchPreviewTitle": "图片预览",
+  "imageSearchTextHint": "例如：长发、白色连衣裙、海边",
+  "imageSearchSearchAction": "搜图",
+  "imageSearchEmpty": "暂无匹配结果",
+  "imageSearchAutoLoadPaused": "已暂停自动加载",
+  "imageSearchContinueLoading": "继续加载",
+  "imageSearchLoadMoreFailed": "加载更多失败，请稍后重试",
+  "imageSearchPickImageFailed": "选择图片失败",
+  "imageSearchTextRequired": "请输入文字描述",
+  "imageSearchReadResultImageFailed": "读取结果图片失败，请稍后重试",
+  "imageSearchPickUnreadable": "无法读取所选图片，请换一张再试",
+  "imageSearchPickerUnavailable": "图片选择器尚未加载，请完整重启应用后再试",
+  "imageSearchPickerOpenFailed": "打开图片选择器失败，请稍后再试",
+  "imageSearchSimilarAction": "相似图片",
+  "imageSearchSaveToLocal": "保存到本地",
+  "imageSearchAddMark": "添加标记",
+  "imageSearchRemoveMark": "删除标记",
+  "imageSearchAddToCollection": "加入合集",
+  "imageSearchPlay": "播放",
+  "imageSearchMovieDetail": "影片详情",
+  "imageSearchImageSaved": "图片已保存",
+  "imageSearchSaveFailed": "保存失败，请稍后重试",
+  "imageSearchMarkAdded": "已添加标记",
+  "imageSearchMarkRemoved": "已删除标记",
+  "imageSearchMarkUpdateFailed": "更新标记失败",
+  "imageSearchSimilarityLabel": "相似 {score}",
+  "@imageSearchSimilarityLabel": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "imageSearchMaterialTitle": "搜索素材",
+  "imageSearchMovieScopeTitle": "影片范围",
+  "imageSearchActorScopeTitle": "女优范围",
+  "imageSearchSelectSubscribedActors": "选择已订阅女优",
+  "imageSearchSelectedActorsCount": "已选 {count} 位",
+  "@imageSearchSelectedActorsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "imageSearchSelectAtLeastOneActor": "请选择至少一位女优",
+  "imageSearchReset": "重置",
+  "imageSearchApplyAndSearch": "应用并搜索",
+  "imageSearchActorFilterNone": "不过滤",
+  "imageSearchActorFilterInclude": "仅包含所选",
+  "imageSearchActorFilterExclude": "排除所选",
+  "imageSearchMovieScopeAll": "全部",
+  "imageSearchMovieScopeOnlyCurrent": "仅当前影片",
+  "imageSearchMovieScopeExcludeCurrent": "排除当前影片",
+  "imageSearchTargetThumbnail": "缩略图",
+  "imageSearchTargetPlot": "剧情图",
+  "imageSearchSubscribedActorsLoadFailed": "加载已订阅女优失败",
+  "imageSearchNoMoviesForActors": "所选女优下没有可用于筛选的影片",
+  "imageSearchImageSearchFailed": "以图搜图失败，请稍后重试",
+  "imageSearchTextSearchFailed": "文字搜索失败，请稍后重试",
+  "imageSearchIndexRebuildRequired": "嵌入空间已变更，请先重建图搜索索引",
+  "imageSearchNoSubscribedActors": "暂无已订阅女优",
+  "imageSearchClose": "关闭",
+  "imageSearchClearSelection": "清空已选"
 }

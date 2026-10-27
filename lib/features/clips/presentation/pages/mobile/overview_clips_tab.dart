@@ -25,6 +25,7 @@ import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.
 import 'package:sakuramedia/features/shared/presentation/providers/batch_operation_submission_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -186,6 +187,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     BuildContext context,
     AsyncValue<List<ClipCollectionDto>> collectionsAsync,
   ) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
     final collections = collectionsAsync.value ?? const <ClipCollectionDto>[];
     return Column(
@@ -195,7 +197,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
         Row(
           children: [
             Text(
-              '切片合集',
+              l10n.clipCollectionsTitle,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s14,
@@ -206,7 +208,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
             const Spacer(),
             AppTextButton(
               key: const Key('mobile-clips-create-collection-button'),
-              label: '新建',
+              label: l10n.clipCollectionCreate,
               size: AppTextButtonSize.small,
               onPressed: _createCollection,
             ),
@@ -214,7 +216,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
               SizedBox(width: spacing.xs),
               AppTextButton(
                 key: const Key('mobile-clips-view-all-collections-button'),
-                label: '查看全部',
+                label: l10n.clipCollectionViewAll,
                 size: AppTextButtonSize.small,
                 onPressed: _viewAllCollections,
               ),
@@ -233,12 +235,14 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     AsyncValue<List<ClipCollectionDto>> collectionsAsync,
     List<ClipCollectionDto> collections,
   ) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
     if (collectionsAsync.hasError && collections.isEmpty) {
       return CollectionHintBox(
         message: apiErrorMessage(
           collectionsAsync.error!,
-          fallback: '合集暂时无法加载，请稍后重试',
+          fallback: l10n.clipCollectionsLoadFailedFallback,
+          l10n: l10n,
         ),
       );
     }
@@ -247,7 +251,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
         ? clipCollectionPlaceholders(count: 4)
         : collections;
     if (display.isEmpty) {
-      return const CollectionHintBox(message: '还没有合集，点「新建」把喜欢的切片攒成一个连播合集吧');
+      return CollectionHintBox(message: l10n.clipCollectionsEmptyHint);
     }
     return AppSkeletonizer(
       enabled: isLoading,
@@ -283,6 +287,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
   // ----------------------------------------------------------- 切片区
 
   Widget _buildClipsHeader(BuildContext context, List<MediaClipDto> clips) {
+    final l10n = AppLocalizations.of(context);
     final hasClips = clips.isNotEmpty;
     final summary = ref.watch(
       clipsOverviewProvider.select(
@@ -312,21 +317,21 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
               _buildSortAction(
                 context,
                 actionKey: const Key('mobile-clips-sort-latest'),
-                label: '最新',
+                label: l10n.clipSortLatest,
                 sort: 'created_at:desc',
                 currentSort: currentSort,
               ),
               _buildSortAction(
                 context,
                 actionKey: const Key('mobile-clips-sort-earliest'),
-                label: '最早',
+                label: l10n.clipSortEarliest,
                 sort: 'created_at:asc',
                 currentSort: currentSort,
               ),
               if (hasClips)
                 AppTextButton(
                   key: const Key('mobile-clips-enter-selection-button'),
-                  label: '选择',
+                  label: l10n.clipEnterSelection,
                   size: AppTextButtonSize.xSmall,
                   icon: const Icon(Icons.check_circle_outline, size: 14),
                   onPressed: enterSelection,
@@ -368,6 +373,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     AsyncValue<Object?> clipsAsync,
     List<MediaClipDto> clips,
   ) {
+    final l10n = AppLocalizations.of(context);
     final filterUpdate = ref
         .read(clipsOverviewProvider)
         .value
@@ -384,17 +390,18 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
           child: AppEmptyState(
             message: apiErrorMessage(
               clipsAsync.error!,
-              fallback: '切片暂时无法加载，请稍后重试',
+              fallback: l10n.errorClipLoadFailed,
+              l10n: l10n,
             ),
           ),
         ),
       );
     }
     if (!isLoading && clips.isEmpty) {
-      return const SliverToBoxAdapter(
+      return SliverToBoxAdapter(
         child: SizedBox(
           height: 200,
-          child: AppEmptyState(message: '还没有切片，去播放器圈选生成吧'),
+          child: AppEmptyState(message: l10n.clipEmpty),
         ),
       );
     }
@@ -431,16 +438,17 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
   /// 选择模式下的顶栏：退出 / 计数 / 全选。批量动作下沉到贴底的
   /// [AppSelectionBottomBar]；与 [AppListHeader] 等高，原地替换不跳版。
   Widget _buildSelectionHeader(BuildContext context, List<MediaClipDto> clips) {
+    final l10n = AppLocalizations.of(context);
     final clipIds = clips.map((c) => c.clipId);
     final allSelected = isAllSelected(clipIds);
     return AppListHeader.selection(
-      selectionLabel: '已选 $selectedCount 个',
+      selectionLabel: l10n.clipSelectionCount(selectedCount),
       selectionExitButtonKey: const Key('mobile-clips-exit-selection-button'),
       onExitSelection: exitSelection,
       actionSlots: [
         AppButton(
           key: const Key('mobile-clips-select-all-button'),
-          label: allSelected ? '取消全选' : '全选',
+          label: allSelected ? l10n.clipDeselectAll : l10n.clipSelectAll,
           variant: AppButtonVariant.ghost,
           size: AppButtonSize.xSmall,
           isSelected: allSelected,
@@ -451,6 +459,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
   }
 
   Widget _buildBatchBar(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final hasSelection = selectedCount > 0;
     final submitting = watchBatchOperationSubmitting(ref, const [
       BatchOperationType.clipCollectionAdd,
@@ -461,13 +470,13 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
       actions: [
         AppButton(
           key: const Key('mobile-clips-batch-add-collection-button'),
-          label: '加入合集',
+          label: l10n.clipAddToCollection,
           variant: AppButtonVariant.secondary,
           onPressed: hasSelection && !submitting ? _batchAddToCollection : null,
         ),
         AppButton(
           key: const Key('mobile-clips-batch-delete-button'),
-          label: '删除',
+          label: l10n.commonDelete,
           variant: AppButtonVariant.danger,
           onPressed: hasSelection && !submitting ? _batchDelete : null,
         ),
@@ -505,6 +514,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
   }
 
   Future<void> _renameClip(MediaClipDto clip) async {
+    final l10n = AppLocalizations.of(context);
     final newTitle = await showRenameClipDialog(
       context,
       initialTitle: clip.title,
@@ -519,32 +529,37 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
           .updateClipTitle(clipId: clip.clipId, title: newTitle);
       ref.read(clipsOverviewProvider.notifier).replaceClip(updated);
       if (mounted) {
-        showToast('已重命名');
+        showToast(l10n.clipRenamed);
       }
     } catch (error) {
-      showToast(apiErrorMessage(error, fallback: '重命名失败，请重试'));
+      showToast(
+        apiErrorMessage(error, fallback: l10n.clipRenameFailed, l10n: l10n),
+      );
     }
   }
 
   Future<void> _deleteClip(MediaClipDto clip) async {
-    final title = clip.title.trim().isEmpty ? '该切片' : '“${clip.title.trim()}”';
+    final l10n = AppLocalizations.of(context);
+    final trimmedTitle = clip.title.trim();
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除切片',
-      message: '确认删除$title？切片文件会被一并删除，该操作不可恢复。',
-      confirmLabel: '删除',
+      title: l10n.clipDeleteTitle,
+      message: trimmedTitle.isEmpty
+          ? l10n.clipDeleteUnnamedMessage
+          : l10n.clipDeleteMessage(trimmedTitle),
+      confirmLabel: l10n.commonDelete,
       danger: true,
       dialogKey: const Key('mobile-clip-delete-drawer'),
       confirmKey: const Key('mobile-clip-delete-confirm-button'),
       onConfirm: () =>
           ref.read(clipsApiProvider).deleteClip(clipId: clip.clipId),
-      failureFallback: '删除失败，请重试',
+      failureFallback: l10n.clipDeleteFailed,
     );
     if (!mounted || !confirmed) {
       return;
     }
     ref.read(clipMutationEventsProvider.notifier).reportDeleted(clip.clipId);
-    showToast('已删除切片');
+    showToast(AppLocalizations.of(context).clipDeleted);
   }
 
   Future<void> _addToCollection(MediaClipDto clip) async {
@@ -572,7 +587,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     ref
         .read(clipCollectionsOverviewProvider.notifier)
         .insertCollection(created);
-    showToast('已创建合集');
+    showToast(AppLocalizations.of(context).clipCollectionCreated);
   }
 
   void _viewAllCollections() {
@@ -613,10 +628,12 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     }
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除切片',
-      message: '确认删除选中的 ${selected.length} 个切片？切片文件会被一并删除，该操作不可恢复。',
+      title: AppLocalizations.of(context).clipDeleteTitle,
+      message: AppLocalizations.of(
+        context,
+      ).clipBatchDeleteMessage(selected.length),
       danger: true,
-      confirmLabel: '删除',
+      confirmLabel: AppLocalizations.of(context).commonDelete,
       dialogKey: const Key('mobile-clips-batch-delete-drawer'),
       confirmKey: const Key('mobile-clips-batch-delete-confirm-button'),
     );

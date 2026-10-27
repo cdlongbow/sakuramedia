@@ -373,6 +373,7 @@ class _MoviePlaylistPickerDialogState
       }
     } catch (error) {
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
       setState(() {
         if (isSelected) {
           _selectedPlaylistIds.add(playlist.id);
@@ -384,8 +385,9 @@ class _MoviePlaylistPickerDialogState
         apiErrorMessage(
           error,
           fallback: isSelected
-              ? AppLocalizations.of(context).playlistRemoveFailed
-              : AppLocalizations.of(context).playlistAddFailed,
+              ? l10n.playlistRemoveFailed
+              : l10n.playlistAddFailed,
+          l10n: l10n,
         ),
       );
     } finally {

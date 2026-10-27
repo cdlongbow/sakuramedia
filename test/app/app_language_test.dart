@@ -10,6 +10,7 @@ void main() {
     expect(AppLanguage.tryFromTag('en-US'), AppLanguage.en);
     expect(AppLanguage.tryFromTag('EN-gb'), AppLanguage.en);
     expect(AppLanguage.tryFromTag('zh-TW'), isNull);
+    expect(AppLanguage.tryFromTag('zh-Hant'), isNull);
     expect(AppLanguage.tryFromTag('fr'), isNull);
     expect(AppLanguage.tryFromTag(null), isNull);
   });

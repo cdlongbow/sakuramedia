@@ -99,9 +99,14 @@ class _QuickPlayDialogState extends State<QuickPlayDialog> {
       if (!mounted) {
         return;
       }
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _loading = false;
-        _errorMessage = apiErrorMessage(error, fallback: _errorFallback);
+        _errorMessage = apiErrorMessage(
+          error,
+          fallback: _errorFallback,
+          l10n: l10n,
+        );
       });
     }
   }
@@ -121,8 +126,13 @@ class _QuickPlayDialogState extends State<QuickPlayDialog> {
     if (!mounted) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     setState(() {
-      _errorMessage = apiErrorMessage(error, fallback: _errorFallback);
+      _errorMessage = apiErrorMessage(
+        error,
+        fallback: _errorFallback,
+        l10n: l10n,
+      );
     });
   }
 

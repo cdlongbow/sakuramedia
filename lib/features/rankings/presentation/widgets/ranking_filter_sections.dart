@@ -114,7 +114,7 @@ class RankingFilterSectionGroup extends StatelessWidget {
             selectedValue: selectedPeriod,
             isLoading: isBoardLoading,
             optionKeyBuilder: (value) => Key('rankings-filter-period-$value'),
-            labelBuilder: (value) => rankingPeriodLabel(value, l10n: l10n),
+            labelBuilder: (value) => rankingPeriodLabel(value, l10n),
             onSelected: onPeriodChanged,
           ),
         ),

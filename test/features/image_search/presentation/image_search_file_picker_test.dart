@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +32,7 @@ void main() {
       bytes: Uint8List.fromList([1, 2, 3]),
     );
 
-    final result = await pickMobileImageSearchFile();
+    final result = await pickMobileImageSearchFile(l10n: AppLocalizationsZh());
 
     expect(result!.bytes, [1, 2, 3]);
     expect(result.fileName, 'photo.png');
@@ -43,7 +44,7 @@ void main() {
     recordingFilePicker.selectedFile = _SelectedFile(bytes: Uint8List(0));
 
     await expectLater(
-      pickMobileImageSearchFile(),
+      pickMobileImageSearchFile(l10n: AppLocalizationsZh()),
       throwsA(isA<ImageSearchFilePickerException>()),
     );
   });
@@ -53,12 +54,12 @@ void main() {
     recordingFilePicker.selectedFile = _SelectedFile();
 
     await expectLater(
-      pickMobileImageSearchFile(),
+      pickMobileImageSearchFile(l10n: AppLocalizationsZh()),
       throwsA(
         isA<ImageSearchFilePickerException>().having(
           (error) => error.message,
           'message',
-          '无法读取所选图片，请换一张再试',
+          AppLocalizationsZh().imageSearchPickUnreadable,
         ),
       ),
     );
@@ -70,7 +71,7 @@ void main() {
         '/Users/test/Downloads';
     debugImageSearchDirectoryExists = (_) => true;
 
-    await pickImageSearchFile();
+    await pickImageSearchFile(l10n: AppLocalizationsZh());
 
     expect(
       recordingFilePicker.pickFileInitialDirectory,
@@ -84,7 +85,7 @@ void main() {
         '/storage/emulated/0/Download';
     debugImageSearchDirectoryExists = (_) => true;
 
-    await pickImageSearchFile();
+    await pickImageSearchFile(l10n: AppLocalizationsZh());
 
     expect(
       recordingFilePicker.pickFileInitialDirectory,
@@ -101,7 +102,7 @@ void main() {
           '/var/mobile/Documents';
       debugImageSearchDirectoryExists = (_) => true;
 
-      await pickImageSearchFile();
+      await pickImageSearchFile(l10n: AppLocalizationsZh());
 
       expect(
         recordingFilePicker.pickFileInitialDirectory,
@@ -117,7 +118,7 @@ void main() {
         name == 'USERPROFILE' ? r'C:\Users\tester' : null;
     debugImageSearchDirectoryExists = (_) => true;
 
-    await pickImageSearchFile();
+    await pickImageSearchFile(l10n: AppLocalizationsZh());
 
     expect(recordingFilePicker.pickFileInitialDirectory, r'C:\Users\tester');
   });
@@ -127,7 +128,7 @@ void main() {
     () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
 
-      await pickImageSearchFile();
+      await pickImageSearchFile(l10n: AppLocalizationsZh());
 
       expect(recordingFilePicker.pickFileInitialDirectory, isNull);
     },
@@ -138,7 +139,7 @@ void main() {
     debugImageSearchDownloadsDirectoryProvider = () async => null;
     debugImageSearchEnvironmentLookup = (_) => null;
 
-    await pickImageSearchFile();
+    await pickImageSearchFile(l10n: AppLocalizationsZh());
 
     expect(
       recordingFilePicker.pickFileAllowedExtensions,
@@ -158,7 +159,7 @@ void main() {
       mimeType: 'image/png',
     );
 
-    final picked = await pickMobileImageSearchFile();
+    final picked = await pickMobileImageSearchFile(l10n: AppLocalizationsZh());
 
     expect(picked, isNotNull);
     expect(picked!.fileName, 'mobile.png');
@@ -171,7 +172,9 @@ void main() {
     () async {
       debugMobileImageSearchFilePicker = () async => null;
 
-      final picked = await pickMobileImageSearchFile();
+      final picked = await pickMobileImageSearchFile(
+        l10n: AppLocalizationsZh(),
+      );
 
       expect(picked, isNull);
     },
@@ -182,7 +185,7 @@ void main() {
     () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.android;
 
-      await pickMobileImageSearchFile();
+      await pickMobileImageSearchFile(l10n: AppLocalizationsZh());
 
       expect(recordingFilePicker.pickFileType, FileType.image);
       expect(recordingFilePicker.pickFileInitialDirectory, isNull);
@@ -192,7 +195,7 @@ void main() {
   test('pickMobileImageSearchFile disables compression on Android', () async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
 
-    await pickMobileImageSearchFile();
+    await pickMobileImageSearchFile(l10n: AppLocalizationsZh());
 
     expect(recordingFilePicker.pickFileCompressionQuality, 0);
   });

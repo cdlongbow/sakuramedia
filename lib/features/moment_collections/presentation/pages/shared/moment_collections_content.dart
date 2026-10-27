@@ -160,6 +160,7 @@ class _MomentCollectionsContentState
         message: apiErrorMessage(
           async.error!,
           fallback: l10n.momentErrorCollectionLoadFailed,
+          l10n: l10n,
         ),
       );
     }
@@ -237,6 +238,7 @@ class _MomentCollectionsContentState
                 message: apiErrorMessage(
                   async.error!,
                   fallback: l10n.momentErrorCollectionLoadFailed,
+                  l10n: l10n,
                 ),
               ),
             )
@@ -320,7 +322,13 @@ class _MomentCollectionsContentState
           .removeCollection(collection.id);
       showToast(l10n.momentCollectionDeletedToast);
     } catch (error) {
-      showToast(apiErrorMessage(error, fallback: l10n.momentErrorDeleteFailed));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: l10n.momentErrorDeleteFailed,
+          l10n: l10n,
+        ),
+      );
     }
   }
 }

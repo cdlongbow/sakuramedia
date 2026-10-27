@@ -39,30 +39,27 @@ class RankingBoardDto {
   }
 }
 
-/// 榜单周期的展示文案。
-///
-/// [l10n] 传入时按当前语言渲染；未传时回退中文，供尚未接入语言包的调用方
-/// （影片详情等）继续使用。
-String rankingPeriodLabel(String period, {AppLocalizations? l10n}) {
+/// 榜单周期的展示文案，按当前语言渲染。
+String rankingPeriodLabel(String period, AppLocalizations l10n) {
   switch (period) {
     case 'daily':
-      return l10n?.rankingPeriodDaily ?? '日榜';
+      return l10n.rankingPeriodDaily;
     case 'weekly':
-      return l10n?.rankingPeriodWeekly ?? '周榜';
+      return l10n.rankingPeriodWeekly;
     case 'monthly':
-      return l10n?.rankingPeriodMonthly ?? '月榜';
+      return l10n.rankingPeriodMonthly;
     // JavDB TOP250 用固定子榜和年份作为周期。
     case 'all':
-      return l10n?.rankingPeriodAll ?? '总榜';
+      return l10n.rankingPeriodAll;
     case 'censored':
-      return l10n?.rankingPeriodCensored ?? '有码';
+      return l10n.rankingPeriodCensored;
     case 'uncensored':
-      return l10n?.rankingPeriodUncensored ?? '无码';
+      return l10n.rankingPeriodUncensored;
     case 'fc2':
       return 'FC2';
   }
   if (period.length == 4 && int.tryParse(period) != null) {
-    return l10n?.rankingPeriodYear(period) ?? '$period年';
+    return l10n.rankingPeriodYear(period);
   }
   return period;
 }

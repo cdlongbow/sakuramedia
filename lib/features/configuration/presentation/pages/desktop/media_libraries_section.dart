@@ -52,12 +52,12 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection> {
       return await ref.read(mediaProviderCatalogProvider.future);
     } catch (error) {
       if (showError && mounted) {
+        final l10n = AppLocalizations.of(context);
         showToast(
           apiErrorMessage(
             error,
-            fallback: AppLocalizations.of(
-              context,
-            ).mediaLibraryProviderCatalogLoadFailed,
+            fallback: l10n.mediaLibraryProviderCatalogLoadFailed,
+            l10n: l10n,
           ),
         );
       }
@@ -132,6 +132,7 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection> {
             message: apiErrorMessage(
               libraries.error!,
               fallback: l10n.mediaLibraryLoadFailedFallback,
+              l10n: l10n,
             ),
             onRetry: () => ref.read(mediaLibrariesProvider.notifier).reload(),
           )
@@ -391,6 +392,7 @@ class _MediaLibraryDialogState extends ConsumerState<MediaLibraryDialog> {
           fallback: _isEditing
               ? l10n.mediaLibraryUpdateFailed
               : l10n.mediaLibraryCreateFailed,
+          l10n: l10n,
         ),
       );
     }

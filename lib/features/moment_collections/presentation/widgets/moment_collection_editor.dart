@@ -169,6 +169,7 @@ class _MomentCollectionEditorState
           fallback: _isEditing
               ? l10n.momentErrorSaveFailed
               : l10n.momentErrorCreateFailed,
+          l10n: l10n,
         ),
       );
       if (mounted) setState(() => _isSubmitting = false);

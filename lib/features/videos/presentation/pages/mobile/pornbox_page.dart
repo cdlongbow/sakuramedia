@@ -458,7 +458,11 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     final l10n = AppLocalizations.of(context);
     if (async.hasError && collections.isEmpty) {
       return CollectionHintBox(
-        message: apiErrorMessage(async.error!, fallback: l10n.videoCollectionsLoadFailed),
+        message: apiErrorMessage(
+          async.error!,
+          fallback: l10n.videoCollectionsLoadFailed,
+          l10n: l10n,
+        ),
       );
     }
     final isLoading = async.isLoading && collections.isEmpty;

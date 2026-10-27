@@ -33,8 +33,3 @@ class AppLanguageController extends _$AppLanguageController {
     await ref.read(appLanguageStoreProvider).save(language);
   }
 }
-
-/// 请求头/后端使用的语言标签，避免每个调用方自己映射。
-@Riverpod(keepAlive: true)
-String appLanguageTag(Ref ref) =>
-    ref.watch(appLanguageControllerProvider).apiTag;

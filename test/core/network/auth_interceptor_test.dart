@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
+import 'package:sakuramedia/l10n/app_localizations_en.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 
 import '../../support/fake_http_client_adapter.dart';
@@ -26,6 +27,7 @@ void main() {
     apiClient = ApiClient(
       sessionStore: sessionStore,
       onUnauthorized: () => unauthorizedCalls++,
+      localizationsProvider: () => AppLocalizationsEn(),
     );
     adapter = FakeHttpClientAdapter();
     apiClient.rawDio.httpClientAdapter = adapter;
@@ -263,7 +265,7 @@ void main() {
               .having(
                 (ApiException error) => error.message,
                 'message',
-                '认证响应格式错误',
+                AppLocalizationsEn().coreSessionInvalidAuthResponse,
               )
               .having(
                 (ApiException error) => error.error?.code,
@@ -309,7 +311,7 @@ void main() {
               .having(
                 (ApiException error) => error.message,
                 'message',
-                '认证响应格式错误',
+                AppLocalizationsEn().coreSessionInvalidAuthResponse,
               )
               .having(
                 (ApiException error) => error.error?.code,

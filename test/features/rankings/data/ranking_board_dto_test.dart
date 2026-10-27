@@ -1,17 +1,23 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_board_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 void main() {
-  test('ranking period labels cover board periods and TOP250 sub periods', () {
-    expect(rankingPeriodLabel('daily'), '日榜');
-    expect(rankingPeriodLabel('weekly'), '周榜');
-    expect(rankingPeriodLabel('monthly'), '月榜');
-    expect(rankingPeriodLabel('all'), '总榜');
-    expect(rankingPeriodLabel('censored'), '有码');
-    expect(rankingPeriodLabel('uncensored'), '无码');
-    expect(rankingPeriodLabel('fc2'), 'FC2');
-    expect(rankingPeriodLabel('2026'), '2026年');
-    expect(rankingPeriodLabel(''), '');
-    expect(rankingPeriodLabel('custom'), 'custom');
+  test('ranking period labels come from the language pack', () {
+    final zh = AppLocalizationsZh();
+    expect(rankingPeriodLabel('daily', zh), zh.rankingPeriodDaily);
+    expect(rankingPeriodLabel('weekly', zh), zh.rankingPeriodWeekly);
+    expect(rankingPeriodLabel('monthly', zh), zh.rankingPeriodMonthly);
+    expect(rankingPeriodLabel('all', zh), zh.rankingPeriodAll);
+    expect(rankingPeriodLabel('censored', zh), zh.rankingPeriodCensored);
+    expect(rankingPeriodLabel('uncensored', zh), zh.rankingPeriodUncensored);
+    expect(rankingPeriodLabel('fc2', zh), 'FC2');
+    expect(rankingPeriodLabel('2026', zh), zh.rankingPeriodYear('2026'));
+  });
+
+  test('unknown periods pass through unchanged', () {
+    final zh = AppLocalizationsZh();
+    expect(rankingPeriodLabel('', zh), '');
+    expect(rankingPeriodLabel('custom', zh), 'custom');
   });
 }

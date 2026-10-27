@@ -69,6 +69,7 @@ class _DesktopPluginMarketSectionState
         message: apiErrorMessage(
           asyncMarket.error!,
           fallback: l10n.pluginMarketLoadFailedFallback,
+          l10n: l10n,
         ),
         onRetry: _actions.refreshMarket,
       );

@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/language/app_language.dart';
 import 'package:sakuramedia/app/language/providers/language_providers.dart';
-import 'package:sakuramedia/core/network/api_error_localizations.dart';
 import 'package:sakuramedia/features/account/presentation/providers/account_api_provider.dart';
 import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
@@ -154,10 +153,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         return;
       }
       setState(() {
-        _submitError = localizedApiErrorMessage(
-          l10n,
+        _submitError = apiErrorMessage(
           error,
           fallback: l10n.loginErrorFallback,
+          l10n: l10n,
         );
         _showDeployHelp = error.isTransportFailure;
       });

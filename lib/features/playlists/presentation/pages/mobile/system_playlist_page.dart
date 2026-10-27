@@ -28,7 +28,11 @@ class MobileSystemPlaylistPage extends ConsumerWidget {
       return AppEmptyState(
         icon: _emptyIcon,
         message: async.hasError
-            ? apiErrorMessage(async.error!, fallback: l10n.playlistLoadFailed)
+            ? apiErrorMessage(
+                async.error!,
+                fallback: l10n.playlistLoadFailed,
+                l10n: l10n,
+              )
             : kind == PlaylistKind.favorites
             ? l10n.playlistFavoritesNotReady
             : l10n.playlistNoWatchHistory,

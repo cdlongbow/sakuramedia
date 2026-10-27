@@ -3,23 +3,17 @@ import 'package:sakuramedia/l10n/app_localizations.dart';
 
 /// 影片互动数筛选项。字段与后端 `*_min` / `*_max` query 参数一一对应。
 enum MovieInteractionMetric {
-  heat('heat', '热度'),
-  score('score', '评分', isDecimal: true),
-  scoreNumber('score_number', '评分人数'),
-  watchedCount('watched_count', '看过人数'),
-  wantWatchCount('want_watch_count', '想看人数'),
-  commentCount('comment_count', '评论数');
+  heat('heat'),
+  score('score', isDecimal: true),
+  scoreNumber('score_number'),
+  watchedCount('watched_count'),
+  wantWatchCount('want_watch_count'),
+  commentCount('comment_count');
 
-  const MovieInteractionMetric(
-    this.apiValue,
-    this.label, {
-    this.isDecimal = false,
-  });
+  const MovieInteractionMetric(this.apiValue, {this.isDecimal = false});
 
   final String apiValue;
 
-  /// 中文兜底文案；界面展示请用 [localizedLabel] 按当前语言渲染。
-  final String label;
   final bool isDecimal;
 
   /// 互动数字段的展示文案，按当前语言渲染。
@@ -128,21 +122,6 @@ class MovieInteractionFilter {
     }
   }
 
-  /// 中文兜底摘要；界面展示请用 [localizedSummaryLabel] 按当前语言渲染。
-  String get summaryLabel {
-    if (ranges.isEmpty) {
-      return '';
-    }
-    if (ranges.length == 1) {
-      final metric = MovieInteractionMetric.values.firstWhere(
-        ranges.containsKey,
-      );
-      return '${metric.label} '
-          '${movieInteractionRangeLabel(metric, ranges[metric]!.min, ranges[metric]!.max)}';
-    }
-    return '互动数 · $activeMetricCount 项';
-  }
-
   /// 互动数筛选摘要，按当前语言渲染。
   String localizedSummaryLabel(AppLocalizations l10n) {
     if (ranges.isEmpty) {
@@ -153,21 +132,19 @@ class MovieInteractionFilter {
         ranges.containsKey,
       );
       return '${metric.localizedLabel(l10n)} '
-          '${movieInteractionRangeLabel(metric, ranges[metric]!.min, ranges[metric]!.max, l10n: l10n)}';
+          '${movieInteractionRangeLabel(metric, ranges[metric]!.min, ranges[metric]!.max, l10n)}';
     }
     return l10n.sharedInteractionSummary(activeMetricCount);
   }
 }
 
 /// 单个互动数字段的展示文案，筛选面板与入口摘要共用。
-///
-/// [l10n] 传入时按当前语言渲染；未传时回退中文，供尚未接入语言包的调用方继续使用。
 String movieInteractionRangeLabel(
   MovieInteractionMetric metric,
   num? min,
-  num? max, {
-  AppLocalizations? l10n,
-}) {
+  num? max,
+  AppLocalizations l10n,
+) {
   if (min != null && max != null) {
     return '${metric.format(min)} ~ ${metric.format(max)}';
   }
@@ -177,5 +154,5 @@ String movieInteractionRangeLabel(
   if (max != null) {
     return '≤ ${metric.format(max)}';
   }
-  return l10n?.sharedInteractionUnlimited ?? '不限';
+  return l10n.sharedInteractionUnlimited;
 }

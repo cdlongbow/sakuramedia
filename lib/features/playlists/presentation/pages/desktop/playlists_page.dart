@@ -60,6 +60,7 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
       onRefresh: notifier.refresh,
       child: Builder(
         builder: (context) {
+          final l10n = AppLocalizations.of(context);
           if (async.isLoading && async.value == null) {
             return const _DesktopPlaylistsLoadingState();
           }
@@ -67,7 +68,8 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
             return AppEmptyState(
               message: apiErrorMessage(
                 async.error!,
-                fallback: AppLocalizations.of(context).playlistLoadFailed,
+                fallback: l10n.playlistLoadFailed,
+                l10n: l10n,
               ),
             );
           }

@@ -130,6 +130,7 @@ class _AddClipsToCollectionDialogState
           fallback: AppLocalizations.of(
             context,
           ).clipCollectionClipsLoadFailed,
+          l10n: AppLocalizations.of(context),
         );
         _isLoading = false;
       });
@@ -173,6 +174,7 @@ class _AddClipsToCollectionDialogState
             fallback: AppLocalizations.of(
               context,
             ).clipCollectionClipsLoadFailed,
+            l10n: AppLocalizations.of(context),
           );
           if (_clips.isEmpty) {
             _errorMessage = message;
@@ -465,6 +467,7 @@ class _AddClipsToCollectionDialogState
           fallback: isMember
               ? AppLocalizations.of(context).clipCollectionRemoveFailed
               : AppLocalizations.of(context).clipCollectionAddFailed,
+          l10n: AppLocalizations.of(context),
         ),
       );
     } finally {

@@ -219,6 +219,7 @@ class _MobilePluginsPageState extends ConsumerState<MobilePluginsPage> {
                             message: apiErrorMessage(
                               asyncPlugins.error!,
                               fallback: l10n.pluginsLoadFailedFallback,
+                              l10n: l10n,
                             ),
                             onRetry: _actions.refresh,
                             retryButtonKey: const Key(

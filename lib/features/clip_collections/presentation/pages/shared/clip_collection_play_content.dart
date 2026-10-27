@@ -178,6 +178,7 @@ class _ClipCollectionPlayContentState
         _errorMessage = apiErrorMessage(
           error,
           fallback: AppLocalizations.of(context).clipCollectionPlayLoadFailed,
+          l10n: AppLocalizations.of(context),
         );
       });
     }

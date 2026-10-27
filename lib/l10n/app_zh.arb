@@ -478,14 +478,6 @@
       }
     }
   },
-  "durationSeconds": "{count} 秒",
-  "@durationSeconds": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "systemDiagnosticsComponentTitle": "组件诊断",
   "systemDiagnosticsRerun": "重新检测",
   "systemDiagnosticsOpenPage": "打开组件诊断页",

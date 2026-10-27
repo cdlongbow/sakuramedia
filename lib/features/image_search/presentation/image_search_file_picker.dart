@@ -48,7 +48,7 @@ class ImageSearchFilePickerException implements Exception {
 }
 
 Future<ImageSearchPickedFile?> pickImageSearchFile({
-  AppLocalizations? l10n,
+  required AppLocalizations l10n,
 }) async {
   final override = debugImageSearchFilePicker;
   if (override != null) {
@@ -68,11 +68,10 @@ Future<ImageSearchPickedFile?> pickImageSearchFile({
         'heif',
       ],
       initialDirectory: initialDirectory,
-      unreadableMessage: l10n?.imageSearchPickUnreadable ?? '无法读取所选图片，请换一张再试',
-      pickerUnavailableMessage:
-          l10n?.imageSearchPickerUnavailable ?? '图片选择器尚未加载，请完整重启应用后再试',
-      openFailureMessage:
-          l10n?.imageSearchPickerOpenFailed ?? '打开图片选择器失败，请稍后再试',
+      unreadableMessage: l10n.imageSearchPickUnreadable,
+      pickerUnavailableMessage: l10n.imageSearchPickerUnavailable,
+      openFailureMessage: l10n.imageSearchPickerOpenFailed,
+      l10n: l10n,
     );
     if (picked == null) {
       return null;
@@ -88,7 +87,7 @@ Future<ImageSearchPickedFile?> pickImageSearchFile({
 }
 
 Future<ImageSearchPickedFile?> pickMobileImageSearchFile({
-  AppLocalizations? l10n,
+  required AppLocalizations l10n,
 }) async {
   final override = debugMobileImageSearchFilePicker;
   if (override != null) {
@@ -102,11 +101,10 @@ Future<ImageSearchPickedFile?> pickMobileImageSearchFile({
   try {
     final picked = await pickFileWithBytes(
       type: FileType.image,
-      unreadableMessage: l10n?.imageSearchPickUnreadable ?? '无法读取所选图片，请换一张再试',
-      pickerUnavailableMessage:
-          l10n?.imageSearchPickerUnavailable ?? '图片选择器尚未加载，请完整重启应用后再试',
-      openFailureMessage:
-          l10n?.imageSearchPickerOpenFailed ?? '打开图片选择器失败，请稍后再试',
+      unreadableMessage: l10n.imageSearchPickUnreadable,
+      pickerUnavailableMessage: l10n.imageSearchPickerUnavailable,
+      openFailureMessage: l10n.imageSearchPickerOpenFailed,
+      l10n: l10n,
     );
     if (picked == null) {
       return null;

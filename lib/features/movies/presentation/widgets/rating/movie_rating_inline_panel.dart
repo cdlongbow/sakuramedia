@@ -76,12 +76,12 @@ class _MovieRatingInlinePanelState
         }
       } catch (error) {
         if (mounted) {
+          final l10n = AppLocalizations.of(context);
           showToast(
             apiErrorMessage(
               error,
-              fallback: AppLocalizations.of(
-                context,
-              ).movieWidgetRatingSaveFailed,
+              fallback: l10n.movieWidgetRatingSaveFailed,
+              l10n: l10n,
             ),
           );
         }

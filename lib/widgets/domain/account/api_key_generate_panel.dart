@@ -70,11 +70,13 @@ class _ApiKeyGeneratePanelState extends ConsumerState<ApiKeyGeneratePanel> {
       if (!mounted) {
         return;
       }
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _isGenerating = false;
         _errorMessage = apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(context).errorApiKeyGenerateFailed,
+          fallback: l10n.errorApiKeyGenerateFailed,
+          l10n: l10n,
         );
       });
     }

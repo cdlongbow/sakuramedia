@@ -382,10 +382,12 @@ class MomentsContent extends HookConsumerWidget {
     final itemWidth = isMobile ? 168.0 : 210.0;
     final itemSpacing = isMobile ? spacing.sm : spacing.md;
     if (collectionsAsync.hasError && collections.isEmpty) {
+      final l10n = AppLocalizations.of(context);
       return CollectionHintBox(
         message: apiErrorMessage(
           collectionsAsync.error!,
-          fallback: AppLocalizations.of(context).momentErrorCollectionLoadFailed,
+          fallback: l10n.momentErrorCollectionLoadFailed,
+          l10n: l10n,
         ),
       );
     }
@@ -754,7 +756,13 @@ class MomentsContent extends HookConsumerWidget {
       if (!context.mounted) {
         return;
       }
-      showToast(apiErrorMessage(error, fallback: l10n.momentErrorDeleteFailed));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: l10n.momentErrorDeleteFailed,
+          l10n: l10n,
+        ),
+      );
     }
   }
 

@@ -1,6 +1,10 @@
 import 'package:sakuramedia/core/network/api_error_dto.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/l10n/app_localizations.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
+
+/// 认证链路没有 BuildContext；语言包缺失时回退默认语言（中文）。
+final AppLocalizations _zhFallback = AppLocalizationsZh();
 
 /// The token fields that must be present before a session can be updated.
 ///
@@ -16,10 +20,10 @@ class SessionTokenPayload {
 
   /// 认证响应缺字段时的兜底文案。
   ///
-  /// 传入 [l10n] 时走 ARB 当前语言；不传时保留旧的中文兜底，供尚未迁移的
-  /// 调用点渐进替换。
+  /// 语言包由调用方提供（provider 层走 appLocalizationsProvider）；缺失时回退
+  /// 默认语言文案。
   static String invalidResponseMessage({AppLocalizations? l10n}) =>
-      l10n?.coreSessionInvalidAuthResponse ?? '认证响应格式错误';
+      (l10n ?? _zhFallback).coreSessionInvalidAuthResponse;
 
   static const invalidResponseCode = 'invalid_auth_response';
 

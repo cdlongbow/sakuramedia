@@ -1184,6 +1184,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
           imageUrl: _resultImageUrl(item),
           fileName: _resultImageFileName(item),
           dialogTitle: l10n.imageSearchSaveToLocal,
+          l10n: l10n,
         );
     if (!mounted) {
       return;

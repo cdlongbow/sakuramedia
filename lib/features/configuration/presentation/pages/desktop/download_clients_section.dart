@@ -131,6 +131,7 @@ class _DownloadClientsSectionState
           message: apiErrorMessage(
             error,
             fallback: l10n.downloaderConfigLoadFailedFallback,
+            l10n: l10n,
           ),
           onRetry: () async {
             await Future.wait<void>([
@@ -473,6 +474,7 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
           fallback: _isEditing
               ? l10n.downloaderUpdateFailed
               : l10n.downloaderCreateFailed,
+          l10n: l10n,
         ),
       );
     }
@@ -510,7 +512,11 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
     } catch (error) {
       if (mounted) {
         showToast(
-          apiErrorMessage(error, fallback: l10n.downloaderTestFailed),
+          apiErrorMessage(
+            error,
+            fallback: l10n.downloaderTestFailed,
+            l10n: l10n,
+          ),
         );
       }
     } finally {

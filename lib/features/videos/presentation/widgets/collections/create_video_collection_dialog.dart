@@ -211,6 +211,7 @@ class _CreateVideoCollectionDialogState
           error,
           fallback:
               _isEditing ? l10n.videoSaveFailed : l10n.videoCreateFailed,
+          l10n: l10n,
         ),
       );
       if (mounted) {

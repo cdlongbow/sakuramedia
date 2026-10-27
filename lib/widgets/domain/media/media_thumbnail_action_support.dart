@@ -113,6 +113,7 @@ Future<void> handleMediaThumbnailAction({
             imageUrl: imageUrl,
             fileName: fileName,
             dialogTitle: l10n.widgetMediaActionSaveToLocal,
+            l10n: l10n,
           );
       if (!context.mounted) {
         return;

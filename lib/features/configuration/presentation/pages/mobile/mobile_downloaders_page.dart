@@ -64,12 +64,12 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
       ]);
     } catch (error) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         showToast(
           apiErrorMessage(
             error,
-            fallback: AppLocalizations.of(
-              context,
-            ).downloaderLoadFailedFallback,
+            fallback: l10n.downloaderLoadFailedFallback,
+            l10n: l10n,
           ),
         );
       }
@@ -304,6 +304,7 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
                     message: apiErrorMessage(
                       error,
                       fallback: l10n.downloaderLoadFailedFallback,
+                      l10n: l10n,
                     ),
                     onRetry: _refresh,
                     retryButtonKey: const Key(
@@ -645,6 +646,7 @@ class _MobileDownloaderEditorDrawerState
           fallback: _isEditing
               ? l10n.downloaderUpdateFailed
               : l10n.downloaderCreateFailed,
+          l10n: l10n,
         ),
       );
     }
@@ -685,7 +687,11 @@ class _MobileDownloaderEditorDrawerState
     } catch (error) {
       if (mounted) {
         showToast(
-          apiErrorMessage(error, fallback: l10n.downloaderTestFailed),
+          apiErrorMessage(
+            error,
+            fallback: l10n.downloaderTestFailed,
+            l10n: l10n,
+          ),
         );
       }
     } finally {

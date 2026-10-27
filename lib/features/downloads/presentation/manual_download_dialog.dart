@@ -545,6 +545,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
         allowedExtensions: isMobile ? null : const <String>['torrent'],
         maxBytes: DownloadsApi.maxManualTorrentBytes,
         tooLargeMessage: l10n.downloadTorrentTooLarge,
+        l10n: l10n,
         unreadableMessage: l10n.downloadTorrentUnreadable,
         pickerUnavailableMessage: l10n.downloadTorrentPickerUnavailable,
         openFailureMessage: l10n.downloadTorrentPickerOpenFailed,
@@ -1221,7 +1222,8 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
               SizedBox(width: spacing.sm),
               Expanded(
                 child: Text(
-                  resolution.message ?? l10n.downloadMovieNumberResolvingFallback,
+                  resolution.message ??
+                      l10n.downloadMovieNumberResolvingFallback,
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s12,

@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_interaction_f
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_interaction_filter_options_provider.dart';
 import 'package:sakuramedia/l10n/app_localizations.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
@@ -54,7 +55,7 @@ void main() {
             alignment: Alignment.topRight,
             child: AppListHeader(
               filterButtonKey: const Key('movies-filter-trigger'),
-              filterLabel: filterState.triggerLabel,
+              filterLabel: filterState.triggerLabel(AppLocalizationsZh()),
               filterPanelKey: const Key('movies-filter-panel'),
               filterPanelExtraWidth: 260,
               filterPanelBuilder: (_) => MovieFilterSectionGroup(

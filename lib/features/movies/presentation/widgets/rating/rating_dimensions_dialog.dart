@@ -100,12 +100,12 @@ class _RatingDimensionsDialogState
       });
     } catch (error) {
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
       showToast(
         apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(
-            context,
-          ).movieWidgetRatingDimensionSaveFailed,
+          fallback: l10n.movieWidgetRatingDimensionSaveFailed,
+          l10n: l10n,
         ),
       );
     } finally {
@@ -130,9 +130,8 @@ class _RatingDimensionsDialogState
       showToast(
         apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(
-            context,
-          ).movieWidgetRatingDimensionDeleteFailed,
+          fallback: l10n.movieWidgetRatingDimensionDeleteFailed,
+          l10n: l10n,
         ),
       );
     }

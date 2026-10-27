@@ -121,14 +121,14 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
       });
     } catch (error) {
       if (!mounted || requestId != _searchRequestId) return;
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _hasSearched = true;
         _isSearching = false;
         _searchErrorMessage = apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(
-            context,
-          ).movieWidgetActorSearchFailed,
+          fallback: l10n.movieWidgetActorSearchFailed,
+          l10n: l10n,
         );
       });
     }
@@ -184,13 +184,13 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
       Navigator.of(context).pop(<ActorListItemDto>[created.summary]);
     } catch (error) {
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _isCreating = false;
         _createErrorMessage = apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(
-            context,
-          ).movieWidgetLocalActorCreateFailed,
+          fallback: l10n.movieWidgetLocalActorCreateFailed,
+          l10n: l10n,
         );
       });
     }

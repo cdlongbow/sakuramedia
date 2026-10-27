@@ -126,6 +126,7 @@ class _AddToClipCollectionDialogState
           fallback: AppLocalizations.of(
             context,
           ).clipCollectionCollectionsLoadFailed,
+          l10n: AppLocalizations.of(context),
         );
         _isLoading = false;
       });
@@ -309,6 +310,7 @@ class _AddToClipCollectionDialogState
           fallback: isSelected
               ? l10n.clipCollectionRemoveFailed
               : l10n.clipCollectionAddFailed,
+          l10n: l10n,
         ),
       );
     } finally {

@@ -3,6 +3,7 @@ import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/auth/data/auth_api.dart';
+import 'package:sakuramedia/l10n/app_localizations_en.dart';
 
 import '../../../support/fake_http_client_adapter.dart';
 import '../../../support/in_memory_credential_store.dart';
@@ -25,6 +26,7 @@ void main() {
       apiClient: apiClient,
       sessionStore: sessionStore,
       credentialStore: credentialStore,
+      l10n: () => AppLocalizationsEn(),
     );
     adapter = FakeHttpClientAdapter();
     apiClient.rawDio.httpClientAdapter = adapter;
@@ -143,7 +145,7 @@ void main() {
               .having(
                 (ApiException error) => error.message,
                 'message',
-                '认证响应格式错误',
+                AppLocalizationsEn().coreSessionInvalidAuthResponse,
               )
               .having(
                 (ApiException error) => error.error?.code,
@@ -186,7 +188,7 @@ void main() {
           isA<ApiException>().having(
             (ApiException error) => error.message,
             'message',
-            '认证响应格式错误',
+            AppLocalizationsEn().coreSessionInvalidAuthResponse,
           ),
         ),
       );

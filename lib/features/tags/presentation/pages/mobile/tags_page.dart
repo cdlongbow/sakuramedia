@@ -137,7 +137,7 @@ class _MobileTagsPageState extends ConsumerState<MobileTagsPage> {
     return AppListHeader(
       filterButtonKey: const Key('mobile-tags-filter-button'),
       filterTooltip: l10n.tagFilterTooltip,
-      filterLabel: args.filterState.triggerLabel,
+      filterLabel: args.filterState.triggerLabel(l10n),
       onFilterTap: () => _openFilterDrawer(context, args),
       informationSlots: [
         AppListHeaderInfo(

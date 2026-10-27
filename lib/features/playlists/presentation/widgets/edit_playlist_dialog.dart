@@ -221,10 +221,12 @@ class _EditPlaylistDialogState extends ConsumerState<EditPlaylistDialog> {
       if (!mounted) {
         return;
       }
+      final l10n = AppLocalizations.of(context);
       showToast(
         apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(context).playlistUpdateFailed,
+          fallback: l10n.playlistUpdateFailed,
+          l10n: l10n,
         ),
       );
       setState(() => _isSubmitting = false);

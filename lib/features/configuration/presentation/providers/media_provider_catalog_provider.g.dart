@@ -38,7 +38,7 @@ final class MediaProviderCatalogProvider
 }
 
 String _$mediaProviderCatalogHash() =>
-    r'6572be1dddb3bbfcc62ddfaa44624532f98799e0';
+    r'425f44497fc8c853a072ad43e1d05ea71d2fd177';
 
 /// 当前账号可用的媒体 Provider Bundle 目录。
 

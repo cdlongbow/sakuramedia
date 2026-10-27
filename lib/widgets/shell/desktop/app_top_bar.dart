@@ -313,7 +313,7 @@ class _TopBarSearchEntryState extends ConsumerState<_TopBarSearchEntry> {
   Future<void> _pickAndOpenImageSearch() async {
     final l10n = appL10n(context);
     try {
-      final pickedFile = await pickImageSearchFile();
+      final pickedFile = await pickImageSearchFile(l10n: l10n);
       if (pickedFile == null || !mounted) {
         return;
       }

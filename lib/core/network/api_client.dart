@@ -78,7 +78,7 @@ class ApiClient {
     return tag.isEmpty ? 'zh-CN' : tag;
   }
 
-  /// 当前语言的文案；未注入时返回 `null`，调用点保留旧的中文兜底。
+  /// 当前语言的文案；未注入时返回 `null`，调用点回退英文文案。
   AppLocalizations? get _currentLocalizations => _localizationsProvider?.call();
 
   Dio get rawDio => _dio;

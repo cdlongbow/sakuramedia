@@ -150,6 +150,7 @@ class _MobileVideoCollectionsPageState
                 message: apiErrorMessage(
                   async.error!,
                   fallback: l10n.videoCollectionsLoadFailed,
+                  l10n: l10n,
                 ),
               ),
             )
@@ -247,7 +248,13 @@ class _MobileVideoCollectionsPageState
         showToast(l10n.videoCollectionDeleted);
       }
     } catch (error) {
-      showToast(apiErrorMessage(error, fallback: l10n.videoDeleteFailed));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: l10n.videoDeleteFailed,
+          l10n: l10n,
+        ),
+      );
     }
   }
 }

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/app/appearance_store.dart';
+import 'package:sakuramedia/app/language/app_language.dart';
 import 'package:sakuramedia/app/language/language_store.dart';
 import 'package:sakuramedia/app/language/providers/language_providers.dart';
 import 'package:sakuramedia/app/providers/appearance_providers.dart';
@@ -228,7 +229,7 @@ class _SakuraAppState extends ConsumerState<_SakuraApp>
           AppLocalizations.delegate,
           ...GlobalMaterialLocalizations.delegates,
         ],
-        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: lightTheme,
         darkTheme: darkTheme,
         themeMode: appearance.themeMode,

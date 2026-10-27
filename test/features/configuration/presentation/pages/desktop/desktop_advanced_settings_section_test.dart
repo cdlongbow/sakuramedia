@@ -1,12 +1,14 @@
 import 'package:sakuramedia/widgets/base/actions/app_switch.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show Consumer, ProviderScope;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show Consumer, ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/advanced_settings_section.dart';
 import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
 import 'package:sakuramedia/l10n/app_localizations.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 
@@ -301,9 +303,11 @@ void main() {
   });
 
   group('buildAdvancedConfigSaveSuccessMessage', () {
+    final zh = AppLocalizationsZh();
+
     test('returns default message when restart_required is empty', () {
       expect(
-        buildAdvancedConfigSaveSuccessMessage(const <String>[]),
+        buildAdvancedConfigSaveSuccessMessage(const <String>[], zh),
         '已保存',
       );
     });
@@ -312,7 +316,7 @@ void main() {
       expect(
         buildAdvancedConfigSaveSuccessMessage(const <String>[
           'logging.level',
-        ]),
+        ], zh),
         '已保存，需重启容器才生效',
       );
     });
@@ -323,7 +327,7 @@ void main() {
         expect(
           buildAdvancedConfigSaveSuccessMessage(const <String>[
             'scheduler.movie_heat_cron',
-          ]),
+          ], zh),
           '已保存，需重启容器才生效',
         );
       },
@@ -337,7 +341,7 @@ void main() {
           buildAdvancedConfigSaveSuccessMessage(const <String>[
             'logging.level',
             'downloads.subscription_search_fresh_days',
-          ]),
+          ], zh),
           '已保存，需重启容器才生效',
         );
       },

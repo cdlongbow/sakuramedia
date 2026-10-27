@@ -103,13 +103,13 @@ void main() {
 
   testWidgets('空态显示调用方文案', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         locale: Locale('zh'),
         localizationsDelegates: <LocalizationsDelegate<dynamic>>[
           AppLocalizations.delegate,
           ...GlobalMaterialLocalizations.delegates,
         ],
-        supportedLocales: <Locale>[Locale('zh'), Locale('en')],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: MovieSummaryRail(items: [], emptyMessage: '暂无入库影片，去搜索看看吧'),
         ),

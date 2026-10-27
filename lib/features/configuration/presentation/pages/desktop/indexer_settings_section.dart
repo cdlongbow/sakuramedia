@@ -86,14 +86,14 @@ class _IndexerSettingsSectionState
       });
     } catch (error) {
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _initialized = true;
         _isLoading = false;
         _errorMessage = apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(
-            context,
-          ).indexerConfigLoadFailedFallback,
+          fallback: l10n.indexerConfigLoadFailedFallback,
+          l10n: l10n,
         );
       });
     }
@@ -187,7 +187,11 @@ class _IndexerSettingsSectionState
         _isSaving = false;
       });
       showToast(
-        apiErrorMessage(error, fallback: l10n.indexerSaveFailed),
+        apiErrorMessage(
+          error,
+          fallback: l10n.indexerSaveFailed,
+          l10n: l10n,
+        ),
       );
     }
   }

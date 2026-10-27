@@ -30,14 +30,13 @@ Future<PickedFileWithBytes?> pickFileWithBytes({
   String? initialDirectory,
   int? maxBytes,
   String? tooLargeMessage,
-  AppLocalizations? l10n,
+  required AppLocalizations l10n,
   required String unreadableMessage,
   required String pickerUnavailableMessage,
   required String openFailureMessage,
 }) async {
-  // 未显式给出超限文案时按当前语言渲染；无语言包时回退中文兜底。
-  final tooLarge =
-      tooLargeMessage ?? l10n?.sharedFileTooLarge ?? '文件过大';
+  // 未显式给出超限文案时按当前语言渲染。
+  final tooLarge = tooLargeMessage ?? l10n.sharedFileTooLarge;
   try {
     final file = await FilePicker.pickFile(
       initialDirectory: initialDirectory,

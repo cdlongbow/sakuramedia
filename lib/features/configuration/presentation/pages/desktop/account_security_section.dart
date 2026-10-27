@@ -166,10 +166,12 @@ class _AccountSecuritySectionState
       if (!mounted) {
         return;
       }
+      final l10n = AppLocalizations.of(context);
       showToast(
         apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(context).errorChangePasswordFailed,
+          fallback: l10n.errorChangePasswordFailed,
+          l10n: l10n,
         ),
       );
     } finally {
@@ -445,6 +447,7 @@ class _AccountSecuritySectionState
                   apiErrorMessage(
                     asyncKeys.error!,
                     fallback: l10n.errorApiKeysLoadFailed,
+                    l10n: l10n,
                   ),
                   style: resolveAppTextStyle(
                     context,
@@ -584,7 +587,11 @@ class _AccountSecuritySectionState
     } catch (error) {
       if (context.mounted) {
         showToast(
-          apiErrorMessage(error, fallback: l10n.errorApiKeyDeleteFailed),
+          apiErrorMessage(
+            error,
+            fallback: l10n.errorApiKeyDeleteFailed,
+            l10n: l10n,
+          ),
         );
       }
     }

@@ -134,7 +134,10 @@ class _AddToVideoCollectionDialogState
       setState(() {
         _errorMessage = apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(context).videoCollectionsLoadFailedShort,
+          fallback: AppLocalizations.of(
+            context,
+          ).videoCollectionsLoadFailedShort,
+          l10n: AppLocalizations.of(context),
         );
         _isLoading = false;
       });
@@ -311,6 +314,7 @@ class _AddToVideoCollectionDialogState
               isSelected
                   ? l10n.videoRemoveFromCollectionFailed
                   : l10n.videoAddToCollectionFailedShort,
+          l10n: l10n,
         ),
       );
     } finally {

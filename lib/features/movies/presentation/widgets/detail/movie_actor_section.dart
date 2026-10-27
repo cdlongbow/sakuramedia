@@ -114,12 +114,12 @@ class _MovieActorSectionState extends State<MovieActorSection> {
       );
     } catch (error) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         showToast(
           apiErrorMessage(
             error,
-            fallback: AppLocalizations.of(
-              context,
-            ).movieWidgetRemoveActorFailed,
+            fallback: l10n.movieWidgetRemoveActorFailed,
+            l10n: l10n,
           ),
         );
       }

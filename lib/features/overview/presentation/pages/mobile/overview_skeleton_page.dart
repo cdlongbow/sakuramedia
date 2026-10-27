@@ -565,7 +565,9 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
 
   Future<void> _openImageSearch() async {
     try {
-      final pickedFile = await pickMobileImageSearchFile();
+      final pickedFile = await pickMobileImageSearchFile(
+        l10n: AppLocalizations.of(context),
+      );
       if (pickedFile == null || !mounted) {
         return;
       }

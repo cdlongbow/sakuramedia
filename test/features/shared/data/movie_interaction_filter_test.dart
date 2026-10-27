@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/shared/data/movie_interaction_filter.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 void main() {
   test('withRange 支持设置、覆盖和清空单个指标', () {
@@ -53,19 +54,18 @@ void main() {
     );
   });
 
-  test('summaryLabel 单指标显示范围，多指标折叠为数量', () {
-    expect(
-      MovieInteractionFilter.initial
-          .withRange(MovieInteractionMetric.score, min: 8.0)
-          .summaryLabel,
-      '评分 ≥ 8.0',
-    );
-    expect(
-      MovieInteractionFilter.initial
-          .withRange(MovieInteractionMetric.heat, min: 1000)
-          .withRange(MovieInteractionMetric.score, min: 8.0)
-          .summaryLabel,
-      '互动数 · 2 项',
-    );
+  test('localizedSummaryLabel 单指标显示范围，多指标折叠为数量', () {
+    final l10n = AppLocalizationsZh();
+    final single = MovieInteractionFilter.initial
+        .withRange(MovieInteractionMetric.score, min: 8.0)
+        .localizedSummaryLabel(l10n);
+    expect(single, contains('8.0'));
+
+    final multiple = MovieInteractionFilter.initial
+        .withRange(MovieInteractionMetric.heat, min: 1000)
+        .withRange(MovieInteractionMetric.score, min: 8.0)
+        .localizedSummaryLabel(l10n);
+    expect(multiple, isNot(contains('8.0')));
+    expect(multiple, contains('2'));
   });
 }

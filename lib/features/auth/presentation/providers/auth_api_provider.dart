@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/providers/credential_store_provider.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
@@ -16,5 +17,6 @@ AuthApi authApi(Ref ref) {
     apiClient: ref.watch(apiClientProvider),
     sessionStore: ref.watch(sessionStoreProvider),
     credentialStore: ref.watch(credentialStoreProvider),
+    l10n: () => ref.read(appLocalizationsProvider),
   );
 }

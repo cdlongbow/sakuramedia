@@ -3,9 +3,14 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:sakuramedia/core/media/image_save_service.dart';
+import 'package:sakuramedia/l10n/app_localizations_en.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  final zh = AppLocalizationsZh();
+  final en = AppLocalizationsEn();
 
   test(
     'desktop save passes image bytes and MIME type to file picker',
@@ -22,6 +27,7 @@ void main() {
       final result = await service.saveImageFromUrl(
         imageUrl: '/photo.jpg',
         dialogTitle: '保存图片',
+        l10n: zh,
       );
 
       expect(result.status, ImageSaveStatus.success);
@@ -59,6 +65,7 @@ void main() {
     final result = await service.saveImageFromUrl(
       imageUrl: '/images/thumb.webp',
       fileName: 'thumb.webp',
+      l10n: zh,
     );
 
     expect(result.status, ImageSaveStatus.success);
@@ -84,6 +91,7 @@ void main() {
 
       final result = await service.saveImageFromUrl(
         imageUrl: '/images/thumb.webp',
+        l10n: zh,
       );
 
       expect(result.status, ImageSaveStatus.cancelled);
@@ -103,10 +111,11 @@ void main() {
 
     final result = await service.saveImageFromUrl(
       imageUrl: '/images/thumb.webp',
+      l10n: zh,
     );
 
     expect(result.status, ImageSaveStatus.failed);
-    expect(result.message, '保存失败，请稍后重试');
+    expect(result.message, zh.coreImageSaveFailed);
   });
 
   test('image save service reports write failures', () async {
@@ -122,10 +131,11 @@ void main() {
 
     final result = await service.saveImageFromUrl(
       imageUrl: '/images/thumb.webp',
+      l10n: zh,
     );
 
     expect(result.status, ImageSaveStatus.failed);
-    expect(result.message, '保存失败，请稍后重试');
+    expect(result.message, zh.coreImageSaveFailed);
   });
 
   test('image save service saves to gallery on mobile', () async {
@@ -150,13 +160,14 @@ void main() {
     final result = await service.saveImageFromUrl(
       imageUrl: '/images/thumb.webp',
       fileName: 'thumb.webp',
+      l10n: zh,
     );
 
     expect(permissionRequested, isTrue);
     expect(savedBytes, Uint8List.fromList(const <int>[4, 5, 6]));
     expect(savedFileName, 'thumb.webp');
     expect(result.status, ImageSaveStatus.success);
-    expect(result.message, '已保存到系统相册');
+    expect(result.message, zh.coreImageSaveToGallery);
   });
 
   test(
@@ -172,10 +183,11 @@ void main() {
       final result = await service.saveImageFromUrl(
         imageUrl: '/images/thumb.webp',
         fileName: 'thumb.webp',
+        l10n: zh,
       );
 
       expect(result.status, ImageSaveStatus.failed);
-      expect(result.message, '没有相册权限，无法保存图片');
+      expect(result.message, zh.coreImageSavePermissionDenied);
     },
   );
 
@@ -190,10 +202,29 @@ void main() {
     final result = await service.saveImageFromUrl(
       imageUrl: '/images/thumb.webp',
       fileName: 'thumb.webp',
+      l10n: zh,
     );
 
     expect(result.status, ImageSaveStatus.failed);
-    expect(result.message, '保存失败，请稍后重试');
+    expect(result.message, zh.coreImageSaveFailed);
+  });
+
+  test('image save service uses the wording of the given language', () async {
+    final service = ImageSaveService(
+      fetchBytes: (_) async => Uint8List.fromList(const <int>[4, 5, 6]),
+      resolvePlatform: () => ImageSavePlatform.mobile,
+      requestGalleryPermission: () async => true,
+      saveToGallery: ({required bytes, required fileName}) async => true,
+    );
+
+    final result = await service.saveImageFromUrl(
+      imageUrl: '/images/thumb.webp',
+      fileName: 'thumb.webp',
+      l10n: en,
+    );
+
+    expect(result.status, ImageSaveStatus.success);
+    expect(result.message, en.coreImageSaveToGallery);
   });
 }
 

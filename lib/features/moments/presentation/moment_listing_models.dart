@@ -95,35 +95,27 @@ class MomentListItem {
   bool get isVideo => videoItemId != null && videoItemId! > 0;
 
   // 卡片标签 / 播放器标题 / 副标题统一走这里，避免三处各拼一遍导致 pointId / videoItemId 不一致。
-  //
-  // 不传 [l10n] 时保留旧的中文兜底，供尚未迁移的 `widgets/domain/moments` 卡片渐进替换。
-  String get displayLabel => _displayLabel(null);
-
-  String localizedDisplayLabel(AppLocalizations l10n) => _displayLabel(l10n);
-
-  String _displayLabel(AppLocalizations? l10n) {
+  String localizedDisplayLabel(AppLocalizations l10n) {
     final number = movieNumber;
     if (number != null && number.isNotEmpty) {
       return number;
     }
     final videoId = videoItemId;
     if (videoId != null && videoId > 0) {
-      return l10n?.momentVideoLabel(videoId) ?? '视频 #$videoId';
+      return l10n.momentVideoLabel(videoId);
     }
-    return l10n?.momentLabel(pointId) ?? '时刻 #$pointId';
+    return l10n.momentLabel(pointId);
   }
 
   /// 卡片悬停面板的副信息：`JAV / 视频 · 时刻位置`；来源媒体已删除（[mediaId]
   /// <= 0）时补提示，与预览里的播放入口语义一致。
-  String get hoverMeta => _hoverMeta(null);
-
-  String localizedHoverMeta(AppLocalizations l10n) => _hoverMeta(l10n);
-
-  String _hoverMeta(AppLocalizations? l10n) {
-    final kind = isVideo ? (l10n?.momentKindVideo ?? '视频') : 'JAV';
-    final buffer = StringBuffer('$kind · ${formatMediaTimecode(offsetSeconds)}');
+  String localizedHoverMeta(AppLocalizations l10n) {
+    final kind = isVideo ? l10n.momentKindVideo : 'JAV';
+    final buffer = StringBuffer(
+      '$kind · ${formatMediaTimecode(offsetSeconds)}',
+    );
     if (mediaId <= 0) {
-      buffer.write(' · ${l10n?.momentSourceDeleted ?? '来源已删除'}');
+      buffer.write(' · ${l10n.momentSourceDeleted}');
     }
     return buffer.toString();
   }

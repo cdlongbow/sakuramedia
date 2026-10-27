@@ -110,7 +110,7 @@ class _MobileMoviesPageState extends ConsumerState<MobileMoviesPage> {
       filterTooltip: l10n.moviePageFilterTooltip,
       filterLabel: tagSelection?.hasSelection == true
           ? l10n.moviePageTagFilterCount(tagSelection!.selectedCount)
-          : args.filterState.triggerLabel,
+          : args.filterState.triggerLabel(l10n),
       onFilterTap: () => _openFilterDrawer(context, args),
       informationSlots: [
         AppListHeaderInfo(

@@ -118,6 +118,7 @@ class _VideoThumbnailContentState extends ConsumerState<VideoThumbnailContent> {
         _errorMessage = apiErrorMessage(
           error,
           fallback: AppLocalizations.of(context).videoLoadFailed,
+          l10n: AppLocalizations.of(context),
         );
       });
     }
@@ -190,6 +191,7 @@ class _VideoThumbnailContentState extends ConsumerState<VideoThumbnailContent> {
           apiErrorMessage(
             error,
             fallback: AppLocalizations.of(context).videoCoverSetFailed,
+            l10n: AppLocalizations.of(context),
           ),
         );
       }

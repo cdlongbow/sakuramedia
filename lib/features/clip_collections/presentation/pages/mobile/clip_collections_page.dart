@@ -147,6 +147,7 @@ class _MobileClipCollectionsPageState
                 message: apiErrorMessage(
                   async.error!,
                   fallback: l10n.clipCollectionLoadFailed,
+                  l10n: l10n,
                 ),
               ),
             )
@@ -245,7 +246,11 @@ class _MobileClipCollectionsPageState
       }
     } catch (error) {
       showToast(
-        apiErrorMessage(error, fallback: l10n.clipCollectionDeleteFailed),
+        apiErrorMessage(
+          error,
+          fallback: l10n.clipCollectionDeleteFailed,
+          l10n: l10n,
+        ),
       );
     }
   }

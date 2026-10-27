@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakuramedia/app/language/app_language.dart';
+import 'package:sakuramedia/app/language/providers/language_providers.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
@@ -205,6 +207,24 @@ void main() {
 
     expect(container.read(pluginsProvider).requireValue.plugins, isEmpty);
   });
+
+  test(
+    'refetches the plugin list when the interface language changes',
+    () async {
+      api.listHandler = () async => <PluginSummaryDto>[
+        pluginSummaryDto(id: 'demo_plugin'),
+      ];
+      await container.read(pluginsProvider.future);
+      expect(api.listCalls, 1);
+
+      await container
+          .read(appLanguageControllerProvider.notifier)
+          .setLanguage(AppLanguage.en);
+
+      await container.read(pluginsProvider.future);
+      expect(api.listCalls, 2);
+    },
+  );
 }
 
 class _FakePluginsApi extends PluginsApi {
@@ -219,9 +239,13 @@ class _FakePluginsApi extends PluginsApi {
   upgradeHandler;
   Future<PluginSummaryDto> Function(String, bool)? setEnabledHandler;
   Future<void> Function(String)? removeHandler;
+  int listCalls = 0;
 
   @override
-  Future<List<PluginSummaryDto>> list() => listHandler!();
+  Future<List<PluginSummaryDto>> list() {
+    listCalls++;
+    return listHandler!();
+  }
 
   @override
   Future<void> install({

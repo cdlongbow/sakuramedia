@@ -389,11 +389,13 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
       if (!mounted) {
         return;
       }
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _isLoading = false;
         _errorMessage = apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(context).indexerLoadFailedFallback,
+          fallback: l10n.indexerLoadFailedFallback,
+          l10n: l10n,
         );
       });
     }
@@ -422,10 +424,12 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
       if (!mounted) {
         return;
       }
+      final l10n = AppLocalizations.of(context);
       showToast(
         apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(context).indexerLoadFailedFallback,
+          fallback: l10n.indexerLoadFailedFallback,
+          l10n: l10n,
         ),
       );
     }
@@ -451,11 +455,13 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
       });
     } catch (error) {
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _isLoading = false;
         _errorMessage = apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(context).indexerLoadFailedFallback,
+          fallback: l10n.indexerLoadFailedFallback,
+          l10n: l10n,
         );
       });
     }
@@ -816,6 +822,7 @@ class _MobileIndexerEditorDrawerState
           fallback: _isEditing
               ? l10n.indexerUpdateFailed
               : l10n.indexerCreateFailed,
+          l10n: l10n,
         ),
       );
       setState(() {

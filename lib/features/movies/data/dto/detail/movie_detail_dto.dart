@@ -1,5 +1,6 @@
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_board_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 class MovieDetailDto with MovieCoverSelection {
   const MovieDetailDto({
@@ -224,7 +225,8 @@ class MovieRankingDto {
   final String period;
   final int rank;
 
-  String get periodLabel => rankingPeriodLabel(period);
+  /// 榜单周期文案，按当前语言渲染。
+  String periodLabel(AppLocalizations l10n) => rankingPeriodLabel(period, l10n);
 
   factory MovieRankingDto.fromJson(Map<String, dynamic> json) {
     return MovieRankingDto(

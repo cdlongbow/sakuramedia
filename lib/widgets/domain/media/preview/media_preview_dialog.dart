@@ -189,7 +189,9 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
       setState(() {
         _movieDetailErrorMessage = apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(context).widgetMediaMovieDetailLoadFailed,
+          fallback: AppLocalizations.of(
+            context,
+          ).widgetMediaMovieDetailLoadFailed,
           l10n: AppLocalizations.of(context),
         );
       });
@@ -640,6 +642,7 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
             imageUrl: widget.item.imageUrl,
             fileName: widget.item.fileName,
             dialogTitle: l10n.widgetMediaActionSaveToLocal,
+            l10n: l10n,
           );
       if (mounted && result.status == ImageSaveStatus.success) {
         showToast(result.message ?? l10n.widgetMediaImageSaved);

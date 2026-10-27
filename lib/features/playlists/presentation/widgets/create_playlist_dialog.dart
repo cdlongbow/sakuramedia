@@ -144,6 +144,7 @@ class _CreatePlaylistDialogState extends ConsumerState<CreatePlaylistDialog> {
     if (_isSubmitting || !_formKey.currentState!.validate()) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _isSubmitting = true;
     });
@@ -162,7 +163,8 @@ class _CreatePlaylistDialogState extends ConsumerState<CreatePlaylistDialog> {
       showToast(
         apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(context).playlistCreateFailed,
+          fallback: l10n.playlistCreateFailed,
+          l10n: l10n,
         ),
       );
       if (mounted) {

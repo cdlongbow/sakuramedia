@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 MovieInteractionFilter _range(
   MovieInteractionMetric metric, {
@@ -10,6 +11,8 @@ MovieInteractionFilter _range(
 }
 
 void main() {
+  final zh = AppLocalizationsZh();
+
   group('MovieStatusFilter', () {
     test('unsubscribed 映射后端 status 枚举值', () {
       expect(MovieStatusFilter.unsubscribed.apiValue, 'unsubscribed');
@@ -45,25 +48,26 @@ void main() {
   });
 
   group('movieInteractionRangeLabel', () {
+
     test('双边 / 单边 / 不限的文案', () {
       expect(
-        movieInteractionRangeLabel(MovieInteractionMetric.heat, 1000, 5000),
+        movieInteractionRangeLabel(MovieInteractionMetric.heat, 1000, 5000, zh),
         '1000 ~ 5000',
       );
       expect(
-        movieInteractionRangeLabel(MovieInteractionMetric.heat, 1000, null),
+        movieInteractionRangeLabel(MovieInteractionMetric.heat, 1000, null, zh),
         '≥ 1000',
       );
       expect(
-        movieInteractionRangeLabel(MovieInteractionMetric.heat, null, 5000),
+        movieInteractionRangeLabel(MovieInteractionMetric.heat, null, 5000, zh),
         '≤ 5000',
       );
       expect(
-        movieInteractionRangeLabel(MovieInteractionMetric.heat, null, null),
+        movieInteractionRangeLabel(MovieInteractionMetric.heat, null, null, zh),
         '不限',
       );
       expect(
-        movieInteractionRangeLabel(MovieInteractionMetric.score, 8.0, null),
+        movieInteractionRangeLabel(MovieInteractionMetric.score, 8.0, null, zh),
         '≥ 8.0',
       );
     });
@@ -109,7 +113,7 @@ void main() {
       expect(state.interaction.isDefault, isTrue);
       expect(state.hasInteractionRange, isFalse);
       expect(state.hasActiveFilters, isFalse);
-      expect(state.triggerLabel, '全部');
+      expect(state.triggerLabel(zh), '全部');
     });
 
     test('互动数条件影响 hasActiveFilters / hasInteractionRange / triggerLabel', () {
@@ -118,12 +122,12 @@ void main() {
       );
       expect(state.hasInteractionRange, isTrue);
       expect(state.hasActiveFilters, isTrue);
-      expect(state.triggerLabel, '热度 ≥ 1000');
+      expect(state.triggerLabel(zh), '热度 ≥ 1000');
 
       final both = const MovieFilterState().copyWith(
         interaction: _range(MovieInteractionMetric.heat, min: 1000, max: 5000),
       );
-      expect(both.triggerLabel, '热度 1000 ~ 5000');
+      expect(both.triggerLabel(zh), '热度 1000 ~ 5000');
     });
 
     test('多个互动数指标折叠为数量摘要', () {
@@ -132,22 +136,22 @@ void main() {
           .withRange(MovieInteractionMetric.commentCount, min: 10);
       final state = const MovieFilterState().copyWith(interaction: filter);
 
-      expect(state.triggerLabel, '互动数 · 3 项');
+      expect(state.triggerLabel(zh), '互动数 · 3 项');
     });
 
     test('triggerLabel 优先级：年份 > 互动数 > 状态', () {
       final withYear = const MovieFilterState().copyWith(years: <int>{2024});
-      expect(withYear.triggerLabel, '2024');
+      expect(withYear.triggerLabel(zh), '2024');
 
       final withYearAndHeat = withYear.copyWith(
         interaction: _range(MovieInteractionMetric.heat, min: 1000),
       );
-      expect(withYearAndHeat.triggerLabel, '2024');
+      expect(withYearAndHeat.triggerLabel(zh), '2024');
 
       final withHeatOnly = const MovieFilterState().copyWith(
         interaction: _range(MovieInteractionMetric.heat, max: 2000),
       );
-      expect(withHeatOnly.triggerLabel, '热度 ≤ 2000');
+      expect(withHeatOnly.triggerLabel(zh), '热度 ≤ 2000');
     });
 
     test('多选年份影响 hasActiveFilters / triggerLabel / matches', () {
@@ -155,7 +159,7 @@ void main() {
         years: <int>{2022, 2024, 2023},
       );
       expect(multi.hasActiveFilters, isTrue);
-      expect(multi.triggerLabel, '2024 等 3 个年份');
+      expect(multi.triggerLabel(zh), '2024 等 3 个年份');
 
       expect(
         multi.matches(const MovieFilterState(years: <int>{2024, 2023, 2022})),
@@ -220,13 +224,13 @@ void main() {
       final state = const MovieFilterState().copyWith(actorAgeMax: 25);
       expect(state.hasActorAgeRange, isTrue);
       expect(state.hasActiveFilters, isTrue);
-      expect(state.triggerLabel, '≤ 25 岁');
+      expect(state.triggerLabel(zh), '≤ 25 岁');
 
       final both = const MovieFilterState().copyWith(
         actorAgeMin: 18,
         actorAgeMax: 25,
       );
-      expect(both.triggerLabel, '18 ~ 25 岁');
+      expect(both.triggerLabel(zh), '18 ~ 25 岁');
     });
 
     test('triggerLabel 优先级：年份 > 互动数 > 出演年龄 > 状态', () {
@@ -235,12 +239,12 @@ void main() {
           .copyWith(
             interaction: _range(MovieInteractionMetric.heat, min: 1000),
           );
-      expect(withAgeAndHeat.triggerLabel, '热度 ≥ 1000');
+      expect(withAgeAndHeat.triggerLabel(zh), '热度 ≥ 1000');
 
       final withAgeAndYear = const MovieFilterState()
           .copyWith(actorAgeMax: 25)
           .copyWith(years: <int>{2024});
-      expect(withAgeAndYear.triggerLabel, '2024');
+      expect(withAgeAndYear.triggerLabel(zh), '2024');
     });
 
     test('copyWith 可显式清空出演年龄条件', () {

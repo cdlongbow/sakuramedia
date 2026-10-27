@@ -237,7 +237,11 @@ class _VideoCollectionDetailContentState
 
   Widget _buildError(BuildContext context, Object error) {
     final l10n = AppLocalizations.of(context);
-    final message = apiErrorMessage(error, fallback: l10n.videoCollectionsLoadFailed);
+    final message = apiErrorMessage(
+      error,
+      fallback: l10n.videoCollectionsLoadFailed,
+      l10n: l10n,
+    );
     if (_isMobile) {
       return AppEmptyState(message: message);
     }
@@ -729,7 +733,11 @@ class _VideoCollectionDetailContentState
         return;
       }
       showToast(
-        apiErrorMessage(error, fallback: l10n.videoAddToCollectionFailed),
+        apiErrorMessage(
+          error,
+          fallback: l10n.videoAddToCollectionFailed,
+          l10n: l10n,
+        ),
       );
     }
   }

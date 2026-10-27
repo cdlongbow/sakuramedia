@@ -40,12 +40,12 @@ class _MobileMediaLibrariesPageState
       return await ref.read(mediaProviderCatalogProvider.future);
     } catch (error) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         showToast(
           apiErrorMessage(
             error,
-            fallback: AppLocalizations.of(
-              context,
-            ).mediaLibraryProviderCatalogLoadFailed,
+            fallback: l10n.mediaLibraryProviderCatalogLoadFailed,
+            l10n: l10n,
           ),
         );
       }
@@ -216,6 +216,7 @@ class _MobileMediaLibrariesPageState
         message: apiErrorMessage(
           async.error!,
           fallback: l10n.mediaLibraryLoadFailedFallback,
+          l10n: l10n,
         ),
         onRetry: () => ref.read(mediaLibrariesProvider.notifier).reload(),
         retryButtonKey: const Key('mobile-media-libraries-retry-button'),
@@ -571,6 +572,7 @@ class _MobileMediaLibraryEditorDrawerState
           fallback: _isEditing
               ? l10n.mediaLibraryUpdateFailed
               : l10n.mediaLibraryCreateFailed,
+          l10n: l10n,
         ),
       );
       setState(() => _isSubmitting = false);

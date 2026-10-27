@@ -244,6 +244,7 @@ class _VideoCollectionPlayContentState
         _errorMessage = apiErrorMessage(
           error,
           fallback: l10n.videoCollectionsLoadFailed,
+          l10n: l10n,
         );
       });
     }
@@ -274,6 +275,7 @@ class _VideoCollectionPlayContentState
         _errorMessage = apiErrorMessage(
           error,
           fallback: AppLocalizations.of(context).videoCollectionsLoadFailed,
+          l10n: AppLocalizations.of(context),
         );
       });
     }
@@ -407,7 +409,11 @@ class _VideoCollectionPlayContentState
         } catch (error) {
           if (mounted) {
             showToast(
-              apiErrorMessage(error, fallback: l10n.videoRemoveFailed),
+              apiErrorMessage(
+                error,
+                fallback: l10n.videoRemoveFailed,
+                l10n: l10n,
+              ),
             );
           }
         }

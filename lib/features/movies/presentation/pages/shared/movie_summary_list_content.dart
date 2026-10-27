@@ -341,7 +341,7 @@ class _MovieSummaryListContentState
         filterButtonKey: const Key('movies-filter-trigger'),
         filterLabel: hasTagSelection
             ? l10n.moviePageTagFilterCount(tagSelection!.selectedCount)
-            : filter.triggerLabel,
+            : filter.triggerLabel(l10n),
         filterPanelKey: const Key('movies-filter-panel'),
         filterPanelBuilder: (_) => MovieFilterSectionGroup(
           filterState: filter,

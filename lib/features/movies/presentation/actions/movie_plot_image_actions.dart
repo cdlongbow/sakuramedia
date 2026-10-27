@@ -218,6 +218,7 @@ Future<void> _saveToLocal({
         imageUrl: imageUrl,
         fileName: fileName,
         dialogTitle: l10n.movieActionSaveToLocal,
+        l10n: l10n,
       );
   if (!context.mounted) {
     return;

@@ -4,34 +4,35 @@ import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dar
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_ranking_list.dart';
 import 'package:sakuramedia/theme.dart';
 
+import '../../../../../support/pump_with_providers.dart';
+
 void main() {
   testWidgets('movie ranking list renders one honor badge per placement', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: sakuraThemeData,
-        home: const Scaffold(
-          body: MovieRankingList(
-            rankings: <MovieRankingDto>[
-              MovieRankingDto(
-                sourceKey: 'javdb',
-                sourceName: 'JavDB',
-                boardKey: 'playback_all',
-                boardName: '热播',
-                period: 'daily',
-                rank: 40,
-              ),
-              MovieRankingDto(
-                sourceKey: 'javdb',
-                sourceName: 'JavDB',
-                boardKey: 'top250',
-                boardName: 'TOP250',
-                period: 'all',
-                rank: 18,
-              ),
-            ],
-          ),
+    await pumpWithProviders(
+      tester,
+      theme: sakuraThemeData,
+      home: const Scaffold(
+        body: MovieRankingList(
+          rankings: <MovieRankingDto>[
+            MovieRankingDto(
+              sourceKey: 'javdb',
+              sourceName: 'JavDB',
+              boardKey: 'playback_all',
+              boardName: '热播',
+              period: 'daily',
+              rank: 40,
+            ),
+            MovieRankingDto(
+              sourceKey: 'javdb',
+              sourceName: 'JavDB',
+              boardKey: 'top250',
+              boardName: 'TOP250',
+              period: 'all',
+              rank: 18,
+            ),
+          ],
         ),
       ),
     );
@@ -53,25 +54,50 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('movie ranking list renders the period label in English for en', (
+    WidgetTester tester,
+  ) async {
+    await pumpWithProviders(
+      tester,
+      locale: const Locale('en'),
+      theme: sakuraThemeData,
+      home: const Scaffold(
+        body: MovieRankingList(
+          rankings: <MovieRankingDto>[
+            MovieRankingDto(
+              sourceKey: 'javdb',
+              sourceName: 'JavDB',
+              boardKey: 'playback_all',
+              boardName: '热播',
+              period: 'daily',
+              rank: 40,
+            ),
+          ],
+        ),
+      ),
+    );
+
+    expect(find.text('热播 · Daily'), findsOneWidget);
+  });
+
   testWidgets('movie ranking list skips an empty period segment', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: sakuraThemeData,
-        home: const Scaffold(
-          body: MovieRankingList(
-            rankings: <MovieRankingDto>[
-              MovieRankingDto(
-                sourceKey: 'minnano',
-                sourceName: '更多影片榜单',
-                boardKey: 'daily_pick',
-                boardName: '每日精选',
-                period: '',
-                rank: 9,
-              ),
-            ],
-          ),
+    await pumpWithProviders(
+      tester,
+      theme: sakuraThemeData,
+      home: const Scaffold(
+        body: MovieRankingList(
+          rankings: <MovieRankingDto>[
+            MovieRankingDto(
+              sourceKey: 'minnano',
+              sourceName: '更多影片榜单',
+              boardKey: 'daily_pick',
+              boardName: '每日精选',
+              period: '',
+              rank: 9,
+            ),
+          ],
         ),
       ),
     );
@@ -88,24 +114,23 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: sakuraMobileThemeData,
-        home: const Scaffold(
-          body: Padding(
-            padding: EdgeInsets.all(16),
-            child: MovieRankingList(
-              rankings: <MovieRankingDto>[
-                MovieRankingDto(
-                  sourceKey: 'minnano',
-                  sourceName: '更多影片榜单',
-                  boardKey: 'minnano_av',
-                  boardName: 'Minnano AV 每日人气排行榜',
-                  period: 'monthly',
-                  rank: 128,
-                ),
-              ],
-            ),
+    await pumpWithProviders(
+      tester,
+      theme: sakuraMobileThemeData,
+      home: const Scaffold(
+        body: Padding(
+          padding: EdgeInsets.all(16),
+          child: MovieRankingList(
+            rankings: <MovieRankingDto>[
+              MovieRankingDto(
+                sourceKey: 'minnano',
+                sourceName: '更多影片榜单',
+                boardKey: 'minnano_av',
+                boardName: 'Minnano AV 每日人气排行榜',
+                period: 'monthly',
+                rank: 128,
+              ),
+            ],
           ),
         ),
       ),

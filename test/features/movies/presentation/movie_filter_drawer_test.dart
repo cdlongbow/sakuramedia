@@ -5,11 +5,14 @@ import 'package:sakuramedia/features/movies/presentation/controllers/listing/mov
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_filter_drawer.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_interaction_filter_options_provider.dart';
 import 'package:sakuramedia/l10n/app_localizations.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../../support/test_api_bundle.dart';
 
 void main() {
+  final zh = AppLocalizationsZh();
+
   Widget wrapApp(Widget home) {
     return ProviderScope(
       overrides: [
@@ -93,7 +96,7 @@ void main() {
     await tester.tap(find.text('4K'));
     await tester.pumpAndSettle();
     expect(applied.last.resolution, PlaylistResolutionFilter.k4k);
-    expect(applied.last.triggerLabel, contains('4K'));
+    expect(applied.last.triggerLabel(zh), contains('4K'));
     applied.clear();
     await tester.tap(find.text('已订阅'));
     await tester.pumpAndSettle();
@@ -201,7 +204,7 @@ void main() {
     expect(applied.single.actorAgeMin, isNull);
     expect(applied.single.actorAgeMax, isNotNull);
     expect(applied.single.actorAgeMax, lessThan(movieFilterActorAgeSliderMax));
-    expect(applied.single.triggerLabel, contains('岁'));
+    expect(applied.single.triggerLabel(zh), contains('岁'));
 
     // 左 thumb 同样松手才生效：拖离底端后传具体 actor_age_min。
     await tester.dragFrom(

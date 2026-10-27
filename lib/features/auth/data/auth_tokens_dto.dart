@@ -1,4 +1,5 @@
 import 'package:sakuramedia/core/session/session_token_payload.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 class AuthUserDto {
   const AuthUserDto({required this.username, this.language});
@@ -40,8 +41,11 @@ class AuthTokensDto {
   final DateTime refreshExpiresAt;
   final AuthUserDto user;
 
-  factory AuthTokensDto.fromJson(Map<String, dynamic> json) {
-    final tokenPayload = SessionTokenPayload.fromJson(json);
+  factory AuthTokensDto.fromJson(
+    Map<String, dynamic> json, {
+    AppLocalizations? l10n,
+  }) {
+    final tokenPayload = SessionTokenPayload.fromJson(json, l10n: l10n);
     return AuthTokensDto(
       accessToken: tokenPayload.accessToken,
       refreshToken: tokenPayload.refreshToken,

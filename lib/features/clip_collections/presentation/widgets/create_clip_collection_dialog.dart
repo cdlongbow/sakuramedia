@@ -189,6 +189,7 @@ class _ClipCollectionEditDialogState
     if (_isSubmitting || !_formKey.currentState!.validate()) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     setState(() => _isSubmitting = true);
     final api = ref.read(clipCollectionsApiProvider);
     try {
@@ -216,8 +217,9 @@ class _ClipCollectionEditDialogState
         apiErrorMessage(
           error,
           fallback: widget.isEditing
-              ? AppLocalizations.of(context).clipCollectionSaveFailed
-              : AppLocalizations.of(context).clipCollectionCreateFailed,
+              ? l10n.clipCollectionSaveFailed
+              : l10n.clipCollectionCreateFailed,
+          l10n: l10n,
         ),
       );
       if (mounted) {

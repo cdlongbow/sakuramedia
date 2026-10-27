@@ -91,12 +91,12 @@ class _SystemMaintenanceContentState
       if (!mounted) {
         return;
       }
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _errorMessage = apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(
-            context,
-          ).systemMaintenanceImageSearchLoadFailedFallback,
+          fallback: l10n.systemMaintenanceImageSearchLoadFailedFallback,
+          l10n: l10n,
         );
       });
     } finally {
@@ -339,12 +339,12 @@ class _SystemMaintenanceContentState
           error.error?.code == 'task_conflict') {
         showToast(AppLocalizations.of(context).systemMaintenanceTaskRunning);
       } else {
+        final l10n = AppLocalizations.of(context);
         showToast(
           apiErrorMessage(
             error,
-            fallback: AppLocalizations.of(
-              context,
-            ).systemMaintenanceSubmitFailed,
+            fallback: l10n.systemMaintenanceSubmitFailed,
+            l10n: l10n,
           ),
         );
       }

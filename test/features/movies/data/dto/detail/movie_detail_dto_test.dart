@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 void main() {
   test('movie detail parses ranking placements', () {
+    final zh = AppLocalizationsZh();
     final detail = MovieDetailDto.fromJson(<String, dynamic>{
       'rankings': <dynamic>[
         <String, dynamic>{
@@ -31,9 +33,9 @@ void main() {
     expect(daily.boardKey, 'playback_all');
     expect(daily.boardName, '热播');
     expect(daily.period, 'daily');
-    expect(daily.periodLabel, '日榜');
+    expect(daily.periodLabel(zh), zh.rankingPeriodDaily);
     expect(daily.rank, 3);
-    expect(detail.rankings.last.periodLabel, '2026年');
+    expect(detail.rankings.last.periodLabel(zh), zh.rankingPeriodYear('2026'));
   });
 
   test('movie detail without rankings yields an empty list', () {

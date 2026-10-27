@@ -349,6 +349,7 @@ class _ActorProfileEditorState extends State<ActorProfileEditor> {
         unreadableMessage: l10n.actorProfileImageUnreadable,
         pickerUnavailableMessage: l10n.actorProfileImagePickerUnavailable,
         openFailureMessage: l10n.actorProfileImageOpenFailed,
+        l10n: l10n,
       );
       if (picked == null || !mounted) {
         return;

@@ -473,7 +473,7 @@ class _MovieInteractionRangeFilterSectionState
               ),
             ),
             Text(
-              movieInteractionRangeLabel(widget.metric, min, max, l10n: l10n),
+              movieInteractionRangeLabel(widget.metric, min, max, l10n),
               key: Key('movie-filter-${widget.metric.apiValue}-range-label'),
               style: resolveAppTextStyle(
                 context,

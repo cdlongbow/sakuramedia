@@ -6,9 +6,8 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/language/app_language.dart';
 import 'package:sakuramedia/app/language/providers/language_providers.dart';
 import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
-import 'package:sakuramedia/core/network/api_error_localizations.dart';
+import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/account/presentation/providers/account_api_provider.dart';
-import 'package:sakuramedia/features/plugins/presentation/providers/plugins_provider.dart';
 import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
@@ -49,16 +48,17 @@ class _LanguageSettingsContentState
       if (!mounted) {
         return;
       }
-      // 插件列表/插件设置标题是服务端读时文案，切换后需要重新拉取。
-      ref.invalidate(pluginsProvider);
+      // 服务端读时文案的 provider（插件列表、Provider 目录）各自 watch 了
+      // appLanguageControllerProvider，语言一变自动重拉；这里只负责清掉
+      // 导航级保活的页面缓存，让 autoDispose 列表回到新语言。
       ref.read(riverpodPageCacheProvider).clearAll();
     } catch (error) {
       if (mounted) {
         showToast(
-          localizedApiErrorMessage(
-            l10n,
+          apiErrorMessage(
             error,
             fallback: l10n.settingsLanguageUpdateFailed,
+            l10n: l10n,
           ),
         );
       }

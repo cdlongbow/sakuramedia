@@ -111,6 +111,7 @@ class _DesktopPluginsSectionState extends ConsumerState<DesktopPluginsSection>
         message: apiErrorMessage(
           asyncPlugins.error!,
           fallback: l10n.pluginsLoadFailedFallback,
+          l10n: l10n,
         ),
         onRetry: _actions.refresh,
       );

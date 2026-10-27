@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_pill.dart';
 
@@ -31,9 +32,10 @@ class _MovieRankingChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final label = [
       ranking.boardName.trim(),
-      ranking.periodLabel.trim(),
+      ranking.periodLabel(l10n).trim(),
     ].where((part) => part.isNotEmpty).join(' · ');
 
     return AppPill.custom(

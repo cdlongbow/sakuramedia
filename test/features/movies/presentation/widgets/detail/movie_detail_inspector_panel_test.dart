@@ -175,14 +175,15 @@ void main() {
         await tester.pumpWidget(
           UncontrolledProviderScope(
             container: container,
-            child: const MaterialApp(
+            child: MaterialApp(
               locale: Locale('zh'),
               localizationsDelegates: <LocalizationsDelegate<dynamic>>[
                 AppLocalizations.delegate,
                 ...GlobalMaterialLocalizations.delegates,
               ],
-              supportedLocales: <Locale>[Locale('zh'), Locale('en')],
-              home: SizedBox.shrink()),
+              supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+              home: SizedBox.shrink(),
+            ),
           ),
         );
         // autoDispose 的实际释放挂在 `Timer(Duration.zero)`，要推进时钟才结算。

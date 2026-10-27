@@ -579,14 +579,14 @@ class _DesktopAdvancedSettingsSectionState
       if (!mounted) {
         return;
       }
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _initialized = true;
         _isLoading = false;
         _errorMessage = apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(
-            context,
-          ).errorAdvancedSettingsLoadFailed,
+          fallback: l10n.errorAdvancedSettingsLoadFailed,
+          l10n: l10n,
         );
       });
     }
@@ -695,22 +695,22 @@ class _DesktopAdvancedSettingsSectionState
       showToast(
         buildAdvancedConfigSaveSuccessMessage(
           result.restartRequired,
-          l10n: AppLocalizations.of(context),
+          AppLocalizations.of(context),
         ),
       );
     } catch (error) {
       if (!mounted) {
         return;
       }
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _savingCards.remove(card);
       });
       showToast(
         apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(
-            context,
-          ).errorAdvancedSettingsSaveFailed,
+          fallback: l10n.errorAdvancedSettingsSaveFailed,
+          l10n: l10n,
         ),
       );
     }
@@ -820,14 +820,14 @@ enum _AdvancedCardKind { media, scheduler, other, optionalServices }
 ///
 /// 抽为顶层函数便于单元测试（widget 测里 oktoast 在 test env 下不可靠）。
 String buildAdvancedConfigSaveSuccessMessage(
-  List<String> restartRequired, {
-  AppLocalizations? l10n,
-}) {
-  final saved = l10n?.commonSaved ?? '已保存';
+  List<String> restartRequired,
+  AppLocalizations l10n,
+) {
+  final saved = l10n.commonSaved;
   if (restartRequired.isEmpty) {
     return saved;
   }
-  return buildRestartRequiredMessage(saved, l10n: l10n);
+  return buildRestartRequiredMessage(saved, l10n);
 }
 
 class _CardBadges extends StatelessWidget {

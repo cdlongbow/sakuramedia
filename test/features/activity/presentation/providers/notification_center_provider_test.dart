@@ -1,6 +1,8 @@
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/app/language/app_language.dart';
+import 'package:sakuramedia/app/language/providers/language_providers.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_state.dart';
@@ -45,6 +47,41 @@ void main() {
       isEmpty,
     );
   });
+
+  test(
+    'switching the language keeps the loaded notification snapshot',
+    () async {
+      _enqueueBootstrap(bundle, notificationId: 5, unreadCount: 2);
+
+      await container.read(notificationCenterProvider.notifier).reloadAll();
+      expect(container.read(notificationCenterProvider).initialized, isTrue);
+      expect(
+        container.read(notificationCenterProvider).notifications,
+        hasLength(1),
+      );
+      final bootstrapCalls = bundle.adapter.requests
+          .where((request) => request.path.contains('/system/activity/bootstrap'))
+          .length;
+
+      await container
+          .read(appLanguageControllerProvider.notifier)
+          .setLanguage(AppLanguage.en);
+
+      // 通知标题/正文是写入时快照，不随界面语言重拉：provider 不重建、
+      // 不再发请求，已读列表保持原样。
+      expect(container.read(notificationCenterProvider).initialized, isTrue);
+      expect(
+        container.read(notificationCenterProvider).notifications,
+        hasLength(1),
+      );
+      expect(
+        bundle.adapter.requests
+            .where((request) => request.path.contains('/system/activity/bootstrap'))
+            .length,
+        bootstrapCalls,
+      );
+    },
+  );
 
   test('markAllRead uses notification mutation endpoint', () async {
     _enqueueBootstrap(bundle, notificationId: 5, unreadCount: 1);

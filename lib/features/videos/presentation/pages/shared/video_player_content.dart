@@ -185,6 +185,7 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent>
         _errorMessage = apiErrorMessage(
           error,
           fallback: AppLocalizations.of(context).videoLoadFailed,
+          l10n: AppLocalizations.of(context),
         );
       });
     }
@@ -230,6 +231,7 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent>
         _thumbnailErrorMessage = apiErrorMessage(
           error,
           fallback: AppLocalizations.of(context).videoRetryLater,
+          l10n: AppLocalizations.of(context),
         );
       });
       _setActiveThumbnailIndex(null);
@@ -263,6 +265,7 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent>
       _errorMessage = apiErrorMessage(
         error,
         fallback: AppLocalizations.of(context).videoLoadFailed,
+        l10n: AppLocalizations.of(context),
       );
     });
   }

@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/language_providers.dart';
 import 'package:sakuramedia/features/plugins/data/dto/plugin_dto.dart';
 import 'package:sakuramedia/features/plugins/data/plugins_api.dart';
 import 'package:sakuramedia/features/plugins/presentation/providers/plugins_api_provider.dart';
@@ -18,6 +19,9 @@ class Plugins extends _$Plugins
 
   @override
   Future<PluginsState> build() async {
+    // 插件 display_name / load_error 由后端按请求语言解析（读时文案），
+    // 语言一变这份快照就过期，必须跟着重拉。
+    ref.watch(appLanguageControllerProvider);
     invalidateOnSignOut(ref);
     attachDisposeGuard();
     return _fetchPlugins();

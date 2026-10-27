@@ -119,8 +119,8 @@ class MomentCard extends StatelessWidget {
       children: [
         AppCoverHoverInfoRow(
           key: Key('moment-card-info-${item.pointId}'),
-          label: item.displayLabel,
-          meta: item.hoverMeta,
+          label: item.localizedDisplayLabel(l10n),
+          meta: item.localizedHoverMeta(l10n),
         ),
         if (actions.isNotEmpty) ...[
           SizedBox(height: spacing.sm),

@@ -95,13 +95,13 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
       if (!mounted) {
         return;
       }
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _loading = false;
         _errorMessage = apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(
-            context,
-          ).pluginSettingsLoadFailedFallback,
+          fallback: l10n.pluginSettingsLoadFailedFallback,
+          l10n: l10n,
         );
       });
     }
@@ -159,14 +159,13 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
         return;
       }
       final l10n = AppLocalizations.of(context);
-      showToast(
-        buildRestartRequiredMessage(l10n.pluginSettingsSaved, l10n: l10n),
-      );
+      showToast(buildRestartRequiredMessage(l10n.pluginSettingsSaved, l10n));
       Navigator.of(context).pop();
     } catch (error) {
       if (!mounted) {
         return;
       }
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _saving = false;
         final details = error is ApiException ? error.error?.details : null;
@@ -182,7 +181,8 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
       showToast(
         apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(context).pluginSettingsSaveFailed,
+          fallback: l10n.pluginSettingsSaveFailed,
+          l10n: l10n,
         ),
       );
       WidgetsBinding.instance.addPostFrameCallback((_) {

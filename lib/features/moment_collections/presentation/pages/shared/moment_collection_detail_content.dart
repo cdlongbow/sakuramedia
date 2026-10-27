@@ -83,13 +83,13 @@ class _MomentCollectionDetailContentState
 
     final content = Builder(
       builder: (context) {
+        final l10n = AppLocalizations.of(context);
         if (!isLoading && async.hasError && state == null) {
           return AppEmptyState(
             message: apiErrorMessage(
               async.error!,
-              fallback: AppLocalizations.of(
-                context,
-              ).momentErrorCollectionDetailLoadFailed,
+              fallback: l10n.momentErrorCollectionDetailLoadFailed,
+              l10n: l10n,
             ),
           );
         }
@@ -510,6 +510,7 @@ class _MomentCollectionDetailContentState
         apiErrorMessage(
           error,
           fallback: l10n.momentErrorRemoveFromCollectionFailed,
+          l10n: l10n,
         ),
       );
     }

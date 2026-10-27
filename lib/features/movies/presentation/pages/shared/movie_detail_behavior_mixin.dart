@@ -370,18 +370,19 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
     if (imageUrl.isEmpty) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     final result =
         await ImageSaveService(
           fetchBytes: ref.read(apiClientProvider).getBytes,
         ).saveImageFromUrl(
           imageUrl: imageUrl,
           fileName: buildPointFileName(point),
-          dialogTitle: AppLocalizations.of(context).moviePageSaveToLocal,
+          dialogTitle: l10n.moviePageSaveToLocal,
+          l10n: l10n,
         );
     if (!mounted) {
       return;
     }
-    final l10n = AppLocalizations.of(context);
     if (result.status == ImageSaveStatus.success) {
       showToast(result.message ?? l10n.moviePageImageSaved);
     }

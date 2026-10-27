@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show setEquals;
 import 'package:sakuramedia/features/playlists/data/playlist_resolution_filter.dart';
 import 'package:sakuramedia/features/shared/data/movie_interaction_filter.dart';
 import 'package:sakuramedia/features/shared/data/sort_direction.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 export 'package:sakuramedia/features/playlists/data/playlist_resolution_filter.dart';
 
@@ -253,14 +254,14 @@ class MovieFilterState {
       ? '${sortField.apiValue}:${sortDirection.apiValue}'
       : 'dimension_$dimensionSortId:${sortDirection.apiValue}';
 
-  String get triggerLabel {
+  String triggerLabel(AppLocalizations l10n) {
     final label = switch ((
       years.isNotEmpty,
       hasInteractionRange,
       hasActorAgeRange,
     )) {
       (true, _, _) => movieFilterYearsLabel(years),
-      (_, true, _) => interaction.summaryLabel,
+      (_, true, _) => interaction.localizedSummaryLabel(l10n),
       (_, _, true) => movieActorAgeRangeLabel(actorAgeMin, actorAgeMax),
       _ => status.label,
     };

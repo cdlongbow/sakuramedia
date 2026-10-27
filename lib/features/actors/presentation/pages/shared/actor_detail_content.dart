@@ -412,13 +412,12 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
     PagedListState<MovieListItemDto>? paged,
   ) {
     final tagSelection = ref.watch(tagSelectionProvider(_tagSelectionScope));
+    final l10n = AppLocalizations.of(context);
     return AppListHeader(
       filterButtonKey: const Key('actor-detail-filter-trigger'),
       filterLabel: tagSelection.hasSelection
-          ? AppLocalizations.of(
-              context,
-            ).actorTagFilterLabel(tagSelection.selectedCount)
-          : _filterState.triggerLabel,
+          ? l10n.actorTagFilterLabel(tagSelection.selectedCount)
+          : _filterState.triggerLabel(l10n),
       filterPanelKey: const Key('actor-detail-filter-panel'),
       filterUpdate: paged?.filterUpdate ?? const FilterUpdateState.idle(),
       hasPreviousFilterItems: paged?.items.isNotEmpty ?? false,

@@ -172,6 +172,7 @@ class _ClipCollectionDetailContentState
               fallback: AppLocalizations.of(
                 context,
               ).clipCollectionDetailLoadFailed,
+              l10n: AppLocalizations.of(context),
             ),
           );
         }
@@ -718,7 +719,11 @@ class _ClipCollectionDetailContentState
         return;
       }
       showToast(
-        apiErrorMessage(error, fallback: l10n.clipCollectionAddFailedRetry),
+        apiErrorMessage(
+          error,
+          fallback: l10n.clipCollectionAddFailedRetry,
+          l10n: l10n,
+        ),
       );
     }
   }

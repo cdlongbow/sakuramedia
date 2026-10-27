@@ -160,6 +160,7 @@ class _MobilePluginMarketPageState
           message: apiErrorMessage(
             asyncMarket.error!,
             fallback: l10n.pluginMarketLoadFailedFallback,
+            l10n: l10n,
           ),
           onRetry: _actions.refreshMarket,
           retryButtonKey: const Key('mobile-plugin-market-retry-button'),

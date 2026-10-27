@@ -15,10 +15,10 @@ const List<LocalizationsDelegate<dynamic>> _testLocalizationsDelegates =
 void main() {
   Future<void> pumpTrafficLights(WidgetTester tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         locale: Locale('zh'),
         localizationsDelegates: _testLocalizationsDelegates,
-        supportedLocales: <Locale>[Locale('zh'), Locale('en')],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(body: Center(child: AppMacTrafficLights())),
       ),
     );

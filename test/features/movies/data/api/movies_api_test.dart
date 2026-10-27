@@ -13,6 +13,7 @@ import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.d
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 import 'package:sakuramedia/l10n/app_localizations_en.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
 
@@ -828,6 +829,7 @@ void main() {
   });
 
   test('getMovieDetail parses full movie detail response', () async {
+    final zh = AppLocalizationsZh();
     adapter.enqueueJson(
       method: 'GET',
       path: '/movies/ABC-001',
@@ -1037,10 +1039,10 @@ void main() {
     expect(detail.favoritePlaylistId, 9);
     expect(detail.rankings, hasLength(2));
     expect(detail.rankings.first.boardName, '热播');
-    expect(detail.rankings.first.periodLabel, '日榜');
+    expect(detail.rankings.first.periodLabel(zh), zh.rankingPeriodDaily);
     expect(detail.rankings.first.rank, 3);
     expect(detail.rankings.last.boardName, 'TOP250');
-    expect(detail.rankings.last.periodLabel, '2026年');
+    expect(detail.rankings.last.periodLabel(zh), zh.rankingPeriodYear('2026'));
   });
 
   test('getMergedPlayback requests the selected media library', () async {

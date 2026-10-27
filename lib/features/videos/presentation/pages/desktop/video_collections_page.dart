@@ -152,7 +152,11 @@ class _DesktopVideoCollectionsPageState
     if (!isLoading && async.hasError && async.value == null) {
       return SliverToBoxAdapter(
         child: AppEmptyState(
-          message: apiErrorMessage(async.error!, fallback: l10n.videoCollectionsLoadFailed),
+          message: apiErrorMessage(
+            async.error!,
+            fallback: l10n.videoCollectionsLoadFailed,
+            l10n: l10n,
+          ),
         ),
       );
     }

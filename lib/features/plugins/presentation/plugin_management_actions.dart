@@ -66,16 +66,17 @@ class PluginManagementActions {
       }
       showToast(
         refreshed
-            ? buildRestartRequiredMessage(
-                _l10n.pluginInstalled,
-                l10n: _l10n,
-              )
+            ? buildRestartRequiredMessage(_l10n.pluginInstalled, _l10n)
             : _l10n.pluginInstalledRefreshFailed,
       );
     } catch (error) {
       if (context.mounted) {
         showToast(
-          apiErrorMessage(error, fallback: _l10n.pluginInstallFailed),
+          apiErrorMessage(
+            error,
+            fallback: _l10n.pluginInstallFailed,
+            l10n: _l10n,
+          ),
         );
       }
     }
@@ -90,13 +91,19 @@ class PluginManagementActions {
         showToast(
           buildRestartRequiredMessage(
             enabled ? _l10n.pluginEnabled : _l10n.pluginDisabled,
-            l10n: _l10n,
+            _l10n,
           ),
         );
       }
     } catch (error) {
       if (context.mounted) {
-        showToast(apiErrorMessage(error, fallback: _l10n.pluginToggleFailed));
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: _l10n.pluginToggleFailed,
+            l10n: _l10n,
+          ),
+        );
       }
     }
   }
@@ -160,9 +167,7 @@ class PluginManagementActions {
       failureFallback: _l10n.pluginUpgradeFailed,
     );
     if (confirmed && context.mounted) {
-      showToast(
-        buildRestartRequiredMessage(_l10n.pluginUpgraded, l10n: _l10n),
-      );
+      showToast(buildRestartRequiredMessage(_l10n.pluginUpgraded, _l10n));
     }
   }
 
@@ -182,9 +187,7 @@ class PluginManagementActions {
       failureFallback: _l10n.pluginDeleteFailed,
     );
     if (confirmed && context.mounted) {
-      showToast(
-        buildRestartRequiredMessage(_l10n.pluginDeleted, l10n: _l10n),
-      );
+      showToast(buildRestartRequiredMessage(_l10n.pluginDeleted, _l10n));
     }
   }
 
@@ -228,14 +231,16 @@ class PluginManagementActions {
     try {
       await ref.read(pluginMarketProvider.notifier).install(plugin);
       if (context.mounted) {
-        showToast(
-          buildRestartRequiredMessage(_l10n.pluginInstalled, l10n: _l10n),
-        );
+        showToast(buildRestartRequiredMessage(_l10n.pluginInstalled, _l10n));
       }
     } catch (error) {
       if (context.mounted) {
         showToast(
-          apiErrorMessage(error, fallback: _l10n.pluginInstallFailed),
+          apiErrorMessage(
+            error,
+            fallback: _l10n.pluginInstallFailed,
+            l10n: _l10n,
+          ),
         );
       }
     }
@@ -272,14 +277,16 @@ class PluginManagementActions {
     try {
       await ref.read(pluginMarketProvider.notifier).upgrade(plugin);
       if (context.mounted) {
-        showToast(
-          buildRestartRequiredMessage(_l10n.pluginUpgraded, l10n: _l10n),
-        );
+        showToast(buildRestartRequiredMessage(_l10n.pluginUpgraded, _l10n));
       }
     } catch (error) {
       if (context.mounted) {
         showToast(
-          apiErrorMessage(error, fallback: _l10n.pluginUpgradeFailed),
+          apiErrorMessage(
+            error,
+            fallback: _l10n.pluginUpgradeFailed,
+            l10n: _l10n,
+          ),
         );
       }
     }

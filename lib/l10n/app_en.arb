@@ -478,14 +478,6 @@
       }
     }
   },
-  "durationSeconds": "{count} sec",
-  "@durationSeconds": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "systemDiagnosticsComponentTitle": "Component diagnostics",
   "systemDiagnosticsRerun": "Check again",
   "systemDiagnosticsOpenPage": "Open component diagnostics",

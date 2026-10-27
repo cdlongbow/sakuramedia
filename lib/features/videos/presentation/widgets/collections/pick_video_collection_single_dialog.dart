@@ -116,7 +116,10 @@ class _PickVideoCollectionSingleDialogState
       return AppEmptyState(
         message: apiErrorMessage(
           collectionsAsync.error!,
-          fallback: AppLocalizations.of(context).videoCollectionsLoadFailedShort,
+          fallback: AppLocalizations.of(
+            context,
+          ).videoCollectionsLoadFailedShort,
+          l10n: AppLocalizations.of(context),
         ),
       );
     }
@@ -131,7 +134,8 @@ class _PickVideoCollectionSingleDialogState
         shrinkWrap: true,
         // 首行固定为「不加入合集」；搜索无结果时第二行给出提示而不是空列表。
         itemCount: visible.isEmpty ? 2 : visible.length + 1,
-        separatorBuilder: (context, _) => SizedBox(height: context.appSpacing.sm),
+        separatorBuilder: (context, _) =>
+            SizedBox(height: context.appSpacing.sm),
         itemBuilder: (context, index) {
           if (index == 0) {
             return AppPickerOptionTile.text(
@@ -168,8 +172,9 @@ class _PickVideoCollectionSingleDialogState
               context,
             ).pop(VideoCollectionSelection(collection.id)),
             title: collection.name,
-            trailingText:
-                collection.itemCount > 0 ? '${collection.itemCount}' : null,
+            trailingText: collection.itemCount > 0
+                ? '${collection.itemCount}'
+                : null,
             optionKey: Key('pick-video-collection-single-${collection.id}'),
             checkboxKey: Key(
               'pick-video-collection-single-checkbox-${collection.id}',

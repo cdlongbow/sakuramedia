@@ -120,12 +120,12 @@ class _AddToMomentCollectionDialogState
       });
     } catch (error) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         setState(() {
           _error = apiErrorMessage(
             error,
-            fallback: AppLocalizations.of(
-              context,
-            ).momentErrorCollectionsLoadFailed,
+            fallback: l10n.momentErrorCollectionsLoadFailed,
+            l10n: l10n,
           );
           _isLoading = false;
         });
@@ -323,6 +323,7 @@ class _AddToMomentCollectionDialogState
           fallback: selected
               ? l10n.momentErrorRemoveFromCollectionBriefFailed
               : l10n.momentErrorAddToCollectionFailed,
+          l10n: l10n,
         ),
       );
     } finally {

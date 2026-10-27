@@ -143,10 +143,12 @@ class _AddMomentsToCollectionDialogState
       if (!mounted || seq != _requestSeq) {
         return;
       }
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _errorMessage = apiErrorMessage(
           error,
-          fallback: AppLocalizations.of(context).momentErrorPointsLoadFailed,
+          fallback: l10n.momentErrorPointsLoadFailed,
+          l10n: l10n,
         );
         _isLoading = false;
       });
@@ -184,10 +186,12 @@ class _AddMomentsToCollectionDialogState
       });
     } catch (error) {
       if (mounted && seq == _requestSeq) {
+        final l10n = AppLocalizations.of(context);
         setState(() {
           final message = apiErrorMessage(
             error,
-            fallback: AppLocalizations.of(context).momentErrorPointsLoadFailed,
+            fallback: l10n.momentErrorPointsLoadFailed,
+            l10n: l10n,
           );
           if (_points.isEmpty) {
             _errorMessage = message;
@@ -518,6 +522,7 @@ class _AddMomentsToCollectionDialogState
           fallback: isMember
               ? l10n.momentErrorRemoveFromCollectionBriefFailed
               : l10n.momentErrorAddToCollectionFailed,
+          l10n: l10n,
         ),
       );
     } finally {

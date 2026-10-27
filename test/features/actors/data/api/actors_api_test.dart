@@ -424,7 +424,7 @@ void main() {
 
     expect(
       updates.first.message,
-      'Searching external sources for performers...',
+      'Searching external sources for actors...',
     );
     expect(
       updates.any((update) => update.message == 'Downloading avatars 1/2'),

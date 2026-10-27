@@ -5,7 +5,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/cast/data/cast_device.dart';
 import 'package:sakuramedia/features/cast/data/cast_director.dart';
 import 'package:sakuramedia/features/cast/presentation/widgets/cast_device_picker.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
+import 'package:upnp_client/upnp_client.dart';
 
 import '../../support/cast_test_helpers.dart';
 
@@ -32,6 +34,12 @@ Future<void> _pumpPicker(
 }) async {
   await tester.pumpWidget(
     MaterialApp(
+      locale: const Locale('zh'),
+      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
       home: Builder(
         builder: (context) => Scaffold(
           body: Center(
@@ -150,7 +158,7 @@ void main() {
     await _pumpPicker(
       tester,
       director: _FakeCastDirector([controller.stream]),
-      onCast: (_) async => throw const CastException('电视无法访问该视频地址'),
+      onCast: (_) async => throw UPnPException(errorCode: 716),
     );
 
     controller.add(buildTestCastDevice(id: 'uuid:bedroom', name: '卧室电视'));

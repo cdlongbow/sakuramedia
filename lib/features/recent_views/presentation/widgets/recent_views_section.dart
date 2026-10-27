@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/recent_views/data/dto/recent_view_dto.dart';
 import 'package:sakuramedia/features/recent_views/presentation/providers/recent_views_provider.dart';
 import 'package:sakuramedia/features/recent_views/presentation/widgets/recent_views_rail.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_section_header.dart';
@@ -48,8 +49,8 @@ class RecentViewsSection extends ConsumerWidget {
       children: [
         if (spacingBefore > 0) SizedBox(height: spacingBefore),
         AppSectionHeader(
-          title: '最近浏览',
-          actionLabel: '更多',
+          title: AppLocalizations.of(context).recentSectionTitle,
+          actionLabel: AppLocalizations.of(context).recentMore,
           actionSize: actionSize,
           actionKey: actionKey,
           onActionTap: onMoreTap,

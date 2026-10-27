@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 import 'test_api_bundle.dart';
 
@@ -16,6 +17,9 @@ import 'test_api_bundle.dart';
 ///   `sakuraDesktopThemeData` / `sakuraMobileThemeData`。
 /// - [wrapInOkToast]：默认 true（toast 文案断言依赖 OKToast 树）。
 /// - [wrap]：自定义外壳（如 `Scaffold(body: ...)`、navigatorObservers）。
+///
+/// 语言固定为简体中文，并挂上 ARB 委托：页面文案走 `AppLocalizations`，
+/// 没有委托的测试树会在 `AppLocalizations.of(context)` 处直接抛错。
 ///
 /// 不强推替换存量测试——新测试用这个，旧测试随页面迁移顺手 refactor。
 Future<void> pumpWithProviders(
@@ -37,7 +41,16 @@ Future<void> pumpWithProviders(
       if (bundle != null) ...bundle.riverpodOverrides(),
       ...overrides,
     ],
-    child: MaterialApp(home: child, theme: theme),
+    child: MaterialApp(
+      home: child,
+      theme: theme,
+      locale: const Locale('zh'),
+      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+    ),
   );
   if (wrapInOkToast) {
     app = OKToast(child: app);

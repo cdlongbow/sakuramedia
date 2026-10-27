@@ -42,13 +42,15 @@ class AppNavGroup {
 
 }
 
+/// 路由规格：只描述结构（名称 / 路径 / 布局 / 构造器）。
+///
+/// 不含标题与说明：这些文案按当前语言解析，由导航分组（[AppNavItem.label]）
+/// 与顶栏配置各自取用，避免同一句话在两处各存一份。
 class AppRouteSpec {
   const AppRouteSpec({
     required this.platform,
     required this.name,
     required this.path,
-    required this.title,
-    required this.description,
     required this.groupId,
     required this.layout,
     required this.builder,
@@ -57,8 +59,6 @@ class AppRouteSpec {
   final AppPlatform platform;
   final String name;
   final String path;
-  final String title;
-  final String description;
   final String groupId;
   final AppShellLayout layout;
   final WidgetBuilder builder;

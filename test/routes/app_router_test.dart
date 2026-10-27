@@ -9,6 +9,8 @@ import 'package:oktoast/oktoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/app/app_platform.dart';
+import 'package:sakuramedia/app/language/app_language.dart';
+import 'package:sakuramedia/app/language/providers/language_providers.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/image_search/data/image_search_result_item_dto.dart';
 import 'package:sakuramedia/features/image_search/presentation/pages/shared/image_search_content.dart';
@@ -19,6 +21,8 @@ import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_play
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_hero_card.dart';
 import 'package:sakuramedia/features/plugins/data/plugin_market_source.dart';
 import 'package:sakuramedia/l10n/app_localizations.dart';
+import 'package:sakuramedia/l10n/app_localizations_en.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_router.dart';
@@ -32,6 +36,10 @@ import 'package:sakuramedia/theme.dart';
 
 import '../support/test_api_bundle.dart';
 import '../features/plugins/support/plugin_market_test_data.dart';
+
+/// 断言用文案实例：直接取具体语言实现，不依赖 Widget 上下文。
+final AppLocalizations _zhL10n = AppLocalizationsZh();
+final AppLocalizations _enL10n = AppLocalizationsEn();
 
 const List<_MobileSettingsRouteCase> _mobileSettingsRouteCases =
     <_MobileSettingsRouteCase>[
@@ -103,9 +111,9 @@ void main() {
   });
 
   test('desktop navigation tree contains moments entry', () {
-    expect(desktopNavGroups.length, 21);
+    expect(desktopNavGroups(_zhL10n).length, 21);
     // 管理区顺序：媒体管理 / 资源导入 / 下载任务 / 任务中心 / 订阅管理 / 通知 / 系统设置。
-    expect(desktopNavGroups.map((group) => group.label), [
+    expect(desktopNavGroups(_zhL10n).map((group) => group.label), [
       '概览',
       '发现',
       '影片',
@@ -156,8 +164,8 @@ void main() {
   });
 
   test('mobile navigation tree contains expected skeleton entries', () {
-    expect(mobileNavGroups.length, 5);
-    expect(mobileNavGroups.map((group) => group.label), [
+    expect(mobileNavGroups(_zhL10n).length, 5);
+    expect(mobileNavGroups(_zhL10n).map((group) => group.label), [
       '概览',
       '影片',
       '女优',
@@ -171,6 +179,92 @@ void main() {
       mobileRankingsPath,
       mobilePornboxPath,
     ]);
+  });
+
+  test('navigation labels follow the current language', () {
+    expect(
+      desktopNavGroups(_zhL10n).map((group) => group.label).take(3),
+      <String>['概览', '发现', '影片'],
+    );
+    expect(
+      desktopNavGroups(_enL10n).map((group) => group.label).take(3),
+      <String>['Overview', 'Discover', 'Movies'],
+    );
+    expect(
+      desktopNavGroups(_enL10n)
+          .map((group) => group.sectionLabel)
+          .whereType<String>()
+          .toSet(),
+      <String>{'Browse', 'Manage'},
+    );
+    expect(mobileNavGroups(_enL10n).map((group) => group.label), <String>[
+      'Overview',
+      'Movies',
+      'Actors',
+      'Rankings',
+      'PornBox',
+    ]);
+    expect(
+      resolveDesktopTopBarConfig(
+        currentPath: desktopOverviewPath,
+        navGroups: desktopNavGroups(_enL10n),
+        l10n: _enL10n,
+      ).title,
+      'Overview',
+    );
+    expect(
+      resolveDesktopTopBarConfig(
+        currentPath: desktopMoviesPath,
+        navGroups: desktopNavGroups(_enL10n),
+        l10n: _enL10n,
+      ).title,
+      'Movies',
+    );
+  });
+
+  testWidgets('desktop sidebar labels follow the language provider', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = await _buildLoggedInSessionStore();
+    addTearDown(sessionStore.dispose);
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueDesktopOverviewResponses(bundle);
+    final router = buildAppRouter(AppPlatform.desktop, sessionStore);
+
+    await _pumpRouterApp(
+      tester,
+      router: router,
+      sessionStore: sessionStore,
+      bundle: bundle,
+      includeShellController: true,
+    );
+    await tester.pumpAndSettle();
+
+    final overviewNav = find.byKey(const Key('nav-group-overview'));
+    expect(overviewNav, findsOneWidget);
+    expect(
+      find.descendant(of: overviewNav, matching: find.text('概览')),
+      findsOneWidget,
+    );
+
+    final container = ProviderScope.containerOf(
+      tester.element(overviewNav),
+      listen: false,
+    );
+    await container
+        .read(appLanguageControllerProvider.notifier)
+        .setLanguage(AppLanguage.en);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(of: overviewNav, matching: find.text('Overview')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: overviewNav, matching: find.text('概览')),
+      findsNothing,
+    );
   });
 
   testWidgets('desktop follow route renders desktop follow page', (
@@ -419,11 +513,13 @@ void main() {
   test('desktop top bar config enables back on system playlist pages', () {
     final favorites = resolveDesktopTopBarConfig(
       currentPath: desktopFavoritesPath,
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
     );
     final recentlyPlayed = resolveDesktopTopBarConfig(
       currentPath: desktopRecentlyPlayedPath,
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
     );
 
     expect(favorites.title, '我的收藏');
@@ -435,7 +531,8 @@ void main() {
   test('desktop top bar config disables back on overview', () {
     final config = resolveDesktopTopBarConfig(
       currentPath: desktopOverviewPath,
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
     );
 
     expect(config.title, '概览');
@@ -446,7 +543,8 @@ void main() {
   test('desktop top bar config enables back on latest movies page', () {
     final config = resolveDesktopTopBarConfig(
       currentPath: desktopLatestMoviesPath,
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
     );
 
     expect(config.title, '最近添加');
@@ -457,7 +555,8 @@ void main() {
   test('desktop top bar config enables back on movie detail', () {
     final config = resolveDesktopTopBarConfig(
       currentPath: '/desktop/library/movies/ABC-001',
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
     );
 
     expect(config.title, '影片详情');
@@ -468,15 +567,18 @@ void main() {
   test('desktop top bar config enables back on discover list pages', () {
     final moviesConfig = resolveDesktopTopBarConfig(
       currentPath: desktopDiscoverMoviesPath,
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
     );
     final momentsConfig = resolveDesktopTopBarConfig(
       currentPath: desktopDiscoverMomentsPath,
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
     );
     final hotActressConfig = resolveDesktopTopBarConfig(
       currentPath: desktopHotActressReleasesPath,
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
     );
 
     expect(moviesConfig.title, '推荐影片');
@@ -497,23 +599,28 @@ void main() {
     const hotActressRoute = MobileHotActressReleasesRouteData();
 
     expect(followRoute.location, mobileFollowPath);
-    expect(followRoute.title, '女优上新');
+    expect(followRoute.title(_zhL10n), '女优上新');
+    expect(followRoute.title(_enL10n), 'New Actor Releases');
     expect(followRoute.defaultLocation, mobileOverviewPath);
     expect(moviesRoute.location, mobileDiscoverMoviesPath);
-    expect(moviesRoute.title, '推荐影片');
+    expect(moviesRoute.title(_zhL10n), '推荐影片');
+    expect(moviesRoute.title(_enL10n), 'Recommended Movies');
     expect(moviesRoute.defaultLocation, mobileOverviewPath);
     expect(momentsRoute.location, mobileDiscoverMomentsPath);
-    expect(momentsRoute.title, '推荐时刻');
+    expect(momentsRoute.title(_zhL10n), '推荐时刻');
+    expect(momentsRoute.title(_enL10n), 'Recommended Moments');
     expect(momentsRoute.defaultLocation, mobileOverviewPath);
     expect(hotActressRoute.location, mobileHotActressReleasesPath);
-    expect(hotActressRoute.title, '热门新片');
+    expect(hotActressRoute.title(_zhL10n), '热门新片');
+    expect(hotActressRoute.title(_enL10n), 'Popular New Releases');
     expect(hotActressRoute.defaultLocation, mobileOverviewPath);
   });
 
   test('desktop top bar config enables back on movie series page', () {
     final config = resolveDesktopTopBarConfig(
       currentPath: '/desktop/library/movies/series/7',
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
     );
 
     expect(config.title, '系列影片');
@@ -524,7 +631,8 @@ void main() {
   test('desktop top bar config prefers origin path from route extra', () {
     final config = resolveDesktopTopBarConfig(
       currentPath: '/desktop/library/movies/ABC-001',
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
       routeExtra: '/desktop/library/movies',
     );
 
@@ -534,7 +642,8 @@ void main() {
   test('desktop top bar config enables back on actor detail', () {
     final config = resolveDesktopTopBarConfig(
       currentPath: '/desktop/library/actors/1',
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
     );
 
     expect(config.title, '女优详情');
@@ -545,7 +654,8 @@ void main() {
   test('desktop top bar config enables back on tag movies page', () {
     final config = resolveDesktopTopBarConfig(
       currentPath: '/desktop/library/tags/5',
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
     );
 
     expect(config.title, '标签');
@@ -556,7 +666,8 @@ void main() {
   test('desktop top bar config keeps back disabled on tags root', () {
     final config = resolveDesktopTopBarConfig(
       currentPath: desktopTagsPath,
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
     );
 
     expect(config.isBackEnabled, isFalse);
@@ -565,7 +676,8 @@ void main() {
   test('desktop top bar config enables back on playlist detail', () {
     final config = resolveDesktopTopBarConfig(
       currentPath: '/desktop/library/playlists/8',
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
     );
 
     expect(config.title, '播放列表详情');
@@ -576,7 +688,8 @@ void main() {
   test('desktop top bar config prefers origin path on playlist detail', () {
     final config = resolveDesktopTopBarConfig(
       currentPath: '/desktop/library/playlists/8',
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
       routeExtra: desktopMoviesPath,
     );
 
@@ -588,7 +701,8 @@ void main() {
     () {
       final config = resolveDesktopTopBarConfig(
         currentPath: '/desktop/library/actors/1',
-        routeSpecs: desktopRouteSpecs,
+        navGroups: desktopNavGroups(_zhL10n),
+        l10n: _zhL10n,
         routeExtra: '/desktop/library/movies/ABC-001',
       );
 
@@ -599,7 +713,8 @@ void main() {
   test('desktop top bar config enables back on search route', () {
     final config = resolveDesktopTopBarConfig(
       currentPath: '/desktop/search/ssni888',
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
     );
 
     expect(config.title, 'ssni888');
@@ -610,7 +725,8 @@ void main() {
   test('desktop top bar config prefers origin path on search route', () {
     final config = resolveDesktopTopBarConfig(
       currentPath: '/desktop/search/ssni888',
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
       routeExtra: desktopMoviesPath,
     );
 
@@ -623,7 +739,8 @@ void main() {
     () {
       final config = resolveDesktopTopBarConfig(
         currentPath: '/desktop/search/ssni888',
-        routeSpecs: desktopRouteSpecs,
+        navGroups: desktopNavGroups(_zhL10n),
+        l10n: _zhL10n,
         routeExtra: const DesktopSearchRouteState(
           fallbackPath: desktopMoviesPath,
           useOnlineSearch: true,
@@ -638,7 +755,8 @@ void main() {
   test('desktop top bar config reads generic navigation route state', () {
     final config = resolveDesktopTopBarConfig(
       currentPath: '/desktop/library/actors/1',
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
       routeExtra: const DesktopNavigationRouteState(
         fallbackPath: desktopSearchPath,
       ),
@@ -650,7 +768,8 @@ void main() {
   test('desktop top bar config ignores non-desktop navigation fallback', () {
     final config = resolveDesktopTopBarConfig(
       currentPath: '/desktop/library/actors/1',
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
       routeExtra: const DesktopNavigationRouteState(
         fallbackPath: '/mobile/overview',
       ),
@@ -662,7 +781,8 @@ void main() {
   test('desktop top bar config decodes encoded search title', () {
     final config = resolveDesktopTopBarConfig(
       currentPath: '/desktop/search/%E4%BC%8A%E8%97%A4%E8%88%9E%E9%9B%AA',
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
     );
 
     expect(config.title, '伊藤舞雪');
@@ -672,7 +792,8 @@ void main() {
   test('desktop top bar config enables back on image search route', () {
     final config = resolveDesktopTopBarConfig(
       currentPath: desktopImageSearchPath,
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
       routeExtra: const DesktopImageSearchRouteState(
         fallbackPath: desktopMoviesPath,
       ),
@@ -686,7 +807,8 @@ void main() {
   test('desktop top bar config keeps literal percent in invalid title', () {
     final config = resolveDesktopTopBarConfig(
       currentPath: '/desktop/search/Rio %',
-      routeSpecs: desktopRouteSpecs,
+      navGroups: desktopNavGroups(_zhL10n),
+      l10n: _zhL10n,
     );
 
     expect(config.title, 'Rio %');
@@ -3098,6 +3220,51 @@ void main() {
 
     expect(router.routeInformationProvider.value.uri.path, mobileActorsPath);
     expect(find.byKey(const Key('mobile-actors-page')), findsOneWidget);
+  });
+
+  testWidgets('mobile bottom navigation labels follow the language provider', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = await _buildLoggedInSessionStore(
+      platform: AppPlatform.mobile,
+    );
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueMobileMoviesResponse(bundle);
+    final router = buildMobileRouter(sessionStore: sessionStore);
+
+    await _pumpRouterApp(
+      tester,
+      router: router,
+      sessionStore: sessionStore,
+      bundle: bundle,
+    );
+    await tester.pumpAndSettle();
+
+    final bottomNav = find.byKey(const Key('mobile-bottom-navigation'));
+    expect(bottomNav, findsOneWidget);
+    expect(
+      find.descendant(of: bottomNav, matching: find.text('影片')),
+      findsOneWidget,
+    );
+
+    final container = ProviderScope.containerOf(
+      tester.element(bottomNav),
+      listen: false,
+    );
+    await container
+        .read(appLanguageControllerProvider.notifier)
+        .setLanguage(AppLanguage.en);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(of: bottomNav, matching: find.text('Movies')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: bottomNav, matching: find.text('影片')),
+      findsNothing,
+    );
   });
 
   testWidgets('mobile movies root route renders real page', (

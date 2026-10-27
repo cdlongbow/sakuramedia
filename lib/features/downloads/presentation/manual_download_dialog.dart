@@ -21,6 +21,7 @@ import 'package:sakuramedia/features/videos/presentation/providers/video_collect
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_single_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/video_collection_picker_field.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
@@ -260,24 +261,26 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
   }
 
   String? _validateMagnet(String? value) {
+    final l10n = AppLocalizations.of(context);
     final text = value?.trim() ?? '';
-    if (text.isEmpty) return '请粘贴磁力链接';
+    if (text.isEmpty) return l10n.downloadMagnetRequired;
     if (text.contains('\n') || text.contains('\r')) {
-      return '一次只能提交一条磁力链接';
+      return l10n.downloadMagnetSingleOnly;
     }
     if (!text.toLowerCase().startsWith('magnet:')) {
-      return '仅支持 magnet: 开头的磁力链接';
+      return l10n.downloadMagnetInvalid;
     }
     return null;
   }
 
   String? _validateMovieNumber(String? value) {
+    final l10n = AppLocalizations.of(context);
     final text = value?.trim() ?? '';
-    if (text.isEmpty) return '请填写番号';
+    if (text.isEmpty) return l10n.downloadMovieNumberRequired;
     final resolution = _movieResolution;
-    if (resolution.isResolving) return '番号查询中，请稍候';
+    if (resolution.isResolving) return l10n.downloadMovieNumberResolving;
     if (!resolution.isResolved || resolution.rawInput != text) {
-      return '请先点击「查询」并匹配影片';
+      return l10n.downloadMovieNumberQueryFirst;
     }
     return null;
   }
@@ -320,13 +323,14 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
 
   Future<void> _resolveMovieNumber() async {
     if (_isSubmitting || _movieResolution.isResolving) return;
+    final l10n = AppLocalizations.of(context);
     final raw = _movieNumberController.text.trim();
     if (raw.isEmpty) return;
     final version = _invalidateMovieQuery();
     setState(() {
       _movieResolution = _MovieResolution.resolving(
         rawInput: raw,
-        message: '正在识别番号…',
+        message: l10n.downloadMovieNumberParsing,
       );
     });
     try {
@@ -336,14 +340,18 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
       if (!_isCurrentMovieQuery(version)) return;
       final number = parsed.movieNumber?.trim() ?? '';
       if (!parsed.parsed || number.isEmpty) {
-        _setMovieResolutionFailed(version, raw, '无法识别番号，请输入完整番号（如 SSNI-888）');
+        _setMovieResolutionFailed(
+          version,
+          raw,
+          l10n.downloadMovieNumberUnrecognized,
+        );
         return;
       }
       setState(() {
         _movieResolution = _MovieResolution.resolving(
           rawInput: raw,
           parsedNumber: number,
-          message: '已识别为 $number，正在本地查询…',
+          message: l10n.downloadMovieNumberParsed(number),
         );
       });
       final page = await ref
@@ -367,7 +375,11 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
       _setMovieResolutionFailed(
         version,
         raw,
-        apiErrorMessage(error, fallback: '番号查询失败，请稍后重试'),
+        apiErrorMessage(
+          error,
+          fallback: l10n.downloadMovieNumberQueryFailed,
+          l10n: l10n,
+        ),
       );
     }
   }
@@ -395,11 +407,12 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
   }
 
   void _startOnlineMovieSearch(int version, String raw, String parsed) {
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _movieResolution = _MovieResolution.resolving(
         rawInput: raw,
         parsedNumber: parsed,
-        message: '本地未找到，正在在线搜索并入库…',
+        message: l10n.downloadMovieNumberLocalNotFound,
       );
     });
     var settled = false;
@@ -416,7 +429,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
                   rawInput: raw,
                   parsedNumber: parsed,
                   message: update.message.isEmpty
-                      ? '正在在线搜索并入库…'
+                      ? l10n.downloadMovieNumberOnlineSearching
                       : update.message,
                 );
               });
@@ -439,11 +452,16 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
               _setMovieResolutionFailed(
                 version,
                 raw,
-                '本地和在线均未找到 $parsed',
+                l10n.downloadMovieNumberNotFound(parsed),
                 parsed,
               );
             } else {
-              _setMovieResolutionFailed(version, raw, '在线搜索失败，请稍后重试', parsed);
+              _setMovieResolutionFailed(
+                version,
+                raw,
+                l10n.downloadMovieNumberOnlineSearchFailed,
+                parsed,
+              );
             }
           },
           onError: (Object error, StackTrace stackTrace) {
@@ -452,13 +470,22 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
             _setMovieResolutionFailed(
               version,
               raw,
-              apiErrorMessage(error, fallback: '在线搜索失败，请稍后重试'),
+              apiErrorMessage(
+                error,
+                fallback: l10n.downloadMovieNumberOnlineSearchFailed,
+                l10n: l10n,
+              ),
               parsed,
             );
           },
           onDone: () {
             if (_isCurrentMovieQuery(version) && !settled) {
-              _setMovieResolutionFailed(version, raw, '在线搜索未返回结果，请重试', parsed);
+              _setMovieResolutionFailed(
+                version,
+                raw,
+                l10n.downloadMovieNumberOnlineNoResult,
+                parsed,
+              );
             }
             if (identical(_activeMovieSearch, subscription)) {
               _activeMovieSearch = null;
@@ -511,21 +538,22 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
 
   Future<void> _pickTorrentFile() async {
     final isMobile = AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
+    final l10n = AppLocalizations.of(context);
     try {
       final picked = await pickFileWithBytes(
         type: isMobile ? FileType.any : FileType.custom,
         allowedExtensions: isMobile ? null : const <String>['torrent'],
         maxBytes: DownloadsApi.maxManualTorrentBytes,
-        tooLargeMessage: '种子文件不能超过 10 MB',
-        unreadableMessage: '无法读取所选种子文件，请换一个文件再试',
-        pickerUnavailableMessage: '文件选择器尚未加载，请完整重启应用后再试',
-        openFailureMessage: '打开文件选择器失败，请稍后再试',
+        tooLargeMessage: l10n.downloadTorrentTooLarge,
+        unreadableMessage: l10n.downloadTorrentUnreadable,
+        pickerUnavailableMessage: l10n.downloadTorrentPickerUnavailable,
+        openFailureMessage: l10n.downloadTorrentPickerOpenFailed,
       );
       if (picked == null || !mounted) return;
       setState(() {
         _torrentFile = picked;
         _fileError = picked.bytes.length > DownloadsApi.maxManualTorrentBytes
-            ? '种子文件不能超过 10 MB'
+            ? l10n.downloadTorrentTooLarge
             : null;
       });
     } on FilePickerWithBytesException catch (error) {
@@ -583,14 +611,15 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
 
     _hasAttemptedSubmit = true;
     final formValid = _formKey.currentState?.validate() ?? false;
+    final l10n = AppLocalizations.of(context);
     if (_source == _ManualDownloadSource.torrent) {
       final file = _torrentFile;
       if (file == null) {
-        setState(() => _fileError = '请选择 .torrent 文件');
+        setState(() => _fileError = l10n.downloadTorrentFileRequired);
         return;
       }
       if (file.bytes.length > DownloadsApi.maxManualTorrentBytes) {
-        setState(() => _fileError = '种子文件不能超过 10 MB');
+        setState(() => _fileError = l10n.downloadTorrentTooLarge);
         return;
       }
     }
@@ -648,7 +677,11 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
       if (!mounted) return;
       setState(() {
         _isSubmitting = false;
-        _submitError = apiErrorMessage(error, fallback: '创建下载任务失败，请重试');
+        _submitError = apiErrorMessage(
+          error,
+          fallback: l10n.downloadCreateTaskFailed,
+          l10n: l10n,
+        );
       });
     }
   }
@@ -659,6 +692,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
     final clientsAsync = ref.watch(downloadClientsProvider);
     final clients = clientsAsync.value ?? const <DownloadClientDto>[];
     final selectedClient = _selectedClient(clients);
+    final l10n = AppLocalizations.of(context);
     final canSubmit =
         !_isSubmitting &&
         !_movieResolution.isResolving &&
@@ -680,7 +714,9 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _isCompact ? '添加磁力下载' : '手动添加下载',
+                        _isCompact
+                            ? l10n.downloadMagnetDialogTitle
+                            : l10n.downloadManualAddTitle,
                         style: resolveAppTextStyle(
                           context,
                           size: AppTextSize.s16,
@@ -691,8 +727,8 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
                       SizedBox(height: spacing.xs),
                       Text(
                         _isCompact
-                            ? '磁力已从评论填入，确认下载器后提交。'
-                            : '粘贴磁力链接或上传 .torrent 文件，提交到下载器。',
+                            ? l10n.downloadMagnetPrefilledDescription
+                            : l10n.downloadManualAddDescription,
                         style: resolveAppTextStyle(
                           context,
                           size: AppTextSize.s12,
@@ -705,7 +741,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
                 SizedBox(width: spacing.sm),
                 AppIconButton(
                   key: const Key('manual-download-close-button'),
-                  tooltip: '关闭',
+                  tooltip: l10n.downloadClose,
                   onPressed: _isSubmitting
                       ? null
                       : () => Navigator.of(context).pop(),
@@ -736,7 +772,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
                 Expanded(
                   child: AppButton(
                     key: const Key('manual-download-cancel-button'),
-                    label: '取消',
+                    label: l10n.commonCancel,
                     onPressed: _isSubmitting
                         ? null
                         : () => Navigator.of(context).pop(),
@@ -746,7 +782,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
                 Expanded(
                   child: AppButton(
                     key: const Key('manual-download-submit-button'),
-                    label: '提交下载',
+                    label: l10n.downloadSubmit,
                     variant: AppButtonVariant.primary,
                     isLoading: _isSubmitting,
                     onPressed: canSubmit ? _submit : null,
@@ -766,13 +802,14 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
     DownloadClientDto? selectedClient,
   ) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return <Widget>[
-      const _FormSectionLabel('资源'),
+      _FormSectionLabel(l10n.downloadSectionSource),
       SizedBox(height: spacing.sm),
       _buildChoiceRow<_ManualDownloadSource>(
-        options: const [
-          (_ManualDownloadSource.magnet, '磁力链接'),
-          (_ManualDownloadSource.torrent, '种子文件'),
+        options: [
+          (_ManualDownloadSource.magnet, l10n.downloadMagnetLabel),
+          (_ManualDownloadSource.torrent, l10n.downloadTorrentLabel),
         ],
         selected: _source,
         keyOf: (value) => Key('manual-download-source-${value.name}'),
@@ -784,13 +821,13 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
       else
         _buildTorrentField(context),
       SizedBox(height: spacing.xl),
-      const _FormSectionLabel('下载设置'),
+      _FormSectionLabel(l10n.downloadSectionSettings),
       SizedBox(height: spacing.sm),
       _buildClientField(clientsAsync, selectedClient),
       SizedBox(height: spacing.md),
       _buildChoiceRow<ManualDownloadMediaKind>(
-        options: const [
-          (ManualDownloadMediaKind.jav, 'JAV 影片'),
+        options: [
+          (ManualDownloadMediaKind.jav, l10n.downloadMediaKindJav),
           (ManualDownloadMediaKind.video, 'PornBox'),
         ],
         selected: _mediaKind,
@@ -805,9 +842,9 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
             AppTextField(
               fieldKey: const Key('manual-download-movie-number-field'),
               controller: _movieNumberController,
-              label: '番号',
-              hintText: '例如 ABC-123 或 FC2-PPV-123',
-              helperText: '点「查询」或回车解析并匹配；本地没有时会在线搜索并入库。',
+              label: l10n.downloadMovieNumberLabel,
+              hintText: l10n.downloadMovieNumberHint,
+              helperText: l10n.downloadMovieNumberHelper,
               enabled: !_isSubmitting,
               textInputAction: TextInputAction.search,
               onFieldSubmitted: (_) => unawaited(_resolveMovieNumber()),
@@ -824,7 +861,9 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
                 ),
                 child: AppTextButton(
                   key: const Key('manual-download-movie-number-query-button'),
-                  label: _movieResolution.isResolving ? '查询中' : '查询',
+                  label: _movieResolution.isResolving
+                      ? l10n.downloadQuerying
+                      : l10n.downloadQuery,
                   icon: const Icon(Icons.search_rounded),
                   size: AppTextButtonSize.small,
                   emphasis: AppTextButtonEmphasis.accent,
@@ -849,8 +888,8 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
       AppTextField(
         fieldKey: const Key('manual-download-display-name-field'),
         controller: _displayNameController,
-        label: '显示名称（可选）',
-        helperText: '优先显示在下载任务列表；留空时使用影片标题或资源名称。',
+        label: l10n.downloadDisplayNameLabel,
+        helperText: l10n.downloadDisplayNameHelper,
         enabled: !_isSubmitting,
       ),
       SizedBox(height: spacing.md),
@@ -892,14 +931,15 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
   }
 
   Widget _buildMagnetField({bool compact = false}) {
+    final l10n = AppLocalizations.of(context);
     return AppTextField(
       fieldKey: const Key('manual-download-magnet-field'),
       controller: _magnetController,
-      label: '磁力链接',
+      label: l10n.downloadMagnetLabel,
       hintText: 'magnet:?xt=urn:btih:...',
       helperText: compact
-          ? '从评论识别，提交前可修改。'
-          : '只接受 magnet: 链接；HTTP 种子地址请下载 .torrent 后上传。',
+          ? l10n.downloadMagnetCompactHelper
+          : l10n.downloadMagnetHelper,
       minLines: 2,
       maxLines: 3,
       keyboardType: TextInputType.url,
@@ -941,13 +981,14 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
     bool showLabel = true,
   }) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     if (clientsAsync.isLoading && !clientsAsync.hasValue) {
       return Row(
         children: [
           const AppInlineSpinner(),
           SizedBox(width: spacing.sm),
           Text(
-            '正在加载下载器…',
+            l10n.downloadLoadingClients,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -959,7 +1000,11 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
     }
     if (clientsAsync.hasError && !clientsAsync.hasValue) {
       return AppInlineErrorBanner(
-        message: apiErrorMessage(clientsAsync.error!, fallback: '下载器加载失败'),
+        message: apiErrorMessage(
+          clientsAsync.error!,
+          fallback: l10n.downloadClientsLoadFailed,
+          l10n: l10n,
+        ),
         retryKey: const Key('manual-download-clients-retry'),
         onRetry: () => ref.read(downloadClientsProvider.notifier).reload(),
       );
@@ -979,7 +1024,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '还没有可用的下载器',
+              l10n.downloadClientsEmpty,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s14,
@@ -988,7 +1033,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
             ),
             SizedBox(height: spacing.xs),
             Text(
-              '请先在系统设置中配置并启用下载器，然后再提交下载。',
+              l10n.downloadClientsEmptyHint,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s12,
@@ -998,7 +1043,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
             SizedBox(height: spacing.sm),
             AppButton(
               key: const Key('manual-download-configure-clients-button'),
-              label: '去配置下载器',
+              label: l10n.downloadConfigureClients,
               size: AppButtonSize.xSmall,
               onPressed: _isSubmitting ? null : _goConfigureClients,
             ),
@@ -1009,9 +1054,9 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
 
     return AppSelectField<int?>(
       key: const Key('manual-download-client-field'),
-      label: showLabel ? '下载器' : null,
+      label: showLabel ? l10n.downloadClientLabel : null,
       value: selectedClient?.id,
-      placeholder: '请选择下载器',
+      placeholder: l10n.downloadSelectClient,
       items: clients
           .map(
             (client) => DropdownMenuItem<int?>(
@@ -1028,6 +1073,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
 
   Widget _buildTorrentField(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final file = _torrentFile;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1053,7 +1099,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      file?.fileName ?? '未选择种子文件',
+                      file?.fileName ?? l10n.downloadTorrentNotSelected,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: resolveAppTextStyle(
@@ -1067,7 +1113,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
                     SizedBox(height: spacing.xs),
                     Text(
                       file == null
-                          ? '选择 .torrent 文件，最大 10 MB'
+                          ? l10n.downloadTorrentSelectHint
                           : formatFileSize(file.bytes.length),
                       style: resolveAppTextStyle(
                         context,
@@ -1081,7 +1127,9 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
               SizedBox(width: spacing.sm),
               AppButton(
                 key: const Key('manual-download-pick-torrent-button'),
-                label: file == null ? '选择文件' : '重新选择',
+                label: file == null
+                    ? l10n.downloadChooseFile
+                    : l10n.downloadChooseFileAgain,
                 size: AppButtonSize.xSmall,
                 onPressed: _isSubmitting ? null : _pickTorrentFile,
               ),
@@ -1106,6 +1154,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
 
   Widget _buildDeleteSourceRow(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return AppInteractiveSurface(
       key: const Key('manual-download-delete-source-row'),
       onTap: _isSubmitting
@@ -1122,7 +1171,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '导入后删除源文件',
+                    l10n.downloadDeleteSourceAfterImport,
                     style: resolveAppTextStyle(
                       context,
                       size: AppTextSize.s14,
@@ -1131,7 +1180,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
                   ),
                   SizedBox(height: spacing.xs),
                   Text(
-                    '导入成功后删除下载器中的源文件，不可恢复',
+                    l10n.downloadDeleteSourceAfterImportHint,
                     style: resolveAppTextStyle(
                       context,
                       size: AppTextSize.s12,
@@ -1157,6 +1206,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
 
   Widget _buildMovieResolutionStatus(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final resolution = _movieResolution;
     switch (resolution.phase) {
       case _MovieResolutionPhase.idle:
@@ -1171,7 +1221,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
               SizedBox(width: spacing.sm),
               Expanded(
                 child: Text(
-                  resolution.message ?? '正在查询番号…',
+                  resolution.message ?? l10n.downloadMovieNumberResolvingFallback,
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s12,
@@ -1187,7 +1237,8 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
           padding: EdgeInsets.only(top: spacing.sm),
           child: AppInlineErrorBanner(
             key: const Key('manual-download-movie-resolution-error'),
-            message: resolution.message ?? '番号查询失败',
+            message:
+                resolution.message ?? l10n.downloadMovieNumberQueryFailedTitle,
             tone: AppInlineErrorTone.error,
           ),
         );
@@ -1214,6 +1265,7 @@ class _ResolvedMovieCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final coverUrl = movie.coverUrl ?? '';
     return Container(
       key: const Key('manual-download-movie-resolution-card'),
@@ -1268,9 +1320,12 @@ class _ResolvedMovieCard extends StatelessWidget {
                     AppBadge(
                       key: const Key('manual-download-movie-resolution-source'),
                       label: switch (source) {
-                        _MovieResolutionSource.local => '本地',
-                        _MovieResolutionSource.online => '在线',
-                        _MovieResolutionSource.currentMovie => '当前影片',
+                        _MovieResolutionSource.local =>
+                          l10n.downloadMovieSourceLocal,
+                        _MovieResolutionSource.online =>
+                          l10n.downloadMovieSourceOnline,
+                        _MovieResolutionSource.currentMovie =>
+                          l10n.downloadMovieSourceCurrent,
                       },
                       tone: source == _MovieResolutionSource.local
                           ? AppBadgeTone.neutral
@@ -1281,7 +1336,9 @@ class _ResolvedMovieCard extends StatelessWidget {
                 ),
                 SizedBox(height: spacing.xs),
                 Text(
-                  movie.title.trim().isEmpty ? '未知标题' : movie.title.trim(),
+                  movie.title.trim().isEmpty
+                      ? l10n.downloadUnknownTitle
+                      : movie.title.trim(),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: resolveAppTextStyle(

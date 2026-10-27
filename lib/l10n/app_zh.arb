@@ -2416,5 +2416,378 @@
   "playlistSortAddedAt": "最近入库",
   "playlistSortReleaseDate": "发布时间",
   "playlistSortDefault": "最近触达",
-  "playlistEditInfo": "编辑信息"
+  "playlistEditInfo": "编辑信息",
+  "activityAll": "全部",
+  "activityUnread": "未读",
+  "activityTimeUnknown": "时间未知",
+  "activityNotificationCategoryInfo": "信息",
+  "activityNotificationCategoryWarning": "警告",
+  "activityNotificationCategoryError": "错误",
+  "activityNotificationCategoryReminder": "提醒",
+  "activityMarkAllRead": "全部已读",
+  "activityEmptyNotificationsFiltered": "当前筛选下暂无通知",
+  "activityNoUnreadNotifications": "没有未读消息",
+  "activityNoNotifications": "暂无消息",
+  "activityRefreshFailed": "刷新失败，请稍后重试",
+  "activityCenterTitle": "任务中心",
+  "activityTaskHistory": "任务历史",
+  "activityActiveTasks": "活动任务",
+  "activityEmptyTasksFiltered": "当前筛选下暂无任务记录",
+  "activityJobSubmitted": "任务已提交",
+  "activityJobAlreadyRunning": "任务已在运行中",
+  "activityJobSubmitFailed": "任务提交失败，请重试",
+  "activityJobsLoading": "加载中",
+  "activityJobsLoadFailed": "加载失败",
+  "activityJobsEmpty": "暂无任务",
+  "activityJobsCount": "{count} 个任务",
+  "@activityJobsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activityExecutableJobsTitle": "可执行任务",
+  "activityViewJobs": "查看任务",
+  "activityExecutableJobsDescription": "手动触发已注册的后台任务，执行状态会在任务中心实时更新。",
+  "activityJobDisabled": "未启用",
+  "activityJobSubmitting": "提交中",
+  "activityJobRunNow": "立即执行",
+  "activityJobFillParams": "填写参数",
+  "activityJobNotManual": "不可手动执行",
+  "activityJobNoSchedule": "未配置定时",
+  "activityJobNeedsParams": "需填写参数",
+  "activityJobNoRuns": "暂无运行记录",
+  "activityJobLastRun": "最近运行：{time}",
+  "@activityJobLastRun": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "activityFilterAllTasks": "全部任务",
+  "activityFilterSystemTasks": "系统任务",
+  "activityExecutableJobsEmpty": "暂无可执行任务",
+  "activityJobsRefreshing": "正在刷新任务列表",
+  "activityJobSourceLabel": "任务来源",
+  "activityExecutableJobsDialogDescription": "选择一个任务手动执行，运行结果会回到后台任务列表。",
+  "activityJobParamsTitle": "填写任务参数",
+  "activityJobParamsEmpty": "该任务没有可填写的参数，将按默认配置执行。",
+  "activityJobParamsSubmit": "提交任务",
+  "activityJobParamFallbackHelp": "参数名：{name}",
+  "@activityJobParamFallbackHelp": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "activityJobParamUnset": "未设置",
+  "activityJobParamYes": "是",
+  "activityJobParamNo": "否",
+  "activityJobParamSelectPlaceholder": "请选择",
+  "activityJobParamSelectRequired": "请选择{label}",
+  "@activityJobParamSelectRequired": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "activityJobParamRequired": "请输入{label}",
+  "@activityJobParamRequired": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "activityJobParamIntegerRequired": "请输入整数",
+  "activityJobParamNumberRequired": "请输入数字",
+  "activityJobParamJsonArrayRequired": "请输入 JSON 数组",
+  "activityJobParamJsonObjectRequired": "请输入 JSON 对象",
+  "activityJobParamJsonInvalid": "请输入合法的 JSON",
+  "activityFilterAllStates": "全部状态",
+  "activityFilterAllTaskTypes": "全部任务类型",
+  "activityFilterAllTriggers": "全部触发来源",
+  "activityFilterApplied": "已筛选",
+  "activityFilterAction": "筛选",
+  "activityTaskFilterTitle": "筛选任务历史",
+  "activityTaskStateLabel": "任务状态",
+  "activityTaskTypeLabel": "任务类型",
+  "activityTaskTriggerLabel": "触发来源",
+  "activityHandleFailedFiles": "处理失败文件（{count}）",
+  "@activityHandleFailedFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activityViewSkippedFiles": "查看跳过文件（{count}）",
+  "@activityViewSkippedFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activityFinishedAt": "完成于 {time}",
+  "@activityFinishedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "activityStartedAt": "开始于 {time}",
+  "@activityStartedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "activityCreatedAt": "创建于 {time}",
+  "@activityCreatedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "activityTaskStateRunning": "运行中",
+  "activityTaskStateCompleted": "已完成",
+  "activityTaskStateFailed": "失败",
+  "activityTaskStatePending": "排队中",
+  "activityTriggerScheduled": "定时触发",
+  "activityTriggerManual": "手动触发",
+  "activityTriggerStartup": "启动触发",
+  "activityTriggerInternal": "内部触发",
+  "activityTriggerPlugin": "插件触发",
+  "activitySortStartedAt": "开始时间",
+  "activitySortCreatedAt": "创建时间",
+  "activitySortUpdatedAt": "更新时间",
+  "activitySummarySucceeded": "成功 {count} 项",
+  "@activitySummarySucceeded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activitySummaryFailed": "失败 {count} 项",
+  "@activitySummaryFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activitySummaryTransferred": "已迁移 {count} 项",
+  "@activitySummaryTransferred": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activitySummarySkipped": "已跳过 {count} 项",
+  "@activitySummarySkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activitySummaryTransferFailed": "迁移失败 {count} 项",
+  "@activitySummaryTransferFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activitySummaryCleanupIncomplete": "源文件待确认 {count} 项",
+  "@activitySummaryCleanupIncomplete": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activitySummaryUnexecuted": "未执行 {count} 项",
+  "@activitySummaryUnexecuted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activityConnectionPollingTasks": "每 3 秒同步任务进度",
+  "activityConnectionConnectingTasks": "正在同步任务中心",
+  "activityConnectionTaskSyncFailed": "任务同步失败，可手动刷新",
+  "activityConnectionConnectingNotifications": "正在同步通知",
+  "activityConnectionPollingNotifications": "每 30 秒同步通知",
+  "activityConnectionNotificationSyncFailed": "通知同步失败，可手动刷新",
+  "downloadStateAll": "全部",
+  "downloadStateDownloading": "下载中",
+  "downloadStateQueued": "排队中",
+  "downloadStateCompleted": "已完成",
+  "downloadStateFailed": "失败",
+  "downloadManualAddTitle": "手动添加下载",
+  "downloadManualAddAction": "手动添加",
+  "downloadSelectionCount": "已选 {count} 个",
+  "@downloadSelectionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadSelectionClearAll": "取消全选",
+  "downloadSelectionSelectAll": "全选（{count}）",
+  "@downloadSelectionSelectAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadSelectionDelete": "删除所选（{count}）",
+  "@downloadSelectionDelete": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadEmptyFiltered": "没有符合筛选条件的下载任务",
+  "downloadEmpty": "暂无下载任务",
+  "downloadViewAllTasks": "查看全部任务",
+  "downloadClientFallbackName": "客户端 #{id}",
+  "@downloadClientFallbackName": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadCreatedAt": "创建 {time}",
+  "@downloadCreatedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadViewFiles": "查看文件",
+  "downloadRetriggerImport": "重新导入",
+  "downloadDeleteBlockedImporting": "任务正在导入，无法删除",
+  "downloadImportStatusPending": "待导入",
+  "downloadImportStatusRunning": "导入中",
+  "downloadImportStatusCompleted": "已导入",
+  "downloadImportStatusFailed": "导入失败",
+  "downloadImportStatusSkipped": "已跳过",
+  "downloadImportSubmitted": "已提交导入任务",
+  "downloadImportSubmitFailed": "提交导入失败，请稍后重试",
+  "downloadViewMovieDetails": "查看影片详情：{number}",
+  "@downloadViewMovieDetails": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadSearchByMovieNumber": "按番号搜索",
+  "downloadFilterAllClients": "全部客户端",
+  "downloadFilterApplied": "已筛选",
+  "downloadFilterAction": "筛选",
+  "downloadFilterTitle": "筛选下载任务",
+  "downloadMovieNumberLabel": "番号",
+  "downloadStateFilterLabel": "下载状态",
+  "downloadClientFilterLabel": "下载客户端",
+  "downloadFilterClientSpecified": "指定客户端",
+  "downloadMagnetRequired": "请粘贴磁力链接",
+  "downloadMagnetSingleOnly": "一次只能提交一条磁力链接",
+  "downloadMagnetInvalid": "仅支持 magnet: 开头的磁力链接",
+  "downloadMovieNumberRequired": "请填写番号",
+  "downloadMovieNumberResolving": "番号查询中，请稍候",
+  "downloadMovieNumberQueryFirst": "请先点击「查询」并匹配影片",
+  "downloadMovieNumberParsing": "正在识别番号…",
+  "downloadMovieNumberUnrecognized": "无法识别番号，请输入完整番号（如 SSNI-888）",
+  "downloadMovieNumberParsed": "已识别为 {number}，正在本地查询…",
+  "@downloadMovieNumberParsed": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadMovieNumberQueryFailed": "番号查询失败，请稍后重试",
+  "downloadMovieNumberLocalNotFound": "本地未找到，正在在线搜索并入库…",
+  "downloadMovieNumberOnlineSearching": "正在在线搜索并入库…",
+  "downloadMovieNumberNotFound": "本地和在线均未找到 {number}",
+  "@downloadMovieNumberNotFound": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadMovieNumberOnlineSearchFailed": "在线搜索失败，请稍后重试",
+  "downloadMovieNumberOnlineNoResult": "在线搜索未返回结果，请重试",
+  "downloadTorrentTooLarge": "种子文件不能超过 10 MB",
+  "downloadTorrentUnreadable": "无法读取所选种子文件，请换一个文件再试",
+  "downloadTorrentPickerUnavailable": "文件选择器尚未加载，请完整重启应用后再试",
+  "downloadTorrentPickerOpenFailed": "打开文件选择器失败，请稍后再试",
+  "downloadTorrentFileRequired": "请选择 .torrent 文件",
+  "downloadCreateTaskFailed": "创建下载任务失败，请重试",
+  "downloadMagnetDialogTitle": "添加磁力下载",
+  "downloadMagnetPrefilledDescription": "磁力已从评论填入，确认下载器后提交。",
+  "downloadManualAddDescription": "粘贴磁力链接或上传 .torrent 文件，提交到下载器。",
+  "downloadClose": "关闭",
+  "downloadSubmit": "提交下载",
+  "downloadSectionSource": "资源",
+  "downloadMagnetLabel": "磁力链接",
+  "downloadTorrentLabel": "种子文件",
+  "downloadSectionSettings": "下载设置",
+  "downloadMediaKindJav": "JAV 影片",
+  "downloadMovieNumberHint": "例如 ABC-123 或 FC2-PPV-123",
+  "downloadMovieNumberHelper": "点「查询」或回车解析并匹配；本地没有时会在线搜索并入库。",
+  "downloadQuerying": "查询中",
+  "downloadQuery": "查询",
+  "downloadDisplayNameLabel": "显示名称（可选）",
+  "downloadDisplayNameHelper": "优先显示在下载任务列表；留空时使用影片标题或资源名称。",
+  "downloadMagnetCompactHelper": "从评论识别，提交前可修改。",
+  "downloadMagnetHelper": "只接受 magnet: 链接；HTTP 种子地址请下载 .torrent 后上传。",
+  "downloadLoadingClients": "正在加载下载器…",
+  "downloadClientsLoadFailed": "下载器加载失败",
+  "downloadClientsEmpty": "还没有可用的下载器",
+  "downloadClientsEmptyHint": "请先在系统设置中配置并启用下载器，然后再提交下载。",
+  "downloadConfigureClients": "去配置下载器",
+  "downloadClientLabel": "下载器",
+  "downloadSelectClient": "请选择下载器",
+  "downloadTorrentNotSelected": "未选择种子文件",
+  "downloadTorrentSelectHint": "选择 .torrent 文件，最大 10 MB",
+  "downloadChooseFile": "选择文件",
+  "downloadChooseFileAgain": "重新选择",
+  "downloadDeleteSourceAfterImport": "导入后删除源文件",
+  "downloadDeleteSourceAfterImportHint": "导入成功后删除下载器中的源文件，不可恢复",
+  "downloadMovieNumberResolvingFallback": "正在查询番号…",
+  "downloadMovieNumberQueryFailedTitle": "番号查询失败",
+  "downloadMovieSourceLocal": "本地",
+  "downloadMovieSourceOnline": "在线",
+  "downloadMovieSourceCurrent": "当前影片",
+  "downloadUnknownTitle": "未知标题",
+  "downloadSubmittedToClient": "已提交到 {client}",
+  "@downloadSubmittedToClient": {
+    "placeholders": {
+      "client": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadTaskAlreadyExists": "下载任务已存在"
 }

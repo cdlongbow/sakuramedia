@@ -1,4 +1,5 @@
 import 'package:sakuramedia/features/shared/data/sort_direction.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 class ActivityNotificationFilterState {
   const ActivityNotificationFilterState({this.category});
@@ -39,10 +40,10 @@ enum ActivityTaskSort {
 enum ActivityTaskSortField { startedAt, createdAt, updatedAt }
 
 extension ActivityTaskSortFieldValue on ActivityTaskSortField {
-  String get label => switch (this) {
-    ActivityTaskSortField.startedAt => '开始时间',
-    ActivityTaskSortField.createdAt => '创建时间',
-    ActivityTaskSortField.updatedAt => '更新时间',
+  String label(AppLocalizations l10n) => switch (this) {
+    ActivityTaskSortField.startedAt => l10n.activitySortStartedAt,
+    ActivityTaskSortField.createdAt => l10n.activitySortCreatedAt,
+    ActivityTaskSortField.updatedAt => l10n.activitySortUpdatedAt,
   };
 
   ActivityTaskSort withDirection(SortDirection direction) =>

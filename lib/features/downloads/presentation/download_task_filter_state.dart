@@ -1,14 +1,16 @@
+import 'package:sakuramedia/l10n/app_localizations.dart';
+
 /// 下载任务的状态筛选枚举，对应后端 `DownloadTask.state` 的取值。
 /// `all` 表示不带 `state` 查询参数。
 enum DownloadTaskStateFilter { all, downloading, queued, completed, failed }
 
 extension DownloadTaskStateFilterValue on DownloadTaskStateFilter {
-  String get label => switch (this) {
-    DownloadTaskStateFilter.all => '全部',
-    DownloadTaskStateFilter.downloading => '下载中',
-    DownloadTaskStateFilter.queued => '排队中',
-    DownloadTaskStateFilter.completed => '已完成',
-    DownloadTaskStateFilter.failed => '失败',
+  String label(AppLocalizations l10n) => switch (this) {
+    DownloadTaskStateFilter.all => l10n.downloadStateAll,
+    DownloadTaskStateFilter.downloading => l10n.downloadStateDownloading,
+    DownloadTaskStateFilter.queued => l10n.downloadStateQueued,
+    DownloadTaskStateFilter.completed => l10n.downloadStateCompleted,
+    DownloadTaskStateFilter.failed => l10n.downloadStateFailed,
   };
 
   /// 对应后端 `state` 的查询值集合；空/null 表示不过滤（`all`）。

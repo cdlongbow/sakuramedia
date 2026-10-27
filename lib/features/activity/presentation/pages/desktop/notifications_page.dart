@@ -9,6 +9,7 @@ import 'package:sakuramedia/features/activity/data/activity_notification_dto.dar
 import 'package:sakuramedia/features/activity/presentation/activity_filter_state.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_card.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/theme.dart';
@@ -141,6 +142,7 @@ class _DesktopNotificationsPageState
     required FilterUpdateState filterUpdate,
     required bool hasItems,
   }) {
+    final l10n = AppLocalizations.of(context);
     final notifier = ref.read(notificationCenterProvider.notifier);
     return Padding(
       key: const Key('desktop-notifications-page'),
@@ -160,7 +162,7 @@ class _DesktopNotificationsPageState
               SizedBox(width: context.appSpacing.md),
               AppButton(
                 key: const Key('notifications-mark-all-read'),
-                label: '全部已读',
+                label: l10n.activityMarkAllRead,
                 size: AppButtonSize.small,
                 variant: AppButtonVariant.secondary,
                 isLoading: isMarkingAllRead,
@@ -232,8 +234,10 @@ class _NotificationsBodySliver extends ConsumerWidget {
       if (body.filterFailed) {
         return const SliverToBoxAdapter(child: SizedBox.shrink());
       }
-      return const SliverToBoxAdapter(
-        child: AppEmptyState(message: '当前筛选下暂无通知'),
+      return SliverToBoxAdapter(
+        child: AppEmptyState(
+          message: AppLocalizations.of(context).activityEmptyNotificationsFiltered,
+        ),
       );
     }
     // 条目快照只读不订阅：序列变化时本体重建，快照即新；
@@ -306,7 +310,10 @@ class _NotificationsErrorState extends StatelessWidget {
       children: [
         AppEmptyState(message: message),
         SizedBox(height: context.appSpacing.lg),
-        AppButton(label: '重试', onPressed: () => onRetry()),
+        AppButton(
+          label: AppLocalizations.of(context).commonRetry,
+          onPressed: () => onRetry(),
+        ),
       ],
     );
   }

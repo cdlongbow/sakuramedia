@@ -83,7 +83,9 @@ class NotificationCenter extends _$NotificationCenter {
       refreshErrorMessage: null,
       filterUpdate: const FilterUpdateState.idle(),
       connectionState: NotificationConnectionState.connecting,
-      connectionMessage: '正在同步通知',
+      connectionMessage: ref
+          .read(appLocalizationsProvider)
+          .activityConnectionConnectingNotifications,
     );
     try {
       final bootstrap = await _loadBootstrapState();
@@ -94,7 +96,9 @@ class NotificationCenter extends _$NotificationCenter {
         isInitialLoading: false,
         initialErrorMessage: null,
         connectionState: NotificationConnectionState.polling,
-        connectionMessage: '每 30 秒同步通知',
+        connectionMessage: ref
+            .read(appLocalizationsProvider)
+            .activityConnectionPollingNotifications,
       );
       _startPolling(generation);
     } catch (error) {
@@ -108,7 +112,9 @@ class NotificationCenter extends _$NotificationCenter {
               .errorNotificationLoadFailed,
         ),
         connectionState: NotificationConnectionState.polling,
-        connectionMessage: '通知同步失败，可手动刷新',
+        connectionMessage: ref
+            .read(appLocalizationsProvider)
+            .activityConnectionNotificationSyncFailed,
       );
       _startPolling(generation);
     }
@@ -356,13 +362,17 @@ class NotificationCenter extends _$NotificationCenter {
       state = state.copyWith(
         unreadCount: unread.total,
         connectionState: NotificationConnectionState.polling,
-        connectionMessage: '每 30 秒同步通知',
+        connectionMessage: ref
+            .read(appLocalizationsProvider)
+            .activityConnectionPollingNotifications,
       );
     } catch (_) {
       if (ref.mounted) {
         state = state.copyWith(
           connectionState: NotificationConnectionState.polling,
-          connectionMessage: '通知同步失败，可手动刷新',
+          connectionMessage: ref
+              .read(appLocalizationsProvider)
+              .activityConnectionNotificationSyncFailed,
         );
       }
     }

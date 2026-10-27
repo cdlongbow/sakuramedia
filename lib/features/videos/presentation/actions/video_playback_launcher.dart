@@ -4,6 +4,7 @@ import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/features/external_player/presentation/external_playback_launcher.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 /// 尝试把单个 PornBox 视频交给已配置的外部播放器。
 Future<bool> tryLaunchExternalVideoPlayback(
@@ -13,7 +14,10 @@ Future<bool> tryLaunchExternalVideoPlayback(
 }) {
   return tryLaunchConfiguredExternalPlayer(
     context,
-    title: title.trim().isEmpty ? '视频' : title,
+    title:
+        title.trim().isEmpty
+            ? AppLocalizations.of(context).videoFallbackTitle
+            : title,
     resolveUrl: () => resolveVideoPlaybackUrl(context, videoId: videoId),
   );
 }

@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
+import 'package:sakuramedia/features/videos/presentation/video_display_title.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_context_menu_trigger.dart';
@@ -19,6 +21,7 @@ Future<VideoCollectionEpisodeAction?> showVideoCollectionEpisodeActions({
   Offset position = Offset.zero,
 }) {
   final isDrawer = presentation == AppMenuPresentation.bottomDrawer;
+  final l10n = AppLocalizations.of(context);
   return showAppActionMenu<VideoCollectionEpisodeAction>(
     context: context,
     globalPosition: position,
@@ -26,19 +29,19 @@ Future<VideoCollectionEpisodeAction?> showVideoCollectionEpisodeActions({
     useRootNavigator: !isDrawer,
     drawerKey: const Key('video-episode-actions'),
     title: isDrawer ? title : null,
-    items: const <AppMenuItem<VideoCollectionEpisodeAction>>[
+    items: <AppMenuItem<VideoCollectionEpisodeAction>>[
       AppMenuItem(
         key: Key('video-episode-action-remove'),
         value: VideoCollectionEpisodeAction.remove,
-        label: '移出合集',
-        subtitle: '保留视频和媒体文件',
+        label: l10n.videoRemoveFromCollection,
+        subtitle: l10n.videoEpisodeRemoveSubtitle,
         icon: Icons.playlist_remove_rounded,
       ),
       AppMenuItem(
         key: Key('video-episode-action-delete'),
         value: VideoCollectionEpisodeAction.delete,
-        label: '删除选集',
-        subtitle: '删除视频及全部关联媒体',
+        label: l10n.videoEpisodeDeleteTitle,
+        subtitle: l10n.videoEpisodeDeleteSubtitle,
         icon: Icons.delete_outline_rounded,
         tone: AppTextTone.error,
       ),
@@ -50,27 +53,30 @@ Future<bool> showVideoEpisodeDeleteConfirmation({
   required BuildContext context,
   required String title,
   required Future<void> Function() onConfirm,
-}) => showAppConfirmDialog(
-  context,
-  title: '删除选集',
-  message: '将删除该视频及全部关联媒体文件，并从所有合集中移除。此操作不可恢复。',
-  extraContent: Text(
-    title,
-    maxLines: 2,
-    overflow: TextOverflow.ellipsis,
-    style: resolveAppTextStyle(
-      context,
-      size: AppTextSize.s14,
-      tone: AppTextTone.primary,
+}) {
+  final l10n = AppLocalizations.of(context);
+  return showAppConfirmDialog(
+    context,
+    title: l10n.videoEpisodeDeleteTitle,
+    message: l10n.videoEpisodeDeleteMessage,
+    extraContent: Text(
+      title,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: resolveAppTextStyle(
+        context,
+        size: AppTextSize.s14,
+        tone: AppTextTone.primary,
+      ),
     ),
-  ),
-  confirmLabel: '删除选集',
-  danger: true,
-  // 横屏使用紧凑确认窗；菜单仍为移动操作表。
-  variant: AppConfirmVariant.dialog,
-  confirmKey: const Key('video-episode-delete-confirm'),
-  onConfirm: onConfirm,
-);
+    confirmLabel: l10n.videoEpisodeDeleteTitle,
+    danger: true,
+    // 横屏使用紧凑确认窗；菜单仍为移动操作表。
+    variant: AppConfirmVariant.dialog,
+    confirmKey: const Key('video-episode-delete-confirm'),
+    onConfirm: onConfirm,
+  );
+}
 
 class VideoEpisodeQueueItem extends StatelessWidget {
   const VideoEpisodeQueueItem({
@@ -100,19 +106,20 @@ class VideoEpisodeQueueItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final onContextActions = this.onContextActions;
     final onMoreActions = this.onMoreActions;
+    final l10n = AppLocalizations.of(context);
     final item = CollectionEpisodeQueueItem(
       itemKey: Key('video-collection-play-queue-item-${video.id}'),
       coverUrl: video.coverImage?.origin,
       coverStyle: CollectionQueueCoverStyle.containOnMuted,
-      title: video.preferredTitle,
-      subtitle: '第 ${index + 1} 集',
+      title: video.displayTitle(l10n),
+      subtitle: l10n.videoEpisodeIndex(index + 1),
       isCurrent: isCurrent,
       onTap: onPlay,
       trailing: Builder(
         builder: (buttonContext) => AppIconButton(
           key: Key('video-episode-more-${video.id}'),
           size: AppIconButtonSize.regular,
-          tooltip: '选集操作',
+          tooltip: l10n.videoEpisodeActionsTooltip,
           icon: isBusy
               ? SizedBox.square(
                   dimension: context.appComponentTokens.iconSizeSm,

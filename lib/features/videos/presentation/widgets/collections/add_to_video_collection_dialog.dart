@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.da
 import 'package:sakuramedia/features/videos/presentation/providers/video_collections_overview_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
@@ -131,7 +132,10 @@ class _AddToVideoCollectionDialogState
         return;
       }
       setState(() {
-        _errorMessage = apiErrorMessage(error, fallback: '合集加载失败');
+        _errorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(context).videoCollectionsLoadFailedShort,
+        );
         _isLoading = false;
       });
     }
@@ -148,6 +152,7 @@ class _AddToVideoCollectionDialogState
 
   Widget _buildContent(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final isAnyUpdating = _updatingIds.isNotEmpty;
     // 抽屉形态：列表占据抽屉剩余空间并内部滚动，表头/按钮常驻，整体由抽屉 maxHeightFactor
     // 约束，避免矮屏上「表头 + 固定高列表 + 按钮」超过抽屉封顶导致溢出。桌面弹窗仍用固定上限。
@@ -168,7 +173,7 @@ class _AddToVideoCollectionDialogState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '加入合集',
+                l10n.videoAddToCollection,
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s16,
@@ -180,7 +185,7 @@ class _AddToVideoCollectionDialogState
               AppSearchField(
                 fieldKey: const Key('add-to-video-collection-search-field'),
                 controller: _searchController,
-                hintText: '搜索合集',
+                hintText: l10n.videoSearchCollections,
                 onChanged: (value) =>
                     setState(() => _keyword = value.trim().toLowerCase()),
                 clearKey: const Key(
@@ -194,13 +199,13 @@ class _AddToVideoCollectionDialogState
                 children: [
                   Expanded(
                     child: AppButton(
-                      label: '新建合集并加入',
+                      label: l10n.videoCreateCollectionAndAdd,
                       onPressed: _isLoading || isAnyUpdating ? null : _createAndAdd,
                     ),
                   ),
                   SizedBox(width: spacing.md),
                   AppButton(
-                    label: '关闭',
+                    label: l10n.videoClose,
                     variant: AppButtonVariant.secondary,
                     onPressed: () => Navigator.of(context).pop(),
                   ),
@@ -232,11 +237,15 @@ class _AddToVideoCollectionDialogState
       return AppEmptyState(message: _errorMessage!);
     }
     if (_collections.isEmpty) {
-      return const AppEmptyState(message: '暂无合集，点击下方新建');
+      return AppEmptyState(
+        message: AppLocalizations.of(context).videoCollectionsEmptyDialog,
+      );
     }
     final visibleCollections = _visibleCollections;
     if (visibleCollections.isEmpty) {
-      return const AppEmptyState(message: '没有匹配的合集');
+      return AppEmptyState(
+        message: AppLocalizations.of(context).videoCollectionsNoMatch,
+      );
     }
     final isAnyUpdating = _updatingIds.isNotEmpty;
     return ListView.separated(
@@ -262,6 +271,7 @@ class _AddToVideoCollectionDialogState
 
   Future<void> _toggle(VideoCollectionDto collection) async {
     final api = ref.read(videoCollectionsApiProvider);
+    final l10n = AppLocalizations.of(context);
     final isSelected = _selectedIds.contains(collection.id);
     setState(() {
       _updatingIds.add(collection.id);
@@ -295,7 +305,13 @@ class _AddToVideoCollectionDialogState
         });
       }
       showToast(
-        apiErrorMessage(error, fallback: isSelected ? '移出合集失败' : '加入合集失败'),
+        apiErrorMessage(
+          error,
+          fallback:
+              isSelected
+                  ? l10n.videoRemoveFromCollectionFailed
+                  : l10n.videoAddToCollectionFailedShort,
+        ),
       );
     } finally {
       if (mounted) {

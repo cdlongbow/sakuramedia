@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/videos/presentation/providers/video_collect
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_single_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/video_collection_picker_field.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
@@ -131,6 +132,7 @@ class _VideoImportDialogState extends ConsumerState<VideoImportDialog> {
     // 维持合集 overview 存活：嵌套的单选弹层复用同一份缓存，不重复全量拉取。
     ref.listen(videoCollectionsOverviewProvider, (_, _) {});
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return SafeArea(
       top: false,
       child: Column(
@@ -138,7 +140,7 @@ class _VideoImportDialogState extends ConsumerState<VideoImportDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '导入视频',
+            l10n.videoImportTitle,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s16,
@@ -187,7 +189,7 @@ class _VideoImportDialogState extends ConsumerState<VideoImportDialog> {
             children: [
               Expanded(
                 child: AppButton(
-                  label: '取消',
+                  label: l10n.commonCancel,
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ),
@@ -195,7 +197,7 @@ class _VideoImportDialogState extends ConsumerState<VideoImportDialog> {
               Expanded(
                 child: AppButton(
                   key: const Key('video-import-submit-button'),
-                  label: '开始导入',
+                  label: l10n.videoImportStart,
                   variant: AppButtonVariant.primary,
                   onPressed: _selectedLibrary != null && _source != null
                       ? _submit
@@ -212,7 +214,7 @@ class _VideoImportDialogState extends ConsumerState<VideoImportDialog> {
   Widget _buildCollectionField(BuildContext context) {
     String? selectedName;
     if (_collectionId != null) {
-      selectedName = '已选合集';
+      selectedName = AppLocalizations.of(context).videoSelectedCollection;
       for (final collection in _collections) {
         if (collection.id == _collectionId) {
           selectedName = collection.name;

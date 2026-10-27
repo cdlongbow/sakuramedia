@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/external_player/data/external_player_app.da
 import 'package:sakuramedia/features/external_player/data/external_playback_mode.dart';
 import 'package:sakuramedia/features/external_player/data/external_player_channel.dart';
 import 'package:sakuramedia/features/external_player/presentation/providers/external_player_preference_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
@@ -81,6 +82,7 @@ class _ExternalPlayerSettingsContentState
     }
 
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final selection = ref.watch(externalPlayerPreferenceProvider).value;
     final selectedPlayerId = selection?.playerId;
     final playbackMode =
@@ -90,8 +92,8 @@ class _ExternalPlayerSettingsContentState
       AppSettingCell(
         key: const Key('external-player-in-app'),
         icon: Icons.phonelink_ring_outlined,
-        title: '应用内播放器',
-        subtitle: '使用樱视内置播放器',
+        title: l10n.externalPlayerInAppTitle,
+        subtitle: l10n.externalPlayerInAppSubtitle,
         trailing: selectedPlayerId == null ? const _SelectionCheckMark() : null,
         onTap: selection == null ? null : () => unawaited(_selectInApp()),
       ),
@@ -109,17 +111,17 @@ class _ExternalPlayerSettingsContentState
         ),
       if (_isLoading)
         AppSettingCell(
-          title: '正在检测已安装的播放器…',
+          title: l10n.externalPlayerDetecting,
           trailing: SizedBox.square(
             dimension: context.appComponentTokens.iconSizeSm,
             child: const CircularProgressIndicator.adaptive(strokeWidth: 2),
           ),
         ),
       if (!_isLoading && _players.isEmpty)
-        const AppSettingCell(
+        AppSettingCell(
           icon: Icons.video_library_outlined,
-          title: '未发现外部播放器',
-          subtitle: '安装网络视频播放器后，点击重新检测',
+          title: l10n.externalPlayerNoneFound,
+          subtitle: l10n.externalPlayerNoneFoundSubtitle,
         ),
     ];
 
@@ -127,7 +129,7 @@ class _ExternalPlayerSettingsContentState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '选择播放器与播放方式，下次播放时生效。',
+          l10n.externalPlayerIntro,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -139,7 +141,7 @@ class _ExternalPlayerSettingsContentState
           children: [
             Expanded(
               child: Text(
-                '默认播放器',
+                l10n.externalPlayerDefaultPlayer,
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s14,
@@ -149,17 +151,17 @@ class _ExternalPlayerSettingsContentState
             ),
             AppTextButton(
               key: const Key('external-player-refresh'),
-              label: '重新检测',
+              label: l10n.externalPlayerRescan,
               size: AppTextButtonSize.small,
               onPressed: _isLoading ? null : () => unawaited(_loadPlayers()),
             ),
           ],
         ),
         SizedBox(height: spacing.sm),
-        AppSettingsGroup(footer: '选择外部播放器后，点击播放会直接打开该应用。', children: cells),
+        AppSettingsGroup(footer: l10n.externalPlayerGroupFooter, children: cells),
         SizedBox(height: spacing.xl),
         Text(
-          '播放模式',
+          l10n.externalPlayerPlaybackMode,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s14,
@@ -178,9 +180,7 @@ class _ExternalPlayerSettingsContentState
             );
           },
           child: AppSettingsGroup(
-            footer:
-                '仅用于单个媒体的外部播放；合并播放和切片保持原有方式。'
-                '所选模式不受媒体来源支持时会播放失败，不会自动切换。',
+            footer: l10n.externalPlayerModeFooter,
             children: [
               for (final mode in ExternalPlaybackMode.values)
                 _PlaybackModeOption(
@@ -212,17 +212,19 @@ class _PlaybackModeOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final (title, description) = switch (mode) {
-      ExternalPlaybackMode.followBackend => ('默认', '跟随后端提供的播放方式，不改变播放地址。'),
+      ExternalPlaybackMode.followBackend => (
+        l10n.externalPlayerModeFollowBackendTitle,
+        l10n.externalPlayerModeFollowBackendDescription,
+      ),
       ExternalPlaybackMode.proxy => (
-        '代理（Proxy）',
-        '视频经服务器转发，兼容性更好；会占用服务器带宽。'
-            '遇到直连或跨协议跳转失败时可尝试。',
+        l10n.externalPlayerModeProxyTitle,
+        l10n.externalPlayerModeProxyDescription,
       ),
       ExternalPlaybackMode.redirect => (
-        '直连',
-        '播放器直接连接媒体来源，减少服务器转发；'
-            '需要播放器支持来源地址及重定向。',
+        l10n.externalPlayerModeRedirectTitle,
+        l10n.externalPlayerModeRedirectDescription,
       ),
     };
     return Material(

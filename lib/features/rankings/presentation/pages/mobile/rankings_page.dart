@@ -150,6 +150,7 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
   }
 
   Widget _buildScrollView(BuildContext context, RankingSummaryState summary) {
+    final l10n = AppLocalizations.of(context);
     final hasNoSources = summary.filters.hasNoSources;
     return AppPagedLoadMoreScope(
       canLoadMore: () =>
@@ -173,8 +174,8 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
               if (hasNoSources &&
                   !(summary.paged.filterUpdate.hasFailed &&
                       summary.paged.items.isEmpty))
-                const SliverToBoxAdapter(
-                  child: AppEmptyState(message: '暂无可用排行榜'),
+                SliverToBoxAdapter(
+                  child: AppEmptyState(message: l10n.rankingNoBoards),
                 )
               else if (!summary.paged.filterUpdate.hasFailed ||
                   summary.paged.items.isNotEmpty)
@@ -208,7 +209,7 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
                     onMovieBlacklist: _hoverFeatureActions.blacklist,
                     isMovieSubscriptionUpdating: (movie) =>
                         summary.isSubscriptionUpdating(movie.movieNumber),
-                    emptyMessage: '暂无榜单数据',
+                    emptyMessage: l10n.rankingEmptyData,
                     selectionMode: selectionMode,
                     isMovieSelected: (movie) => isSelected(movie.movieNumber),
                     onMovieSelectedChanged: (movie, _) =>
@@ -238,15 +239,16 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
         .read(rankingSummaryProvider(_scope).notifier)
         .refresh();
     if (error != null && mounted) {
-      showToast('刷新失败');
+      showToast(AppLocalizations.of(context).sharedRefreshFailed);
     }
   }
 
   Widget _buildHeader(BuildContext context, RankingSummaryState summary) {
+    final l10n = AppLocalizations.of(context);
     final source = summary.filters.selectedSource;
     final board = summary.filters.selectedBoard;
     // 与桌面榜单页同一套单值语义：只报「榜单」这一主维度。
-    final boardLabel = board?.name ?? source?.name ?? '全部榜单';
+    final boardLabel = board?.name ?? source?.name ?? l10n.rankingAllBoards;
     final syncedAtLabel = formatSyncedAtLabel(
       summary.paged.syncedAt,
       l10n: AppLocalizations.of(context),
@@ -255,7 +257,7 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
 
     return AppListHeader(
       filterButtonKey: const Key('mobile-rankings-filter-button'),
-      filterTooltip: '筛选',
+      filterTooltip: l10n.sharedFilter,
       filterIcon: Icons.leaderboard_outlined,
       filterLabel: boardLabel,
       filterEnabled: summary.filters.sources.isNotEmpty,
@@ -268,7 +270,7 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
       informationSlots: [
         AppListHeaderInfo(
           key: const Key('mobile-rankings-page-total'),
-          label: '${summary.paged.total} 部',
+          label: l10n.sharedMovieCount(summary.paged.total),
         ),
         if (syncedAtLabel != null)
           AppListHeaderInfo(

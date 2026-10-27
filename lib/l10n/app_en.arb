@@ -1265,5 +1265,237 @@
       }
     }
   },
-  "pluginMarketInstallablePlugins": "Installable plugins"
+  "pluginMarketInstallablePlugins": "Installable plugins",
+
+  "discoveryActressReleaseTitle": "New from Followed Actors",
+  "@discoveryActressReleaseTitle": {},
+  "discoveryActressReleaseLoadFailed": "Failed to load new releases from followed actors. Please try again later.",
+  "@discoveryActressReleaseLoadFailed": {},
+  "discoveryActressReleaseEmpty": "No new releases yet. Follow the actors you like; their latest titles show up after the scheduled sync.",
+  "@discoveryActressReleaseEmpty": {},
+  "discoveryHotNewTitle": "Trending New Releases",
+  "@discoveryHotNewTitle": {},
+  "discoveryHotNewEmpty": "No trending new releases yet. They appear as more titles gather heat.",
+  "@discoveryHotNewEmpty": {},
+  "discoveryHotActressBadge": "Trending: {name}",
+  "@discoveryHotActressBadge": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "discoveryDailyTitle": "Today's Picks",
+  "@discoveryDailyTitle": {},
+  "discoveryDailyEmpty": "No daily picks yet. Head to search to find something to watch.",
+  "@discoveryDailyEmpty": {},
+  "discoveryDailyLoadFailed": "Failed to load today's picks. Please try again later.",
+  "@discoveryDailyLoadFailed": {},
+  "discoveryMomentTitle": "Recommended Moments",
+  "@discoveryMomentTitle": {},
+  "discoveryMomentEmpty": "No recommended moments yet. Add markers while playing; they show up after the scheduled run.",
+  "@discoveryMomentEmpty": {},
+  "discoveryRecommendedEmpty": "No recommended movies yet. Head to search to find something to watch.",
+  "@discoveryRecommendedEmpty": {},
+  "discoveryTasteTitle": "Taste Profile",
+  "@discoveryTasteTitle": {},
+  "discoveryTasteSuggestedActors": "You may want to follow",
+  "@discoveryTasteSuggestedActors": {},
+  "discoveryTasteFrequentActors": "Frequently watched actors",
+  "@discoveryTasteFrequentActors": {},
+  "discoveryTasteFrequentTags": "Frequently watched tags",
+  "@discoveryTasteFrequentTags": {},
+  "discoveryTagSemanticLabel": "View movies tagged \"{name}\"",
+  "@discoveryTagSemanticLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "rankingAllBoards": "All boards",
+  "@rankingAllBoards": {},
+  "rankingNoBoards": "No rankings available",
+  "@rankingNoBoards": {},
+  "rankingEmptyData": "No ranking data",
+  "@rankingEmptyData": {},
+  "rankingFilterSource": "Source",
+  "@rankingFilterSource": {},
+  "rankingFilterBoard": "Board",
+  "@rankingFilterBoard": {},
+  "rankingFilterPeriod": "Period",
+  "@rankingFilterPeriod": {},
+  "rankingPeriodDaily": "Daily",
+  "@rankingPeriodDaily": {},
+  "rankingPeriodWeekly": "Weekly",
+  "@rankingPeriodWeekly": {},
+  "rankingPeriodMonthly": "Monthly",
+  "@rankingPeriodMonthly": {},
+  "rankingPeriodAll": "All time",
+  "@rankingPeriodAll": {},
+  "rankingPeriodCensored": "Censored",
+  "@rankingPeriodCensored": {},
+  "rankingPeriodUncensored": "Uncensored",
+  "@rankingPeriodUncensored": {},
+  "rankingPeriodYear": "{year}",
+  "@rankingPeriodYear": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "rankingSortFieldRank": "Board rank",
+  "@rankingSortFieldRank": {},
+  "rankingSortFieldCommentCount": "Comment count",
+  "@rankingSortFieldCommentCount": {},
+  "externalPlayerInAppTitle": "Built-in player",
+  "@externalPlayerInAppTitle": {},
+  "externalPlayerInAppSubtitle": "Play inside the built-in SakuraMedia player",
+  "@externalPlayerInAppSubtitle": {},
+  "externalPlayerDetecting": "Detecting installed players…",
+  "@externalPlayerDetecting": {},
+  "externalPlayerNoneFound": "No external players found",
+  "@externalPlayerNoneFound": {},
+  "externalPlayerNoneFoundSubtitle": "Install a network video player, then tap re-scan",
+  "@externalPlayerNoneFoundSubtitle": {},
+  "externalPlayerIntro": "Choose a player and playback mode. Changes apply to the next playback.",
+  "@externalPlayerIntro": {},
+  "externalPlayerDefaultPlayer": "Default player",
+  "@externalPlayerDefaultPlayer": {},
+  "externalPlayerRescan": "Re-scan",
+  "@externalPlayerRescan": {},
+  "externalPlayerGroupFooter": "Once an external player is selected, tapping play opens it directly.",
+  "@externalPlayerGroupFooter": {},
+  "externalPlayerPlaybackMode": "Playback mode",
+  "@externalPlayerPlaybackMode": {},
+  "externalPlayerModeFooter": "Applies to external playback of a single media item; merged playback and clips keep their current behavior. If the media source does not support the selected mode, playback fails without switching automatically.",
+  "@externalPlayerModeFooter": {},
+  "externalPlayerModeFollowBackendTitle": "Default",
+  "@externalPlayerModeFollowBackendTitle": {},
+  "externalPlayerModeFollowBackendDescription": "Follow the playback mode provided by the server without changing the URL.",
+  "@externalPlayerModeFollowBackendDescription": {},
+  "externalPlayerModeProxyTitle": "Proxy",
+  "@externalPlayerModeProxyTitle": {},
+  "externalPlayerModeProxyDescription": "The server relays the video, which is more compatible but uses server bandwidth. Try it when direct or cross-protocol redirects fail.",
+  "@externalPlayerModeProxyDescription": {},
+  "externalPlayerModeRedirectTitle": "Direct",
+  "@externalPlayerModeRedirectTitle": {},
+  "externalPlayerModeRedirectDescription": "The player connects to the media source directly, reducing server relaying; the player must support the source address and redirects.",
+  "@externalPlayerModeRedirectDescription": {},
+  "externalPlayerUnavailable": "External player unavailable. Playing inside the app instead.",
+  "@externalPlayerUnavailable": {},
+  "sharedMovieCount": "{count}",
+  "@sharedMovieCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sharedMomentCount": "{count}",
+  "@sharedMomentCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sharedMore": "More",
+  "@sharedMore": {},
+  "sharedFilter": "Filter",
+  "@sharedFilter": {},
+  "sharedRefreshFailed": "Failed to refresh",
+  "@sharedRefreshFailed": {},
+  "sharedFileTooLarge": "File is too large",
+  "@sharedFileTooLarge": {},
+  "sharedSortAscending": "Ascending",
+  "@sharedSortAscending": {},
+  "sharedSortDescending": "Descending",
+  "@sharedSortDescending": {},
+  "sharedInteractionHeat": "Heat",
+  "@sharedInteractionHeat": {},
+  "sharedInteractionScore": "Score",
+  "@sharedInteractionScore": {},
+  "sharedInteractionScoreNumber": "Rating count",
+  "@sharedInteractionScoreNumber": {},
+  "sharedInteractionWatchedCount": "Watchers",
+  "@sharedInteractionWatchedCount": {},
+  "sharedInteractionWantWatchCount": "Interested",
+  "@sharedInteractionWantWatchCount": {},
+  "sharedInteractionCommentCount": "Comments",
+  "@sharedInteractionCommentCount": {},
+  "sharedInteractionUnlimited": "Any",
+  "@sharedInteractionUnlimited": {},
+  "sharedInteractionSummary": "Interactions · {count}",
+  "@sharedInteractionSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sharedBatchDeleteMedia": "Batch delete media",
+  "@sharedBatchDeleteMedia": {},
+  "sharedBatchDeleteClip": "Batch delete clips",
+  "@sharedBatchDeleteClip": {},
+  "sharedBatchDeleteMoment": "Batch delete moments",
+  "@sharedBatchDeleteMoment": {},
+  "sharedBatchDeleteVideo": "Batch delete videos",
+  "@sharedBatchDeleteVideo": {},
+  "sharedBatchAddClipsToCollection": "Batch add clips to collection",
+  "@sharedBatchAddClipsToCollection": {},
+  "sharedBatchRemoveClipsFromCollection": "Batch remove clips from collection",
+  "@sharedBatchRemoveClipsFromCollection": {},
+  "sharedBatchAddMomentsToCollection": "Batch add moments to collection",
+  "@sharedBatchAddMomentsToCollection": {},
+  "sharedBatchRemoveMomentsFromCollection": "Batch remove moments from collection",
+  "@sharedBatchRemoveMomentsFromCollection": {},
+  "sharedBatchAddVideosToCollection": "Batch add videos to collection",
+  "@sharedBatchAddVideosToCollection": {},
+  "sharedBatchRemoveVideosFromCollection": "Batch remove videos from collection",
+  "@sharedBatchRemoveVideosFromCollection": {},
+  "sharedBatchDeleteDownloadTask": "Batch delete download tasks",
+  "@sharedBatchDeleteDownloadTask": {},
+  "sharedBatchTooManyItems": "{label} accepts at most {max} items per submission ({count} selected). Select fewer and try again.",
+  "@sharedBatchTooManyItems": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "max": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sharedBatchSubmitting": "{label} is being submitted. Please wait.",
+  "@sharedBatchSubmitting": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "sharedBatchSubmitFailed": "Failed to submit {label}. Please try again later.",
+  "@sharedBatchSubmitFailed": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "sharedBatchSubmitted": "{label} submitted ({count} items). Track progress in the activity center and refresh the list once it finishes.",
+  "@sharedBatchSubmitted": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

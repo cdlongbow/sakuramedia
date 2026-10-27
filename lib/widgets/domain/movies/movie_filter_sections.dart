@@ -5,6 +5,7 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_interaction_f
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_interaction_filter_options_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
@@ -445,6 +446,7 @@ class _MovieInteractionRangeFilterSectionState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final min = widget.metric.minFromSlider(_values.start);
     final max = widget.metric.maxFromSlider(_values.end, widget.maxValue);
     final colorScheme = Theme.of(context).colorScheme;
@@ -455,7 +457,7 @@ class _MovieInteractionRangeFilterSectionState
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              widget.metric.label,
+              widget.metric.localizedLabel(l10n),
               key: Key('movie-filter-${widget.metric.apiValue}-section-title'),
               style: resolveAppTextStyle(
                 context,
@@ -465,7 +467,7 @@ class _MovieInteractionRangeFilterSectionState
               ),
             ),
             Text(
-              movieInteractionRangeLabel(widget.metric, min, max),
+              movieInteractionRangeLabel(widget.metric, min, max, l10n: l10n),
               key: Key('movie-filter-${widget.metric.apiValue}-range-label'),
               style: resolveAppTextStyle(
                 context,

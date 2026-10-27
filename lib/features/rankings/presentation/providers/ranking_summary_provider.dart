@@ -160,7 +160,8 @@ class RankingSummary extends _$RankingSummary
           initialErrorMessage: null,
           paged: current.paged.copyWith(
             filterUpdate: FilterUpdateState.failed(
-              filters.errorMessage ?? '排行榜筛选加载失败，请稍后重试',
+              filters.errorMessage ??
+                  ref.read(appLocalizationsProvider).errorRankingFilterLoadFailed,
             ),
           ),
         ),

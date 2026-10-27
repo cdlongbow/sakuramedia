@@ -5,6 +5,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 import '../../../support/test_api_bundle.dart';
 
@@ -37,6 +38,12 @@ void main() {
         overrides: bundle.riverpodOverrides(),
         child: OKToast(
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             home: Consumer(
               builder: (context, ref, _) => Scaffold(
                 body: TextButton(

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/features/external_player/data/external_player_channel.dart';
 import 'package:sakuramedia/features/external_player/presentation/providers/external_player_preference_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 /// 在用户已配置外部播放器时，解析地址并直接拉起它。
 ///
@@ -46,7 +47,7 @@ Future<bool> tryLaunchConfiguredExternalPlayer(
     if (!context.mounted || launched) {
       return true;
     }
-    showToast('外部播放器不可用，已使用应用内播放');
+    showToast(AppLocalizations.of(context).externalPlayerUnavailable);
   } on Object {
     // 无 ProviderScope、偏好读取或地址解析失败时，交给既有内置播放流程
     // 展示对应的错误状态。

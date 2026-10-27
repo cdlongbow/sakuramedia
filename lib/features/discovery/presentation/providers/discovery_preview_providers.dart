@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/features/discovery/data/daily_recommendation_movie_dto.dart';
 import 'package:sakuramedia/features/discovery/data/hot_actress_release_movie_dto.dart';
 import 'package:sakuramedia/features/discovery/data/moment_recommendation_dto.dart';
@@ -66,7 +67,10 @@ class DiscoveryDailyPreview extends _$DiscoveryDailyPreview {
       state = DiscoveryPreviewState(
         items: state.items,
         total: state.total,
-        errorMessage: keepSilently ? null : '今日推荐加载失败，请稍后重试',
+        errorMessage:
+            keepSilently
+                ? null
+                : ref.read(appLocalizationsProvider).discoveryDailyLoadFailed,
       );
     } finally {
       _inFlight = false;
@@ -127,7 +131,10 @@ class DiscoveryHotActressReleasePreview
       state = DiscoveryPreviewState(
         items: state.items,
         total: state.total,
-        errorMessage: keepSilently ? null : '热门新片加载失败，请稍后重试',
+        errorMessage:
+            keepSilently
+                ? null
+                : ref.read(appLocalizationsProvider).errorHotNewMovieLoadFailed,
       );
     } finally {
       _inFlight = false;
@@ -181,7 +188,10 @@ class DiscoveryMomentPreview extends _$DiscoveryMomentPreview {
       state = DiscoveryPreviewState(
         items: state.items,
         total: state.total,
-        errorMessage: keepSilently ? null : '推荐时刻加载失败，请稍后重试',
+        errorMessage:
+            keepSilently
+                ? null
+                : ref.read(appLocalizationsProvider).errorRecommendedMomentLoadFailed,
       );
     } finally {
       _inFlight = false;

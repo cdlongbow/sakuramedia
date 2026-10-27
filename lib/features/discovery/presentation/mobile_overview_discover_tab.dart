@@ -21,6 +21,7 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_summary
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
@@ -45,7 +46,6 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
   static const int _momentPageSize = 10;
   static const _followScope = MovieSummaryScope.subscribedActorsLatest(
     pageSize: _followPageSize,
-    initialLoadErrorText: '女优上新加载失败，请稍后重试',
   );
 
   @override
@@ -118,14 +118,15 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
     final follow = followAsync.value;
     final paged = follow?.paged;
     final isLoading = followAsync.isLoading && follow == null;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AppSectionHeader(
-          title: '女优上新',
-          trailingText: '${paged?.total ?? 0} 部',
+          title: l10n.discoveryActressReleaseTitle,
+          trailingText: l10n.sharedMovieCount(paged?.total ?? 0),
           actionKey: const Key('mobile-discover-load-more-follow'),
-          actionLabel: '更多',
+          actionLabel: l10n.sharedMore,
           actionSize: AppTextButtonSize.xSmall,
           onActionTap: () => context.push(mobileFollowPath),
         ),
@@ -137,9 +138,9 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
                 ? movieListItemPlaceholders(count: _followPreviewCount)
                 : paged?.items.take(_followPreviewCount).toList() ?? const [],
             errorMessage: followAsync.hasError && follow == null
-                ? _followScope.initialLoadErrorText
+                ? l10n.discoveryActressReleaseLoadFailed
                 : null,
-            emptyMessage: '暂无女优上新，先订阅感兴趣的女优，等定时任务同步后展示',
+            emptyMessage: l10n.discoveryActressReleaseEmpty,
             onMovieTap: (movie) => _openMovieDetail(context, movie.movieNumber),
             onMovieMenuRequest: (movie, globalPosition) =>
                 requestMovieCollectionMenu(
@@ -173,14 +174,15 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
     WidgetRef ref,
     DiscoveryPreviewState<HotActressReleaseMovieDto> hotActress,
   ) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AppSectionHeader(
-          title: '热门新片',
-          trailingText: '${hotActress.total} 部',
+          title: l10n.discoveryHotNewTitle,
+          trailingText: l10n.sharedMovieCount(hotActress.total),
           actionKey: const Key('mobile-discover-load-more-hot-actress'),
-          actionLabel: '更多',
+          actionLabel: l10n.sharedMore,
           actionSize: AppTextButtonSize.xSmall,
           onActionTap: () => context.push(mobileHotActressReleasesPath),
         ),
@@ -204,10 +206,13 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
         ),
       );
     }
+    final l10n = AppLocalizations.of(context);
     final actressNames = <String, String>{
       for (final item in hotActress.items)
         if (item.hotActressName.trim().isNotEmpty)
-          item.movie.movieNumber: '热门：${item.hotActressName.trim()}',
+          item.movie.movieNumber: l10n.discoveryHotActressBadge(
+            item.hotActressName.trim(),
+          ),
     };
     final isLoading = hotActress.isLoading && hotActress.items.isEmpty;
     return AppSkeletonizer(
@@ -219,7 +224,7 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
                   .take(_hotActressPreviewCount)
                   .map((item) => item.movie)
                   .toList(growable: false),
-        emptyMessage: '暂无热门新片，待更多影片积累热度后展示',
+        emptyMessage: l10n.discoveryHotNewEmpty,
         secondaryLabelForMovie: (movie) => actressNames[movie.movieNumber],
         useDefaultSubscriptionActions: true,
         onMovieTap: (movie) => _openMovieDetail(context, movie.movieNumber),
@@ -239,14 +244,15 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
     WidgetRef ref,
     DiscoveryPreviewState<DailyRecommendationMovieDto> daily,
   ) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AppSectionHeader(
-          title: '今日推荐',
-          trailingText: '${daily.total} 部',
+          title: l10n.discoveryDailyTitle,
+          trailingText: l10n.sharedMovieCount(daily.total),
           actionKey: const Key('mobile-discover-load-more-daily'),
-          actionLabel: '更多',
+          actionLabel: l10n.sharedMore,
           actionSize: AppTextButtonSize.xSmall,
           onActionTap: () => context.push(mobileDiscoverMoviesPath),
         ),
@@ -278,7 +284,7 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
                   .take(_dailyPreviewCount)
                   .map((item) => item.movie)
                   .toList(growable: false),
-        emptyMessage: '暂无每日推荐，去搜索看看吧',
+        emptyMessage: AppLocalizations.of(context).discoveryDailyEmpty,
         onMovieTap: (movie) => _openMovieDetail(context, movie.movieNumber),
         onMovieMenuRequest: (movie, globalPosition) =>
             requestMovieCollectionMenu(
@@ -296,14 +302,15 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
     WidgetRef ref,
     DiscoveryPreviewState<MomentRecommendationDto> moment,
   ) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AppSectionHeader(
-          title: '推荐时刻',
-          trailingText: '${moment.total} 个',
+          title: l10n.discoveryMomentTitle,
+          trailingText: l10n.sharedMomentCount(moment.total),
           actionKey: const Key('mobile-discover-load-more-moments'),
-          actionLabel: '更多',
+          actionLabel: l10n.sharedMore,
           actionSize: AppTextButtonSize.xSmall,
           onActionTap: () => context.push(mobileDiscoverMomentsPath),
         ),
@@ -337,7 +344,9 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
       );
     }
     if (moment.items.isEmpty) {
-      return const AppEmptyState(message: '暂无推荐时刻，播放时添加标记，等定时任务处理后展示');
+      return AppEmptyState(
+        message: AppLocalizations.of(context).discoveryMomentEmpty,
+      );
     }
     return MomentRail(
       items: moment.items

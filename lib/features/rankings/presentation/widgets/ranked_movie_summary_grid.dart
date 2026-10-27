@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/rankings/data/ranked_movie_list_item_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_grid.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
 
@@ -16,7 +17,7 @@ class RankedMovieSummarySliver extends StatelessWidget {
     this.onMovieToggleCollectionType,
     this.onMovieBlacklist,
     this.isMovieSubscriptionUpdating,
-    this.emptyMessage = '暂无榜单数据',
+    this.emptyMessage,
     this.selectionMode = false,
     this.isMovieSelected,
     this.onMovieSelectedChanged,
@@ -39,7 +40,9 @@ class RankedMovieSummarySliver extends StatelessWidget {
   final ValueChanged<MovieListItemDto>? onMovieBlacklist;
   final bool Function(RankedMovieListItemDto movie)?
   isMovieSubscriptionUpdating;
-  final String emptyMessage;
+
+  /// 空态文案；不传时按当前语言取默认的「暂无榜单数据」。
+  final String? emptyMessage;
 
   final bool selectionMode;
   final bool Function(RankedMovieListItemDto movie)? isMovieSelected;
@@ -52,7 +55,8 @@ class RankedMovieSummarySliver extends StatelessWidget {
       gridKey: const Key('ranked-movie-summary-grid'),
       items: items,
       errorMessage: errorMessage,
-      emptyMessage: emptyMessage,
+      emptyMessage:
+          emptyMessage ?? AppLocalizations.of(context).rankingEmptyData,
       itemBuilder:
           (context, item, index) => MovieSummaryCard(
             movie: item.toMovieListItem(),

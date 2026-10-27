@@ -20,7 +20,7 @@ class PluginZipPickerException implements Exception {
   final String message;
 }
 
-Future<PluginZipFile?> pickPluginZip({AppLocalizations? l10n}) async {
+Future<PluginZipFile?> pickPluginZip({required AppLocalizations l10n}) async {
   final override = debugPluginZipPicker;
   if (override != null) {
     return override();
@@ -29,12 +29,10 @@ Future<PluginZipFile?> pickPluginZip({AppLocalizations? l10n}) async {
   try {
     final picked = await pickFileWithBytes(
       allowedExtensions: const <String>['zip'],
-      unreadableMessage:
-          l10n?.pluginZipUnreadable ?? '无法读取所选插件包，请换一个文件再试',
-      pickerUnavailableMessage:
-          l10n?.pluginZipPickerUnavailable ?? '文件选择器尚未加载，请完整重启应用后再试',
-      openFailureMessage:
-          l10n?.pluginZipOpenFailed ?? '打开文件选择器失败，请稍后再试',
+      unreadableMessage: l10n.pluginZipUnreadable,
+      pickerUnavailableMessage: l10n.pluginZipPickerUnavailable,
+      openFailureMessage: l10n.pluginZipOpenFailed,
+      l10n: l10n,
     );
     if (picked == null) {
       return null;

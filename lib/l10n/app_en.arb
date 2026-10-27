@@ -87,7 +87,7 @@
   "errorTagLoadFailed": "Failed to load tags. Please try again later.",
   "errorRankingLoadFailed": "Failed to load rankings. Please try again later.",
   "errorVideoListLoadFailed": "Failed to load videos. Please try again later.",
-  "errorActorListLoadFailed": "Failed to load performers. Please try again later.",
+  "errorActorListLoadFailed": "Failed to load actors. Please try again later.",
   "errorImportFailed": "Import failed. Please try again later.",
   "errorReviewLoadFailed": "Failed to load reviews. Please try again later.",
   "errorReviewFilterUpdateFailed": "Failed to update review filters. Please try again later.",
@@ -142,9 +142,9 @@
   "sseMovieOnlineImportFinished": "Online movie import complete",
   "sseMovieOnlineSearchFinished": "Online search complete",
   "sseMovieSyncingOnlineResults": "Syncing online movie search results...",
-  "sseActorSearchingExternal": "Searching external sources for performers...",
-  "sseActorCandidatesFetched": "Fetched performer candidates from online sources",
-  "sseActorImportingOnline": "Importing online performers...",
+  "sseActorSearchingExternal": "Searching external sources for actors...",
+  "sseActorCandidatesFetched": "Fetched actor candidates from online sources",
+  "sseActorImportingOnline": "Importing online actors...",
   "sseActorDownloadingAvatar": "Downloading avatars {index}/{total}",
   "@sseActorDownloadingAvatar": {
     "placeholders": {
@@ -156,9 +156,9 @@
       }
     }
   },
-  "sseActorOnlineImportFinished": "Online performer import complete",
+  "sseActorOnlineImportFinished": "Online actor import complete",
   "sseActorOnlineSearchFinished": "Online search complete",
-  "sseActorSyncingOnlineResults": "Syncing online performer search results...",
+  "sseActorSyncingOnlineResults": "Syncing online actor search results...",
   "commonCancel": "Cancel",
   "commonRetry": "Retry",
   "commonDelete": "Delete",
@@ -1399,8 +1399,8 @@
   "recentMore": "More",
   "recentRefreshFailed": "Refresh failed",
   "searchSubscribeMovieFailed": "Failed to subscribe to the movie",
-  "searchSubscribeActorFailed": "Failed to subscribe to the performer",
-  "searchUnsubscribeActorFailed": "Failed to unsubscribe from the performer",
+  "searchSubscribeActorFailed": "Failed to subscribe to the actor",
+  "searchUnsubscribeActorFailed": "Failed to unsubscribe from the actor",
   "searchStatsLabel": "{total} total, {created} added, {existing} already present, {failed} failed",
   "@searchStatsLabel": {
     "placeholders": {

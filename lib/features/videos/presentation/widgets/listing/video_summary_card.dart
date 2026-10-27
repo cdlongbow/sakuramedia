@@ -3,6 +3,8 @@ import 'package:sakuramedia/core/format/file_size.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
+import 'package:sakuramedia/features/videos/presentation/video_display_title.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_cover_hover_info.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
@@ -94,6 +96,7 @@ class VideoSummaryCard extends StatelessWidget {
   /// （播放 / 缩略图 / 加入合集 / 删除，按回调是否为空显隐）。
   Widget _buildHoverInfo(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final play = onPlay;
     final canPlay = play != null && video.canPlay;
     final thumbnails = onThumbnails;
@@ -106,28 +109,28 @@ class VideoSummaryCard extends StatelessWidget {
           icon: Icons.play_arrow_rounded,
           onTap: play,
           primary: true,
-          tooltip: '播放',
+          tooltip: l10n.videoPlay,
         ),
       if (thumbnails != null)
         AppCoverHoverActionButton(
           key: Key('video-summary-card-thumbnails-${video.id}'),
           icon: Icons.photo_library_outlined,
           onTap: thumbnails,
-          tooltip: '缩略图',
+          tooltip: l10n.videoThumbnails,
         ),
       if (addToCollection != null)
         AppCoverHoverActionButton(
           key: Key('video-summary-card-add-collection-${video.id}'),
           icon: Icons.playlist_add_rounded,
           onTap: addToCollection,
-          tooltip: '加入合集',
+          tooltip: l10n.videoAddToCollection,
         ),
       if (delete != null)
         AppCoverHoverActionButton(
           key: Key('video-summary-card-delete-${video.id}'),
           icon: Icons.delete_outline_rounded,
           onTap: delete,
-          tooltip: '删除',
+          tooltip: l10n.commonDelete,
         ),
     ];
     return Column(
@@ -135,7 +138,10 @@ class VideoSummaryCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        AppCoverHoverInfoRow(label: video.preferredTitle, meta: _metaLine()),
+        AppCoverHoverInfoRow(
+          label: video.displayTitle(l10n),
+          meta: _metaLine(),
+        ),
         if (actions.isNotEmpty) ...[
           SizedBox(height: spacing.sm),
           AppCoverHoverActionBar(actions: actions),

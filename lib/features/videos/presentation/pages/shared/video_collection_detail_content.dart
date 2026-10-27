@@ -17,7 +17,9 @@ import 'package:sakuramedia/features/videos/presentation/providers/video_collect
 import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/video_placeholders.dart';
+import 'package:sakuramedia/features/videos/presentation/video_display_title.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_dialog.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
@@ -234,7 +236,8 @@ class _VideoCollectionDetailContentState
   // --------------------------------------------------------- 状态三态
 
   Widget _buildError(BuildContext context, Object error) {
-    final message = apiErrorMessage(error, fallback: '合集加载失败，请稍后重试');
+    final l10n = AppLocalizations.of(context);
+    final message = apiErrorMessage(error, fallback: l10n.videoCollectionsLoadFailed);
     if (_isMobile) {
       return AppEmptyState(message: message);
     }
@@ -244,7 +247,7 @@ class _VideoCollectionDetailContentState
         AppEmptyState(message: message),
         SizedBox(height: context.appSpacing.md),
         AppButton(
-          label: '重试',
+          label: l10n.commonRetry,
           variant: AppButtonVariant.secondary,
           onPressed: () => ref.read(_providerRef.notifier).refresh(),
         ),
@@ -342,6 +345,7 @@ class _VideoCollectionDetailContentState
         ? state.items.length
         : state.collection.itemCount;
     final playAllBuilder = widget.playAllBuilder;
+    final l10n = AppLocalizations.of(context);
     return AppListHeader(
       filterUpdate: state.filterUpdate,
       hasPreviousFilterItems: state.items.isNotEmpty,
@@ -350,7 +354,7 @@ class _VideoCollectionDetailContentState
       informationSlots: [
         AppListHeaderInfo(
           key: Key('${widget.keyPrefix}-total'),
-          label: '$count 个视频',
+          label: l10n.videoCollectionVideoCount(count),
         ),
       ],
       actionSlots: [
@@ -373,7 +377,7 @@ class _VideoCollectionDetailContentState
         if (_isMobile)
           AppTextButton(
             key: Key('${widget.keyPrefix}-enter-selection-button'),
-            label: '选择',
+            label: l10n.videoSelect,
             size: AppTextButtonSize.xSmall,
             icon: const Icon(Icons.check_circle_outline, size: 14),
             onPressed: enterSelection,
@@ -405,6 +409,7 @@ class _VideoCollectionDetailContentState
     final videoIds = state.items.map((it) => it.video.id);
     final allSelected = isAllSelected(videoIds);
     final hasSelection = selectedCount > 0;
+    final l10n = AppLocalizations.of(context);
     final submitting = watchBatchOperationSubmitting(ref, const [
       BatchOperationType.videoCollectionAdd,
       BatchOperationType.videoCollectionRemove,
@@ -412,7 +417,7 @@ class _VideoCollectionDetailContentState
     ]);
     if (_isMobile) {
       return AppListHeader.selection(
-        selectionLabel: '已选 $selectedCount 个',
+        selectionLabel: l10n.videoSelectedCount(selectedCount),
         selectionExitButtonKey: Key(
           '${widget.keyPrefix}-exit-selection-button',
         ),
@@ -420,7 +425,7 @@ class _VideoCollectionDetailContentState
         actionSlots: [
           AppButton(
             key: Key('${widget.keyPrefix}-select-all-button'),
-            label: allSelected ? '取消全选' : '全选',
+            label: allSelected ? l10n.videoDeselectAll : l10n.videoSelectAll,
             variant: AppButtonVariant.ghost,
             size: AppButtonSize.xSmall,
             isSelected: allSelected,
@@ -430,14 +435,14 @@ class _VideoCollectionDetailContentState
       );
     }
     return AppSelectionHeaderToolbar(
-      countLabel: '已选 $selectedCount 个',
-      selectAllLabel: allSelected ? '取消全选' : '全选',
+      countLabel: l10n.videoSelectedCount(selectedCount),
+      selectAllLabel: allSelected ? l10n.videoDeselectAll : l10n.videoSelectAll,
       selectAllKey: Key('${widget.keyPrefix}-select-all-button'),
       onToggleAll: () => toggleSelectAll(videoIds),
       actions: [
         AppButton(
           key: Key('${widget.keyPrefix}-batch-add-collection-button'),
-          label: '加入合集',
+          label: l10n.videoAddToCollection,
           variant: AppButtonVariant.secondary,
           size: AppButtonSize.small,
           onPressed: hasSelection && !submitting
@@ -446,7 +451,7 @@ class _VideoCollectionDetailContentState
         ),
         AppButton(
           key: Key('${widget.keyPrefix}-batch-remove-button'),
-          label: '从合集移除',
+          label: l10n.videoRemoveFromCollectionTitle,
           variant: AppButtonVariant.secondary,
           size: AppButtonSize.small,
           onPressed: hasSelection && !submitting
@@ -455,7 +460,7 @@ class _VideoCollectionDetailContentState
         ),
         AppButton(
           key: Key('${widget.keyPrefix}-batch-delete-button'),
-          label: '删除视频',
+          label: l10n.videoDeleteTitle,
           variant: AppButtonVariant.danger,
           size: AppButtonSize.small,
           onPressed: hasSelection && !submitting
@@ -473,6 +478,7 @@ class _VideoCollectionDetailContentState
     VideoCollectionDetailState state,
   ) {
     final hasSelection = selectedCount > 0;
+    final l10n = AppLocalizations.of(context);
     final submitting = watchBatchOperationSubmitting(ref, const [
       BatchOperationType.videoCollectionAdd,
       BatchOperationType.videoCollectionRemove,
@@ -483,7 +489,7 @@ class _VideoCollectionDetailContentState
       actions: [
         AppButton(
           key: Key('${widget.keyPrefix}-batch-add-collection-button'),
-          label: '加入合集',
+          label: l10n.videoAddToCollection,
           variant: AppButtonVariant.secondary,
           onPressed: hasSelection && !submitting
               ? () => _batchAddToOtherCollection(state)
@@ -491,7 +497,7 @@ class _VideoCollectionDetailContentState
         ),
         AppButton(
           key: Key('${widget.keyPrefix}-batch-remove-button'),
-          label: '移除',
+          label: l10n.videoRemove,
           variant: AppButtonVariant.secondary,
           onPressed: hasSelection && !submitting
               ? () => _batchRemove(state)
@@ -499,7 +505,7 @@ class _VideoCollectionDetailContentState
         ),
         AppButton(
           key: Key('${widget.keyPrefix}-batch-delete-button'),
-          label: '删除',
+          label: l10n.commonDelete,
           variant: AppButtonVariant.danger,
           onPressed: hasSelection && !submitting
               ? () => _batchDelete(state)
@@ -516,7 +522,9 @@ class _VideoCollectionDetailContentState
       return const SizedBox.shrink();
     }
     if (state.items.isEmpty) {
-      return const AppEmptyState(message: '合集还没有视频，去视频列表用「加入合集」添加吧');
+      return AppEmptyState(
+        message: AppLocalizations.of(context).videoCollectionEmptyHint,
+      );
     }
     return _buildGrid(context, state);
   }
@@ -569,7 +577,9 @@ class _VideoCollectionDetailContentState
                 // expandToParent 模式下 coverAspectRatio 仅在 cover placeholder 时
                 // 影响占位比例；瀑布流 tile 已按真实比例分配高度，传 16:9 兜底即可。
                 coverAspectRatio: 16 / 9,
-                title: item.video.preferredTitle,
+                title: item.video.displayTitle(
+                  AppLocalizations.of(context),
+                ),
                 // 副信息只在桌面悬停面板渲染；移动端无 hover，收起态不铺文字。
                 subtitle: _formatReleaseDate(item.video.releaseDate),
                 onTap: selectionMode
@@ -581,7 +591,9 @@ class _VideoCollectionDetailContentState
                     : () => playSingle(
                         context,
                         item.video.id,
-                        item.video.preferredTitle,
+                        item.video.displayTitle(
+                          AppLocalizations.of(context),
+                        ),
                       ),
                 playButtonKey: Key(
                   '${widget.keyPrefix}-grid-play-${item.video.id}',
@@ -645,12 +657,13 @@ class _VideoCollectionDetailContentState
         collectionId: widget.collectionId,
       );
     }
-    showToast(error ?? '已从合集移除');
+    showToast(error ?? AppLocalizations.of(context).videoRemovedFromCollection);
   }
 
   /// 彻底删除视频本体（含文件，不可恢复）：先确认，再走 notifier 乐观删除并广播
   /// [VideoMutationEvents.reportDeleted]，让列表页网格精准移除、合集横滑区刷新。
   Future<void> _deleteVideo(int videoId) async {
+    final l10n = AppLocalizations.of(context);
     final items =
         ref.read(_providerRef).value?.items ?? const <VideoCollectionItemDto>[];
     var title = '';
@@ -660,12 +673,12 @@ class _VideoCollectionDetailContentState
         break;
       }
     }
-    final label = title.isEmpty ? '该视频' : '“$title”';
+    final label = title.isEmpty ? l10n.videoGenericVideo : '“$title”';
     final notifier = ref.read(_providerRef.notifier);
     final confirmed = await _confirm(
-      title: '删除视频',
-      message: '确认删除$label？该操作不可恢复。',
-      confirmLabel: '删除',
+      title: l10n.videoDeleteTitle,
+      message: l10n.videoDeleteConfirmMessage(label),
+      confirmLabel: l10n.commonDelete,
       confirmKey: Key('${widget.keyPrefix}-delete-confirm-button'),
       drawerKey: _isMobile ? Key('${widget.keyPrefix}-delete-drawer') : null,
       onConfirm: () => notifier.deleteVideo(videoId),
@@ -674,7 +687,7 @@ class _VideoCollectionDetailContentState
       return;
     }
     _mutationBroadcaster.reportDeleted(videoId);
-    showToast('已删除视频');
+    showToast(l10n.videoDeletedToast);
   }
 
   /// 跳转到该视频的缩略图页（桌面悬停动作）。
@@ -685,6 +698,7 @@ class _VideoCollectionDetailContentState
   /// 单卡「加入合集」：把该视频加入其它合集（排除当前合集），成功后广播刷新
   /// 目标合集的封面 / 计数。
   Future<void> _addToOtherCollection(VideoCollectionItemDto item) async {
+    final l10n = AppLocalizations.of(context);
     final target = await showPickVideoCollectionDialog(
       context,
       presentation: _isMobile
@@ -709,12 +723,14 @@ class _VideoCollectionDetailContentState
         videoId: item.video.id,
         collectionId: target.id,
       );
-      showToast('已加入「${target.name}」');
+      showToast(l10n.videoAddedToCollection(target.name));
     } catch (error) {
       if (!mounted) {
         return;
       }
-      showToast(apiErrorMessage(error, fallback: '加入合集失败，请重试'));
+      showToast(
+        apiErrorMessage(error, fallback: l10n.videoAddToCollectionFailed),
+      );
     }
   }
 
@@ -813,10 +829,11 @@ class _VideoCollectionDetailContentState
     if (selected.isEmpty) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     final confirmed = await _confirm(
-      title: '从合集移除',
-      message: '确认从合集移除选中的 ${selected.length} 个视频？视频本身不会被删除。',
-      confirmLabel: _isMobile ? '移除' : '确认',
+      title: l10n.videoRemoveFromCollectionTitle,
+      message: l10n.videoBatchRemoveConfirmMessage(selected.length),
+      confirmLabel: _isMobile ? l10n.videoRemove : l10n.videoConfirm,
       confirmKey: _batchConfirmKey('remove'),
       drawerKey: _isMobile
           ? Key('${widget.keyPrefix}-batch-remove-drawer')
@@ -843,10 +860,11 @@ class _VideoCollectionDetailContentState
     if (selected.isEmpty) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     final confirmed = await _confirm(
-      title: '删除视频',
-      message: '确认删除选中的 ${selected.length} 个视频？该操作不可恢复。',
-      confirmLabel: _isMobile ? '删除' : '确认',
+      title: l10n.videoDeleteTitle,
+      message: l10n.videoBatchDeleteConfirmMessage(selected.length),
+      confirmLabel: _isMobile ? l10n.commonDelete : l10n.videoConfirm,
       confirmKey: _batchConfirmKey('delete'),
       drawerKey: _isMobile
           ? Key('${widget.keyPrefix}-batch-delete-drawer')

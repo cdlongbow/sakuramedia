@@ -1417,5 +1417,207 @@
         "type": "int"
       }
     }
-  }
+  },
+  "videoFallbackTitle": "视频",
+  "videoUnnamedTitle": "未命名视频",
+  "videoUnnamedCollection": "未命名合集",
+  "videoGenericVideo": "该视频",
+  "videoGenericCollection": "该合集",
+  "videoSortCreatedAt": "入库时间",
+  "videoSortTitle": "标题",
+  "videoSortDuration": "时长",
+  "videoSortFileSize": "文件大小",
+  "videoFilterUncollected": "未归类",
+  "videoFilterAll": "全部",
+  "videoFilterSectionCollection": "合集",
+  "videoFilterNotInCollection": "未加入合集",
+  "videoFilter": "筛选",
+  "videoPlay": "播放",
+  "videoPlayAll": "播放全部",
+  "videoThumbnails": "缩略图",
+  "videoAddToCollection": "加入合集",
+  "videoRemoveFromCollection": "移出合集",
+  "videoRemoveFromCollectionTitle": "从合集移除",
+  "videoRemove": "移除",
+  "videoConfirm": "确认",
+  "videoSelect": "选择",
+  "videoSelectAll": "全选",
+  "videoDeselectAll": "取消全选",
+  "videoSelectedCount": "已选 {count} 个",
+  "@videoSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoSelectAllCount": "全选({count})",
+  "@videoSelectAllCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoReload": "重新加载",
+  "videoBackToCollection": "返回合集",
+  "videoMediaCount": "共 {count} 个媒体",
+  "@videoMediaCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoTotalCount": "{count} 个",
+  "@videoTotalCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoCollectionVideoCount": "{count} 个视频",
+  "@videoCollectionVideoCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoEpisodeIndex": "第 {index} 集",
+  "@videoEpisodeIndex": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "videoBelongsToCollections": "所属合集",
+  "videoViewCollectionSemantics": "查看合集「{name}」",
+  "@videoViewCollectionSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "videoDeleteTitle": "删除视频",
+  "videoDeleteConfirmMessage": "确认删除{label}？该操作不可恢复。",
+  "@videoDeleteConfirmMessage": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "videoBatchDeleteConfirmMessage": "确认删除选中的 {count} 个视频？该操作不可恢复。",
+  "@videoBatchDeleteConfirmMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoDeleteFailed": "删除失败，请重试",
+  "videoDeleteFailedLater": "删除失败，请稍后重试",
+  "videoDeletedToast": "已删除视频",
+  "videoEpisodeDeleteTitle": "删除选集",
+  "videoEpisodeDeleteMessage": "将删除该视频及全部关联媒体文件，并从所有合集中移除。此操作不可恢复。",
+  "videoRemoveFailed": "移出失败，请重试",
+  "videoRemovedFromCollection": "已从合集移除",
+  "videoAddedToCollection": "已加入「{name}」",
+  "@videoAddedToCollection": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "videoAddToCollectionFailed": "加入合集失败，请重试",
+  "videoRemoveFromCollectionFailed": "移出合集失败",
+  "videoAddToCollectionFailedShort": "加入合集失败",
+  "videoBatchRemoveConfirmMessage": "确认从合集移除选中的 {count} 个视频？视频本身不会被删除。",
+  "@videoBatchRemoveConfirmMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoCollectionsTitle": "视频合集",
+  "videoNewCollection": "新建合集",
+  "videoNew": "新建",
+  "videoViewAll": "查看全部",
+  "videoSearchCollections": "搜索合集",
+  "videoDeleteCollectionTitle": "删除合集",
+  "videoDeleteCollectionConfirmMessage": "确定删除合集「{name}」吗？合集内的视频不会被删除。",
+  "@videoDeleteCollectionConfirmMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "videoDeleteCollectionConfirmMessageNamed": "确认删除{name}？合集内的视频不会被删除。",
+  "@videoDeleteCollectionConfirmMessageNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "videoCollectionDeleted": "已删除合集",
+  "videoCollectionsEmpty": "暂无合集，点击「新建合集」创建",
+  "videoCollectionsNoMatch": "没有匹配的合集",
+  "videoCollectionsEmptyHint": "还没有合集，点「新建」把视频攒成一个连播合集吧",
+  "videoCollectionsEmptyMobile": "还没有合集，点下方「新建合集」开始吧",
+  "videoCollectionsLoadFailed": "合集加载失败，请稍后重试",
+  "videoCollectionsLoadFailedShort": "合集加载失败",
+  "videoCollectionCreated": "已创建合集",
+  "videoEditCollection": "编辑合集",
+  "videoCreateCollection": "创建",
+  "videoCollectionNameHint": "合集名称",
+  "videoCollectionNameRequired": "请输入合集名称",
+  "videoCollectionDescriptionHint": "描述（可选）",
+  "videoCreateCollectionAndAdd": "新建合集并加入",
+  "videoClose": "关闭",
+  "videoCollectionsEmptyDialog": "暂无合集，点击下方新建",
+  "videoSaveFailed": "保存失败",
+  "videoCreateFailed": "创建失败",
+  "videoSelectCollection": "选择合集",
+  "videoNoCollection": "不加入合集",
+  "videoCollectionsEmptyShort": "暂无合集",
+  "videoAddToCollectionOptional": "加入合集（可选）",
+  "videoSelectedCollection": "已选合集",
+  "videoCollectionEmptyHint": "合集还没有视频，去视频列表用「加入合集」添加吧",
+  "videoEmptyList": "暂无视频数据",
+  "videoEmptyGrid": "当前没有可展示的视频数据。",
+  "videoNoPlayableMedia": "暂无可播放的媒体",
+  "videoLoadFailed": "加载失败，请重试",
+  "videoRetryLater": "请稍后重试。",
+  "videoNoAvailableMedia": "该视频暂无可用媒体",
+  "videoCoverSet": "已设为封面",
+  "videoCoverSetFailed": "设置封面失败，请重试",
+  "videoClipCreated": "切片已生成",
+  "videoDetailLoadFailed": "视频详情暂时无法加载，请重试",
+  "videoCollectionNoPlayable": "合集内没有可播放的视频",
+  "videoEpisodePanelTitle": "选集 · {count}",
+  "@videoEpisodePanelTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoEpisodeDeleted": "已删除选集及关联媒体",
+  "videoEpisodeRemoved": "已移出合集，视频仍保留",
+  "videoEpisodeQueueUpdateFailed": "选集已更新，播放队列更新失败，请返回合集重新播放",
+  "videoContinuousPlayback": "连播",
+  "videoCollectionEmptyPlayable": "合集内暂无可播放视频",
+  "videoImportTitle": "导入视频",
+  "videoImportStart": "开始导入",
+  "videoEpisodeRemoveSubtitle": "保留视频和媒体文件",
+  "videoEpisodeDeleteSubtitle": "删除视频及全部关联媒体",
+  "videoEpisodeActionsTooltip": "选集操作"
 }

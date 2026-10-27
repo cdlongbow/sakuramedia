@@ -1417,5 +1417,207 @@
         "type": "int"
       }
     }
-  }
+  },
+  "videoFallbackTitle": "Video",
+  "videoUnnamedTitle": "Untitled video",
+  "videoUnnamedCollection": "Untitled collection",
+  "videoGenericVideo": "this video",
+  "videoGenericCollection": "this collection",
+  "videoSortCreatedAt": "Added at",
+  "videoSortTitle": "Title",
+  "videoSortDuration": "Duration",
+  "videoSortFileSize": "File size",
+  "videoFilterUncollected": "Uncollected",
+  "videoFilterAll": "All",
+  "videoFilterSectionCollection": "Collection",
+  "videoFilterNotInCollection": "Not in a collection",
+  "videoFilter": "Filter",
+  "videoPlay": "Play",
+  "videoPlayAll": "Play all",
+  "videoThumbnails": "Thumbnails",
+  "videoAddToCollection": "Add to collection",
+  "videoRemoveFromCollection": "Remove from collection",
+  "videoRemoveFromCollectionTitle": "Remove from collection",
+  "videoRemove": "Remove",
+  "videoConfirm": "Confirm",
+  "videoSelect": "Select",
+  "videoSelectAll": "Select all",
+  "videoDeselectAll": "Clear selection",
+  "videoSelectedCount": "{count, plural, =1{1 item selected} other{{count} items selected}}",
+  "@videoSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoSelectAllCount": "Select all ({count})",
+  "@videoSelectAllCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoReload": "Reload",
+  "videoBackToCollection": "Back to collection",
+  "videoMediaCount": "{count, plural, =1{1 media file} other{{count} media files}}",
+  "@videoMediaCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoTotalCount": "{count, plural, =1{1 video} other{{count} videos}}",
+  "@videoTotalCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoCollectionVideoCount": "{count, plural, =1{1 video} other{{count} videos}}",
+  "@videoCollectionVideoCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoEpisodeIndex": "Episode {index}",
+  "@videoEpisodeIndex": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "videoBelongsToCollections": "Collections",
+  "videoViewCollectionSemantics": "View collection “{name}”",
+  "@videoViewCollectionSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "videoDeleteTitle": "Delete video",
+  "videoDeleteConfirmMessage": "Delete {label}? This cannot be undone.",
+  "@videoDeleteConfirmMessage": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "videoBatchDeleteConfirmMessage": "{count, plural, =1{Delete the selected video? This cannot be undone.} other{Delete the {count} selected videos? This cannot be undone.}}",
+  "@videoBatchDeleteConfirmMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoDeleteFailed": "Failed to delete. Please try again.",
+  "videoDeleteFailedLater": "Failed to delete. Please try again later.",
+  "videoDeletedToast": "Video deleted",
+  "videoEpisodeDeleteTitle": "Delete episode",
+  "videoEpisodeDeleteMessage": "This deletes the video and all related media files, and removes it from every collection. This cannot be undone.",
+  "videoRemoveFailed": "Failed to remove. Please try again.",
+  "videoRemovedFromCollection": "Removed from collection",
+  "videoAddedToCollection": "Added to “{name}”",
+  "@videoAddedToCollection": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "videoAddToCollectionFailed": "Failed to add to the collection. Please try again.",
+  "videoRemoveFromCollectionFailed": "Failed to remove from the collection",
+  "videoAddToCollectionFailedShort": "Failed to add to the collection",
+  "videoBatchRemoveConfirmMessage": "{count, plural, =1{Remove the selected video from the collection? The video itself is not deleted.} other{Remove the {count} selected videos from the collection? The videos themselves are not deleted.}}",
+  "@videoBatchRemoveConfirmMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoCollectionsTitle": "Video collections",
+  "videoNewCollection": "New collection",
+  "videoNew": "New",
+  "videoViewAll": "View all",
+  "videoSearchCollections": "Search collections",
+  "videoDeleteCollectionTitle": "Delete collection",
+  "videoDeleteCollectionConfirmMessage": "Delete the collection “{name}”? The videos inside it are not deleted.",
+  "@videoDeleteCollectionConfirmMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "videoDeleteCollectionConfirmMessageNamed": "Delete {name}? The videos inside it are not deleted.",
+  "@videoDeleteCollectionConfirmMessageNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "videoCollectionDeleted": "Collection deleted",
+  "videoCollectionsEmpty": "No collections yet. Tap “New collection” to create one.",
+  "videoCollectionsNoMatch": "No matching collections",
+  "videoCollectionsEmptyHint": "No collections yet. Tap “New” to group videos into a playlist.",
+  "videoCollectionsEmptyMobile": "No collections yet. Tap “New collection” below to start.",
+  "videoCollectionsLoadFailed": "Failed to load collections. Please try again later.",
+  "videoCollectionsLoadFailedShort": "Failed to load collections",
+  "videoCollectionCreated": "Collection created",
+  "videoEditCollection": "Edit collection",
+  "videoCreateCollection": "Create",
+  "videoCollectionNameHint": "Collection name",
+  "videoCollectionNameRequired": "Enter a collection name",
+  "videoCollectionDescriptionHint": "Description (optional)",
+  "videoCreateCollectionAndAdd": "New collection and add",
+  "videoClose": "Close",
+  "videoCollectionsEmptyDialog": "No collections yet. Create one below.",
+  "videoSaveFailed": "Failed to save",
+  "videoCreateFailed": "Failed to create",
+  "videoSelectCollection": "Select a collection",
+  "videoNoCollection": "No collection",
+  "videoCollectionsEmptyShort": "No collections yet",
+  "videoAddToCollectionOptional": "Add to a collection (optional)",
+  "videoSelectedCollection": "Collection selected",
+  "videoCollectionEmptyHint": "This collection has no videos yet. Add some from the video list with “Add to collection”.",
+  "videoEmptyList": "No videos yet",
+  "videoEmptyGrid": "No videos to display.",
+  "videoNoPlayableMedia": "No playable media",
+  "videoLoadFailed": "Failed to load. Please try again.",
+  "videoRetryLater": "Please try again later.",
+  "videoNoAvailableMedia": "This video has no media yet",
+  "videoCoverSet": "Cover updated",
+  "videoCoverSetFailed": "Failed to set the cover. Please try again.",
+  "videoClipCreated": "Clip created",
+  "videoDetailLoadFailed": "The video details could not be loaded. Please try again.",
+  "videoCollectionNoPlayable": "This collection has no playable videos",
+  "videoEpisodePanelTitle": "Episodes · {count}",
+  "@videoEpisodePanelTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoEpisodeDeleted": "Episode and related media deleted",
+  "videoEpisodeRemoved": "Removed from the collection; the video is kept",
+  "videoEpisodeQueueUpdateFailed": "The episode list was updated but the playback queue failed. Go back to the collection and play again.",
+  "videoContinuousPlayback": "Continuous playback",
+  "videoCollectionEmptyPlayable": "No playable videos in this collection",
+  "videoImportTitle": "Import videos",
+  "videoImportStart": "Start import",
+  "videoEpisodeRemoveSubtitle": "Keeps the video and media files",
+  "videoEpisodeDeleteSubtitle": "Deletes the video and all related media",
+  "videoEpisodeActionsTooltip": "Episode actions"
 }

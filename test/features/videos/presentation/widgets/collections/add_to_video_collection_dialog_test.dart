@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart'
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/add_to_video_collection_dialog.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../../../../support/fake_http_client_adapter.dart';
@@ -79,6 +80,12 @@ void main() {
         child: OKToast(
           child: MaterialApp(
             theme: sakuraMobileThemeData,
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             home: Scaffold(
               body: AddToVideoCollectionDialog(
                 videoItemId: 101,

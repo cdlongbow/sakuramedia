@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/videos/presentation/providers/video_mutatio
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/video_placeholders.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -74,6 +75,7 @@ class _MobileVideoCollectionsPageState
     final spacing = context.appSpacing;
     final colors = context.appColors;
     final async = ref.watch(videoCollectionsOverviewProvider);
+    final l10n = AppLocalizations.of(context);
 
     return ColoredBox(
       key: const Key('mobile-video-collections-page'),
@@ -85,7 +87,7 @@ class _MobileVideoCollectionsPageState
             child: AppSearchField(
               fieldKey: const Key('mobile-video-collections-search-field'),
               controller: _searchController,
-              hintText: '搜索合集',
+              hintText: l10n.videoSearchCollections,
               onChanged: (value) =>
                   setState(() => _keyword = value.trim().toLowerCase()),
               clearKey: const Key('mobile-video-collections-search-clear'),
@@ -104,7 +106,7 @@ class _MobileVideoCollectionsPageState
                 width: double.infinity,
                 child: AppButton(
                   key: const Key('mobile-video-collections-create-button'),
-                  label: '新建合集',
+                  label: l10n.videoNewCollection,
                   variant: AppButtonVariant.primary,
                   icon: const Icon(Icons.add_rounded),
                   onPressed: _createCollection,
@@ -123,6 +125,7 @@ class _MobileVideoCollectionsPageState
   ) {
     final isLoading = async.isLoading && async.value == null;
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final allCollections = isLoading
         ? videoCollectionPlaceholders()
         : async.value ?? const <VideoCollectionDto>[];
@@ -146,19 +149,19 @@ class _MobileVideoCollectionsPageState
               child: AppEmptyState(
                 message: apiErrorMessage(
                   async.error!,
-                  fallback: '合集加载失败，请稍后重试',
+                  fallback: l10n.videoCollectionsLoadFailed,
                 ),
               ),
             )
           else if (allCollections.isEmpty)
-            const SliverFillRemaining(
+            SliverFillRemaining(
               hasScrollBody: false,
-              child: AppEmptyState(message: '还没有合集，点下方「新建合集」开始吧'),
+              child: AppEmptyState(message: l10n.videoCollectionsEmptyMobile),
             )
           else if (collections.isEmpty)
-            const SliverFillRemaining(
+            SliverFillRemaining(
               hasScrollBody: false,
-              child: AppEmptyState(message: '没有匹配的合集'),
+              child: AppEmptyState(message: l10n.videoCollectionsNoMatch),
             )
           else
             SliverPadding(
@@ -199,7 +202,7 @@ class _MobileVideoCollectionsPageState
     }
     await ref.read(videoCollectionsOverviewProvider.notifier).refresh();
     if (mounted) {
-      showToast('已创建合集');
+      showToast(AppLocalizations.of(context).videoCollectionCreated);
     }
   }
 
@@ -214,20 +217,21 @@ class _MobileVideoCollectionsPageState
     }
     await ref.read(videoCollectionsOverviewProvider.notifier).refresh();
     if (mounted) {
-      showToast('已保存');
+      showToast(AppLocalizations.of(context).commonSaved);
     }
   }
 
   Future<void> _deleteCollection(VideoCollectionDto collection) async {
+    final l10n = AppLocalizations.of(context);
     final name = collection.name.trim().isEmpty
-        ? '该合集'
+        ? l10n.videoGenericCollection
         : '“${collection.name.trim()}”';
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除合集',
-      message: '确认删除$name？合集内的视频不会被删除。',
+      title: l10n.videoDeleteCollectionTitle,
+      message: l10n.videoDeleteCollectionConfirmMessageNamed(name),
       danger: true,
-      confirmLabel: '删除',
+      confirmLabel: l10n.commonDelete,
       dialogKey: const Key('mobile-video-collection-delete-drawer'),
       confirmKey: const Key('mobile-video-collection-delete-confirm-button'),
     );
@@ -240,10 +244,10 @@ class _MobileVideoCollectionsPageState
           .deleteCollection(collection.id);
       await ref.read(videoCollectionsOverviewProvider.notifier).refresh();
       if (mounted) {
-        showToast('已删除合集');
+        showToast(l10n.videoCollectionDeleted);
       }
     } catch (error) {
-      showToast(apiErrorMessage(error, fallback: '删除失败，请重试'));
+      showToast(apiErrorMessage(error, fallback: l10n.videoDeleteFailed));
     }
   }
 }

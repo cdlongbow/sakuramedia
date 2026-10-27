@@ -13,6 +13,8 @@ import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_pl
 import 'package:sakuramedia/features/videos/data/dto/video_item_detail_dto.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/video_display_title.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
@@ -88,7 +90,9 @@ class _VideoThumbnailContentState extends ConsumerState<VideoThumbnailContent> {
       if (detail.mediaItems.isEmpty) {
         setState(() {
           _isLoading = false;
-          _errorMessage = '该视频暂无可用媒体';
+          _errorMessage = AppLocalizations.of(
+            context,
+          ).videoNoAvailableMedia;
         });
         return;
       }
@@ -110,7 +114,10 @@ class _VideoThumbnailContentState extends ConsumerState<VideoThumbnailContent> {
       }
       setState(() {
         _isLoading = false;
-        _errorMessage = apiErrorMessage(error, fallback: '加载失败，请重试');
+        _errorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(context).videoLoadFailed,
+        );
       });
     }
   }
@@ -174,10 +181,15 @@ class _VideoThumbnailContentState extends ConsumerState<VideoThumbnailContent> {
       ref
           .read(videoMutationEventsProvider.notifier)
           .reportCoverChanged(videoId: widget.videoId);
-      showToast('已设为封面');
+      showToast(AppLocalizations.of(context).videoCoverSet);
     } catch (error) {
       if (mounted) {
-        showToast(apiErrorMessage(error, fallback: '设置封面失败，请重试'));
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: AppLocalizations.of(context).videoCoverSetFailed,
+          ),
+        );
       }
     }
   }
@@ -193,7 +205,7 @@ class _VideoThumbnailContentState extends ConsumerState<VideoThumbnailContent> {
     final created = await showCreateClipDialog(
       context,
       mediaId: start.mediaId,
-      movieNumber: video.preferredTitle,
+      movieNumber: video.displayTitle(AppLocalizations.of(context)),
       startThumbnailId: start.thumbnailId,
       endThumbnailId: end.thumbnailId,
       startSeconds: start.offsetSeconds,
@@ -202,7 +214,7 @@ class _VideoThumbnailContentState extends ConsumerState<VideoThumbnailContent> {
     if (!mounted || created == null) {
       return;
     }
-    showToast('切片已生成');
+    showToast(AppLocalizations.of(context).videoClipCreated);
     _thumbnailController.toggleClipSelectionMode();
   }
 
@@ -212,11 +224,12 @@ class _VideoThumbnailContentState extends ConsumerState<VideoThumbnailContent> {
       return const Center(child: CircularProgressIndicator());
     }
     if (_errorMessage != null || _video == null || _mediaId == null) {
+      final l10n = AppLocalizations.of(context);
       return Center(
         child: AppEmptyState(
-          message: _errorMessage ?? '视频详情暂时无法加载，请重试',
+          message: _errorMessage ?? l10n.videoDetailLoadFailed,
           onRetry: () => unawaited(_load()),
-          retryLabel: '重新加载',
+          retryLabel: l10n.videoReload,
           retryKey: const Key('video-thumbnail-retry'),
         ),
       );
@@ -229,7 +242,7 @@ class _VideoThumbnailContentState extends ConsumerState<VideoThumbnailContent> {
         Padding(
           padding: EdgeInsets.only(bottom: context.appSpacing.sm),
           child: Text(
-            _video!.preferredTitle,
+            _video!.displayTitle(AppLocalizations.of(context)),
             key: const Key('video-thumbnail-title'),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,

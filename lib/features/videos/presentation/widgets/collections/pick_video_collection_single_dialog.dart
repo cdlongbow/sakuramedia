@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_collections_overview_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/forms/app_picker_option_tile.dart';
@@ -69,13 +70,14 @@ class _PickVideoCollectionSingleDialogState
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final collectionsAsync = ref.watch(videoCollectionsOverviewProvider);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '选择合集',
+          l10n.videoSelectCollection,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s16,
@@ -87,7 +89,7 @@ class _PickVideoCollectionSingleDialogState
         AppSearchField(
           fieldKey: const Key('pick-video-collection-single-search-field'),
           controller: _searchController,
-          hintText: '搜索合集',
+          hintText: l10n.videoSearchCollections,
           onChanged: (value) =>
               setState(() => _keyword = value.trim().toLowerCase()),
           clearKey: const Key('pick-video-collection-single-search-clear'),
@@ -112,12 +114,16 @@ class _PickVideoCollectionSingleDialogState
     }
     if (collectionsAsync.hasError && !collectionsAsync.hasValue) {
       return AppEmptyState(
-        message: apiErrorMessage(collectionsAsync.error!, fallback: '合集加载失败'),
+        message: apiErrorMessage(
+          collectionsAsync.error!,
+          fallback: AppLocalizations.of(context).videoCollectionsLoadFailedShort,
+        ),
       );
     }
     final collections = collectionsAsync.value ?? <VideoCollectionDto>[];
     final visible = _visibleCollections(collections);
     final noneSelected = widget.selectedCollectionId == null;
+    final l10n = AppLocalizations.of(context);
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: 320),
       child: ListView.separated(
@@ -133,7 +139,7 @@ class _PickVideoCollectionSingleDialogState
               onTap: () => Navigator.of(
                 context,
               ).pop(const VideoCollectionSelection(null)),
-              title: '不加入合集',
+              title: l10n.videoNoCollection,
               optionKey: const Key('pick-video-collection-single-none'),
               checkboxKey: const Key(
                 'pick-video-collection-single-none-checkbox',
@@ -144,7 +150,9 @@ class _PickVideoCollectionSingleDialogState
             return Padding(
               padding: EdgeInsets.all(context.appSpacing.md),
               child: Text(
-                collections.isEmpty ? '暂无合集' : '没有匹配的合集',
+                collections.isEmpty
+                    ? l10n.videoCollectionsEmptyShort
+                    : l10n.videoCollectionsNoMatch,
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s14,

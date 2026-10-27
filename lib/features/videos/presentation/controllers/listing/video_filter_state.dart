@@ -1,5 +1,6 @@
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart'
     show SortDirection, SortDirectionX;
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 export 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart'
     show SortDirection, SortDirectionX;
@@ -16,6 +17,16 @@ extension VideoSortFieldX on VideoSortField {
     VideoSortField.fileSize => 'file_size',
   };
 
+  /// 排序项展示文案（语言包）。展示层用这个取当前语言的排序名。
+  String labelWith(AppLocalizations l10n) => switch (this) {
+    VideoSortField.createdAt => l10n.videoSortCreatedAt,
+    VideoSortField.title => l10n.videoSortTitle,
+    VideoSortField.duration => l10n.videoSortDuration,
+    VideoSortField.fileSize => l10n.videoSortFileSize,
+  };
+
+  /// 无语言包的旧入口：唯一消费方是 `lib/widgets/domain/videos` 下的排序菜单
+  /// 适配器（属其它迁移批次）。该批次改用 [labelWith] 后即可删除本 getter。
   String get label => switch (this) {
     VideoSortField.createdAt => '入库时间',
     VideoSortField.title => '标题',
@@ -51,7 +62,8 @@ class VideoFilterState {
       '${sortField.apiValue}:${sortDirection.apiValue}';
 
   /// 筛选入口只反映合集归属，不再混入排序。
-  String get triggerLabel => uncollected ? '未归类' : '全部';
+  String triggerLabel(AppLocalizations l10n) =>
+      uncollected ? l10n.videoFilterUncollected : l10n.videoFilterAll;
 
   /// 重置筛选条件但保留当前排序。
   VideoFilterState resetFilters() => VideoFilterState.initial.copyWith(

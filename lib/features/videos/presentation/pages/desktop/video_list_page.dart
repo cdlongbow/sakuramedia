@@ -28,6 +28,8 @@ import 'package:sakuramedia/features/shared/presentation/providers/batch_operati
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/videos/presentation/actions/video_playback_launcher.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_actions_dialog.dart';
+import 'package:sakuramedia/features/videos/presentation/video_display_title.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -154,7 +156,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
     if (await tryLaunchExternalVideoPlayback(
       context,
       videoId: video.id,
-      title: video.preferredTitle,
+      title: video.displayTitle(AppLocalizations.of(context)),
     )) {
       return;
     }
@@ -181,24 +183,25 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
   }
 
   Future<void> _deleteVideo(VideoItemListItemDto video) async {
+    final l10n = AppLocalizations.of(context);
     final title = video.preferredTitle.trim();
-    final label = title.isEmpty ? '该视频' : '“$title”';
+    final label = title.isEmpty ? l10n.videoGenericVideo : '“$title”';
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除视频',
-      message: '确认删除$label？该操作不可恢复。',
+      title: l10n.videoDeleteTitle,
+      message: l10n.videoDeleteConfirmMessage(label),
       danger: true,
-      confirmLabel: '删除',
+      confirmLabel: l10n.commonDelete,
       confirmKey: const Key('video-delete-confirm-button'),
       onConfirm: () => ref.read(videosApiProvider).deleteVideo(video.id),
-      failureFallback: '删除失败，请重试',
+      failureFallback: l10n.videoDeleteFailed,
     );
     if (!mounted || !confirmed) {
       return;
     }
     // 广播删除信号：列表 provider 精准移除，页面刷新合集横滑区。
     ref.read(videoMutationEventsProvider.notifier).reportDeleted(video.id);
-    showToast('已删除视频');
+    showToast(l10n.videoDeletedToast);
   }
 
   List<VideoItemListItemDto> get _loadedVideos =>
@@ -212,12 +215,13 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
     if (selected.isEmpty) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除视频',
-      message: '确认删除选中的 ${selected.length} 个视频？该操作不可恢复。',
+      title: l10n.videoDeleteTitle,
+      message: l10n.videoBatchDeleteConfirmMessage(selected.length),
       danger: true,
-      confirmLabel: '删除',
+      confirmLabel: l10n.commonDelete,
       confirmKey: const Key('videos-batch-delete-confirm-button'),
     );
     if (!mounted || !confirmed) {
@@ -272,6 +276,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
     final summary = videosAsync.value;
     final paged = summary?.paged;
     final filter = summary?.filter ?? VideoFilterState.initial;
+    final l10n = AppLocalizations.of(context);
 
     ref.listen(videoMutationEventsProvider, (_, next) {
       if (next.value != null) {
@@ -318,7 +323,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
                 videoProvider: videoSummaryProvider(_scope),
                 isInitialLoading: videosAsync.isLoading && summary == null,
                 initialErrorMessage: videosAsync.hasError && summary == null
-                    ? '视频列表加载失败，请稍后重试'
+                    ? l10n.errorVideoListLoadFailed
                     : null,
                 filterState: filter,
                 onFilterChanged: _applySort,
@@ -364,6 +369,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
 
   /// 多选态下**原地改写整条顶栏**（与影片列表一致），不在筛选行下面另起一行。
   Widget? _buildSelectionHeader(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final videoIds = _loadedVideos.map((v) => v.id);
     final allSelected = isAllSelected(videoIds);
     final hasSelection = selectedCount > 0;
@@ -373,9 +379,12 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
     ]);
 
     return AppSelectionHeaderToolbar(
-      countLabel: '已选 $selectedCount 个',
+      countLabel: l10n.videoSelectedCount(selectedCount),
       countKey: const Key('videos-selection-count-text'),
-      selectAllLabel: allSelected ? '取消全选' : '全选(${_loadedVideos.length})',
+      selectAllLabel:
+          allSelected
+              ? l10n.videoDeselectAll
+              : l10n.videoSelectAllCount(_loadedVideos.length),
       selectAllKey: const Key('videos-select-all-button'),
       onToggleAll: _loadedVideos.isEmpty
           ? null
@@ -383,14 +392,14 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
       actions: [
         AppButton(
           key: const Key('videos-batch-add-collection-button'),
-          label: '加入合集',
+          label: l10n.videoAddToCollection,
           variant: AppButtonVariant.secondary,
           size: AppButtonSize.small,
           onPressed: hasSelection && !submitting ? _batchAddToCollection : null,
         ),
         AppButton(
           key: const Key('videos-batch-delete-button'),
-          label: '删除',
+          label: l10n.commonDelete,
           variant: AppButtonVariant.danger,
           size: AppButtonSize.small,
           onPressed: hasSelection && !submitting ? _batchDelete : null,
@@ -402,6 +411,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
   }
 
   Widget _buildCollectionsSection(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Consumer(
       builder: (context, ref, _) {
         final async = ref.watch(videoCollectionsOverviewProvider);
@@ -412,7 +422,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
             Row(
               children: [
                 Text(
-                  '视频合集',
+                  l10n.videoCollectionsTitle,
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s14,
@@ -423,7 +433,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
                 const Spacer(),
                 AppTextButton(
                   key: const Key('videos-create-collection-button'),
-                  label: '新建',
+                  label: l10n.videoNew,
                   size: AppTextButtonSize.small,
                   onPressed: _createCollection,
                 ),
@@ -431,7 +441,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
                   SizedBox(width: context.appSpacing.xs),
                   AppTextButton(
                     key: const Key('videos-view-all-collections-button'),
-                    label: '查看全部',
+                    label: l10n.videoViewAll,
                     size: AppTextButtonSize.small,
                     onPressed: _viewAllCollections,
                   ),
@@ -451,9 +461,10 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
     AsyncValue<List<VideoCollectionDto>> async,
     List<VideoCollectionDto> collections,
   ) {
+    final l10n = AppLocalizations.of(context);
     if (async.hasError && collections.isEmpty) {
       return CollectionHintBox(
-        message: apiErrorMessage(async.error!, fallback: '合集加载失败，请稍后重试'),
+        message: apiErrorMessage(async.error!, fallback: l10n.videoCollectionsLoadFailed),
       );
     }
     final isLoading = async.isLoading && collections.isEmpty;
@@ -461,7 +472,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
         ? videoCollectionPlaceholders(count: 4)
         : collections;
     if (display.isEmpty) {
-      return const CollectionHintBox(message: '还没有合集，点「新建」把视频攒成一个连播合集吧');
+      return CollectionHintBox(message: l10n.videoCollectionsEmptyHint);
     }
     return AppSkeletonizer(
       enabled: isLoading,

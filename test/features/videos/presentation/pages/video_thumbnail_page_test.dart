@@ -16,6 +16,7 @@ import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_thu
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_actions_sheet.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_thumbnail_page.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_action_support.dart';
@@ -181,6 +182,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: sakuraThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: DesktopVideoActionsDialogBody(
             video: video,
@@ -198,6 +205,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: sakuraMobileThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: MobileVideoActionsSheet(
             video: video,
@@ -271,6 +284,12 @@ Future<void> _pumpVideoThumbnailPage(
       child: OKToast(
         child: MaterialApp(
           theme: mobile ? sakuraMobileThemeData : sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           home: page,
         ),
       ),

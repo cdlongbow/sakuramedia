@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -84,14 +85,16 @@ class _CreateVideoCollectionDialogState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (widget.presentation == VideoCollectionEditPresentation.dialog) {
       return AppDesktopDialog(width: 420, child: _buildDesktopForm(context));
     }
     return AppBottomFormSheet(
       formKey: _formKey,
-      title: _isEditing ? '编辑合集' : '新建合集',
+      title: _isEditing ? l10n.videoEditCollection : l10n.videoNewCollection,
       submitKey: const Key('video-collection-submit-button'),
-      submitLabel: _isEditing ? '保存' : '创建',
+      submitLabel:
+          _isEditing ? l10n.commonSave : l10n.videoCreateCollection,
       isSubmitting: _isSubmitting,
       onSubmit: _submit,
       body: _buildFieldsBody(context),
@@ -100,6 +103,7 @@ class _CreateVideoCollectionDialogState
 
   Widget _buildFieldsBody(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -107,17 +111,19 @@ class _CreateVideoCollectionDialogState
         AppTextField(
           fieldKey: const Key('video-collection-name-field'),
           controller: _nameController,
-          hintText: '合集名称',
+          hintText: l10n.videoCollectionNameHint,
           enabled: !_isSubmitting,
           validator:
               (value) =>
-                  value == null || value.trim().isEmpty ? '请输入合集名称' : null,
+                  value == null || value.trim().isEmpty
+                      ? l10n.videoCollectionNameRequired
+                      : null,
         ),
         SizedBox(height: spacing.sm),
         AppTextField(
           fieldKey: const Key('video-collection-description-field'),
           controller: _descriptionController,
-          hintText: '描述（可选）',
+          hintText: l10n.videoCollectionDescriptionHint,
           enabled: !_isSubmitting,
         ),
       ],
@@ -126,6 +132,7 @@ class _CreateVideoCollectionDialogState
 
   Widget _buildDesktopForm(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Form(
       key: _formKey,
       child: Column(
@@ -133,7 +140,7 @@ class _CreateVideoCollectionDialogState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _isEditing ? '编辑合集' : '新建合集',
+            _isEditing ? l10n.videoEditCollection : l10n.videoNewCollection,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s16,
@@ -148,7 +155,7 @@ class _CreateVideoCollectionDialogState
             children: [
               Expanded(
                 child: AppButton(
-                  label: '取消',
+                  label: l10n.commonCancel,
                   onPressed:
                       _isSubmitting ? null : () => Navigator.of(context).pop(),
                 ),
@@ -157,7 +164,8 @@ class _CreateVideoCollectionDialogState
               Expanded(
                 child: AppButton(
                   key: const Key('video-collection-submit-button'),
-                  label: _isEditing ? '保存' : '创建',
+                  label:
+                      _isEditing ? l10n.commonSave : l10n.videoCreateCollection,
                   variant: AppButtonVariant.primary,
                   isLoading: _isSubmitting,
                   onPressed: _submit,
@@ -174,6 +182,7 @@ class _CreateVideoCollectionDialogState
     if (_isSubmitting || !_formKey.currentState!.validate()) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     setState(() => _isSubmitting = true);
     final api = ref.read(videoCollectionsApiProvider);
     try {
@@ -197,7 +206,13 @@ class _CreateVideoCollectionDialogState
       }
       Navigator.of(context).pop(result);
     } catch (error) {
-      showToast(apiErrorMessage(error, fallback: _isEditing ? '保存失败' : '创建失败'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback:
+              _isEditing ? l10n.videoSaveFailed : l10n.videoCreateFailed,
+        ),
+      );
       if (mounted) {
         setState(() => _isSubmitting = false);
       }

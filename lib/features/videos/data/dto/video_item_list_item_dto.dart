@@ -83,13 +83,9 @@ class VideoItemListItemDto {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  String get preferredTitle {
-    final resolved = title.trim();
-    if (resolved.isNotEmpty) {
-      return resolved;
-    }
-    return '未命名视频';
-  }
+  /// 列表项标题：只做 trim。空标题的兜底文案在展示层用语言包补
+  /// （见 `videoDisplayTitle`），数据层不持有用户可见文案。
+  String get preferredTitle => title.trim();
 
   factory VideoItemListItemDto.fromJson(Map<String, dynamic> json) {
     return VideoItemListItemDto(

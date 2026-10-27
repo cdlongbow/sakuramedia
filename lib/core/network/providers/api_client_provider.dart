@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/app/language/providers/language_providers.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
@@ -15,6 +16,7 @@ ApiClient apiClient(Ref ref) {
   final client = ApiClient(
     sessionStore: ref.watch(sessionStoreProvider),
     languageProvider: () => ref.read(appLanguageControllerProvider).apiTag,
+    localizationsProvider: () => ref.read(appLocalizationsProvider),
   );
   ref.onDispose(client.dispose);
   return client;

@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/overview/presentation/providers/mobile_overview_tab_index_provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/features/account/presentation/pages/mobile/account_security_page.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/mobile/actor_detail_page.dart';
 import 'package:sakuramedia/features/activity/presentation/pages/mobile/activity_page.dart';
@@ -105,7 +107,7 @@ class MobileSearchRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-search-empty';
 
   @override
-  String get title => '搜索';
+  String title(AppLocalizations l10n) => l10n.routeSearchTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -151,7 +153,7 @@ class MobileImageSearchRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-image-search';
 
   @override
-  String get title => '画面搜索';
+  String title(AppLocalizations l10n) => l10n.routeImageSearchTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -222,7 +224,7 @@ class MobileSearchQueryRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-search';
 
   @override
-  String get title => '搜索';
+  String title(AppLocalizations l10n) => l10n.routeSearchTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -259,7 +261,7 @@ class MobileSettingsMediaLibrariesRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-settings-media-libraries';
 
   @override
-  String get title => '媒体库';
+  String title(AppLocalizations l10n) => l10n.configTabMediaLibraries;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -279,7 +281,7 @@ class MobileSettingsPluginsRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-settings-plugins';
 
   @override
-  String get title => '插件';
+  String title(AppLocalizations l10n) => l10n.configTabPlugins;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -301,7 +303,7 @@ class MobileSettingsPluginMarketRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-settings-plugin-market';
 
   @override
-  String get title => '插件市场';
+  String title(AppLocalizations l10n) => l10n.pluginMarketTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -321,7 +323,7 @@ class MobileLatestMoviesRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-latest-movies';
 
   @override
-  String get title => '最近添加';
+  String title(AppLocalizations l10n) => l10n.routeLatestAddedTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -343,7 +345,7 @@ class MobileRecentlySubscribedMoviesRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-recently-subscribed-movies';
 
   @override
-  String get title => '最近订阅';
+  String title(AppLocalizations l10n) => l10n.routeRecentlySubscribedTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -363,7 +365,7 @@ class MobileRecentViewsRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-recent-views';
 
   @override
-  String get title => '最近浏览';
+  String title(AppLocalizations l10n) => l10n.routeRecentViewsTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -383,7 +385,7 @@ class MobileFavoritesRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-favorites';
 
   @override
-  String get title => '我的收藏';
+  String title(AppLocalizations l10n) => l10n.routeFavoritesTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -403,7 +405,7 @@ class MobileRecentlyPlayedRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-recently-played';
 
   @override
-  String get title => '最近播放';
+  String title(AppLocalizations l10n) => l10n.routeRecentlyPlayedTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -423,7 +425,7 @@ class MobileRatedMoviesRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-rated-movies';
 
   @override
-  String get title => '我的评分';
+  String title(AppLocalizations l10n) => l10n.routeRatingsTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -443,7 +445,7 @@ class MobileSystemOverviewRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-system-overview';
 
   @override
-  String get title => '概览';
+  String title(AppLocalizations l10n) => l10n.routeOverviewTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -463,7 +465,7 @@ class MobileMediaImportRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-media-import';
 
   @override
-  String get title => '资源导入';
+  String title(AppLocalizations l10n) => l10n.routeMediaImportTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -483,7 +485,7 @@ class MobileActivityRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-activity';
 
   @override
-  String get title => '任务中心';
+  String title(AppLocalizations l10n) => l10n.routeTaskCenterTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -506,7 +508,7 @@ class MobileDownloadTasksRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-download-tasks';
 
   @override
-  String get title => '下载任务';
+  String title(AppLocalizations l10n) => l10n.routeDownloadTasksTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -529,7 +531,7 @@ class MobileNotificationsRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-notifications';
 
   @override
-  String get title => '消息';
+  String title(AppLocalizations l10n) => l10n.routeMessagesTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -549,7 +551,7 @@ class MobileMediaManagementRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-media-management';
 
   @override
-  String get title => '媒体管理';
+  String title(AppLocalizations l10n) => l10n.routeMediaManagementTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -571,7 +573,7 @@ class MobileMovieSubscriptionsRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-movie-subscriptions';
 
   @override
-  String get title => '订阅管理';
+  String title(AppLocalizations l10n) => l10n.routeSubscriptionManagementTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -593,7 +595,7 @@ class MobileSettingsDownloadersRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-settings-downloaders';
 
   @override
-  String get title => '下载器';
+  String title(AppLocalizations l10n) => l10n.configTabDownloadClients;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -613,7 +615,7 @@ class MobileSettingsIndexersRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-settings-indexers';
 
   @override
-  String get title => '索引器';
+  String title(AppLocalizations l10n) => l10n.configTabIndexers;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -635,7 +637,7 @@ class MobileSettingsSystemMaintenanceRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-settings-system-maintenance';
 
   @override
-  String get title => '系统维护';
+  String title(AppLocalizations l10n) => l10n.configTabSystemMaintenance;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -657,7 +659,7 @@ class MobileSettingsExternalPlayerRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-settings-external-player';
 
   @override
-  String get title => '外部播放器';
+  String title(AppLocalizations l10n) => l10n.configTabExternalPlayer;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -679,7 +681,7 @@ class MobileSettingsAppearanceRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-settings-appearance';
 
   @override
-  String get title => '外观';
+  String title(AppLocalizations l10n) => l10n.configTabAppearance;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -701,7 +703,7 @@ class MobileSettingsAccountSecurityRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-settings-account-security';
 
   @override
-  String get title => '账号安全';
+  String title(AppLocalizations l10n) => l10n.configTabAccountSecurity;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -839,7 +841,7 @@ class MobileVideoThumbnailRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-video-thumbnails';
 
   @override
-  String get title => '缩略图';
+  String title(AppLocalizations l10n) => l10n.routeThumbnailsTitle;
 
   @override
   String get defaultLocation => mobilePornboxPath;
@@ -859,7 +861,7 @@ class MobileTagsRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-tags';
 
   @override
-  String get title => '标签';
+  String title(AppLocalizations l10n) => l10n.routeTagsTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -881,7 +883,7 @@ class MobileTagMoviesRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-tag-movies';
 
   @override
-  String get title => '标签';
+  String title(AppLocalizations l10n) => l10n.routeTagsTitle;
 
   @override
   String get defaultLocation => mobileTagsPath;
@@ -901,7 +903,7 @@ class MobileClipCollectionsRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-clip-collections';
 
   @override
-  String get title => '切片合集';
+  String title(AppLocalizations l10n) => l10n.routeClipCollectionsTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -925,7 +927,7 @@ class MobileClipCollectionDetailRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-clip-collection-detail';
 
   @override
-  String get title => '合集';
+  String title(AppLocalizations l10n) => l10n.routeCollectionsTitle;
 
   @override
   String get defaultLocation => mobileClipCollectionsPath;
@@ -947,7 +949,7 @@ class MobileMomentCollectionsRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-moment-collections';
 
   @override
-  String get title => '时刻合集';
+  String title(AppLocalizations l10n) => l10n.routeMomentCollectionsTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -971,7 +973,7 @@ class MobileMomentCollectionDetailRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-moment-collection-detail';
 
   @override
-  String get title => '合集';
+  String title(AppLocalizations l10n) => l10n.routeCollectionsTitle;
 
   @override
   String get defaultLocation => mobileMomentCollectionsPath;
@@ -1030,7 +1032,7 @@ class MobileVideoCollectionsRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-video-collections';
 
   @override
-  String get title => '视频合集';
+  String title(AppLocalizations l10n) => l10n.routeVideoCollectionsTitle;
 
   @override
   String get defaultLocation => mobilePornboxPath;
@@ -1054,7 +1056,7 @@ class MobileVideoCollectionDetailRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-video-collection-detail';
 
   @override
-  String get title => '合集';
+  String title(AppLocalizations l10n) => l10n.routeCollectionsTitle;
 
   @override
   String get defaultLocation => mobileVideoCollectionsPath;
@@ -1192,10 +1194,10 @@ class MobileRootShellRouteData extends StatefulShellRouteData {
 /// 所以这里按路径反查。两处顺序若失配,`AppMobileShell` 的底栏高亮同样会错——那是
 /// 更早就该暴露的问题,这里兜底回退到 0。
 final int _overviewBranchIndex = () {
-  final items = mobileNavGroups
-      .expand((group) => group.items)
+  final paths = mobileRouteSpecs
+      .map((spec) => spec.path)
       .toList(growable: false);
-  final index = items.indexWhere((item) => item.path == mobileOverviewPath);
+  final index = paths.indexOf(mobileOverviewPath);
   return index < 0 ? 0 : index;
 }();
 
@@ -1244,9 +1246,11 @@ class _MobileRootShellScopeState extends ConsumerState<_MobileRootShellScope> {
         enableOverviewDrawer &&
         currentPath == mobileOverviewPath &&
         ref.watch(mobileOverviewTabIndexProvider) == 0;
+    // 导航文案跟着语言走：订阅当前语言后重新解析分组，底栏与抽屉的标题随之更新。
+    final navGroups = mobileNavGroups(ref.watch(appLocalizationsProvider));
     return AppMobileShell(
       currentPath: currentPath,
-      navGroups: mobileNavGroups,
+      navGroups: navGroups,
       currentIndex: navigationShell.currentIndex,
       drawer: enableOverviewDrawer
           ? MobileOverviewDrawer(
@@ -1414,7 +1418,7 @@ class MobilePlaylistDetailRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-playlist-detail';
 
   @override
-  String get title => '播放列表详情';
+  String title(AppLocalizations l10n) => l10n.routePlaylistDetailsTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -1436,7 +1440,7 @@ class MobileFollowRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-follow';
 
   @override
-  String get title => '女优上新';
+  String title(AppLocalizations l10n) => l10n.routeNewActorReleasesTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -1458,7 +1462,7 @@ class MobileDiscoverMoviesRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-discover-movies';
 
   @override
-  String get title => '推荐影片';
+  String title(AppLocalizations l10n) => l10n.routeRecommendedMoviesTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -1480,7 +1484,7 @@ class MobileDiscoverMomentsRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-discover-moments';
 
   @override
-  String get title => '推荐时刻';
+  String title(AppLocalizations l10n) => l10n.routeRecommendedMomentsTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -1502,7 +1506,7 @@ class MobileHotActressReleasesRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-hot-actress-releases';
 
   @override
-  String get title => '热门新片';
+  String title(AppLocalizations l10n) => l10n.routePopularNewReleasesTitle;
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -1527,7 +1531,7 @@ class MobileMovieSeriesRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-movie-series';
 
   @override
-  String get title => '系列影片';
+  String title(AppLocalizations l10n) => l10n.routeSeriesMoviesTitle;
 
   @override
   String get defaultLocation => mobileMoviesPath;
@@ -1567,7 +1571,7 @@ class MobileMovieDetailRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-movie-detail';
 
   @override
-  String get title => '影片详情';
+  String title(AppLocalizations l10n) => l10n.routeMovieDetailsTitle;
 
   @override
   String get defaultLocation => mobileMoviesPath;
@@ -1597,7 +1601,7 @@ class MobileActorDetailRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-actor-detail';
 
   @override
-  String get title => '女优详情';
+  String title(AppLocalizations l10n) => l10n.routeActorDetailsTitle;
 
   @override
   String get defaultLocation => mobileActorsPath;
@@ -1633,7 +1637,10 @@ abstract class _MobileSubpageRouteData extends GoRouteData {
   const _MobileSubpageRouteData();
 
   String get pageName;
-  String get title;
+
+  /// 子页标题；按当前语言返回，由调用方传入当前语言的 [AppLocalizations]。
+  String title(AppLocalizations l10n);
+
   String get defaultLocation;
   EdgeInsetsGeometry get bodyPadding => AppPageInsets.compactStandard;
   bool get immersive => false;
@@ -1654,7 +1661,7 @@ abstract class _MobileSubpageRouteData extends GoRouteData {
     return CupertinoPage<void>(
       key: state.pageKey,
       name: pageName,
-      child: AppMobileSubpageShell(
+      child: _LocalizedMobileSubpageShell(
         title: title,
         defaultLocation: defaultLocation,
         currentPath: state.uri.path,
@@ -1663,6 +1670,43 @@ abstract class _MobileSubpageRouteData extends GoRouteData {
         autoHideAppBar: autoHideAppBar,
         child: buildSubpage(context, state),
       ),
+    );
+  }
+}
+
+/// 子页壳：标题在 build 时按当前语言求值。
+///
+/// 路由的 `buildPage` 只跑一次，直接在那一层把标题算成字符串会在切换语言后
+/// 留下旧文案；这里依赖 [Localizations] 重建，语言一变标题就跟着换。
+class _LocalizedMobileSubpageShell extends StatelessWidget {
+  const _LocalizedMobileSubpageShell({
+    required this.title,
+    required this.defaultLocation,
+    required this.currentPath,
+    required this.bodyPadding,
+    required this.immersive,
+    required this.autoHideAppBar,
+    required this.child,
+  });
+
+  final String Function(AppLocalizations l10n) title;
+  final String defaultLocation;
+  final String currentPath;
+  final EdgeInsetsGeometry bodyPadding;
+  final bool immersive;
+  final bool autoHideAppBar;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppMobileSubpageShell(
+      title: title(AppLocalizations.of(context)),
+      defaultLocation: defaultLocation,
+      currentPath: currentPath,
+      bodyPadding: bodyPadding,
+      immersive: immersive,
+      autoHideAppBar: autoHideAppBar,
+      child: child,
     );
   }
 }

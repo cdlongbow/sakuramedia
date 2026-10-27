@@ -5,6 +5,7 @@ import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sakuramedia/core/media/image_runtime_platform_io.dart'
     as runtime_platform;
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 enum ImageSaveStatus { success, cancelled, failed }
 
@@ -49,10 +50,15 @@ class ImageSaveService {
   final ImageGalleryPermissionRequester requestGalleryPermission;
   final ImageGallerySaver saveToGallery;
 
+  /// 保存图片。
+  ///
+  /// [l10n] 传入时结果文案走 ARB 当前语言；不传时保留旧的中文兜底，
+  /// 供尚未迁移的调用点渐进替换。
   Future<ImageSaveResult> saveImageFromUrl({
     required String imageUrl,
     String? fileName,
     String? dialogTitle,
+    AppLocalizations? l10n,
   }) async {
     try {
       final suggestedFileName = (fileName == null || fileName.trim().isEmpty)
@@ -73,14 +79,14 @@ class ImageSaveService {
           return ImageSaveResult(
             status: ImageSaveStatus.success,
             savedPath: savePath,
-            message: '图片已保存',
+            message: l10n?.coreImageSaveSuccess ?? '图片已保存',
           );
         case ImageSavePlatform.mobile:
           final granted = await requestGalleryPermission();
           if (!granted) {
-            return const ImageSaveResult(
+            return ImageSaveResult(
               status: ImageSaveStatus.failed,
-              message: '没有相册权限，无法保存图片',
+              message: l10n?.coreImageSavePermissionDenied ?? '没有相册权限，无法保存图片',
             );
           }
           final bytes = await fetchBytes(imageUrl);
@@ -89,30 +95,30 @@ class ImageSaveService {
             fileName: suggestedFileName,
           );
           if (!saved) {
-            return const ImageSaveResult(
+            return ImageSaveResult(
               status: ImageSaveStatus.failed,
-              message: '保存失败，请稍后重试',
+              message: l10n?.coreImageSaveFailed ?? '保存失败，请稍后重试',
             );
           }
-          return const ImageSaveResult(
+          return ImageSaveResult(
             status: ImageSaveStatus.success,
-            message: '已保存到系统相册',
+            message: l10n?.coreImageSaveToGallery ?? '已保存到系统相册',
           );
         case ImageSavePlatform.unsupported:
-          return const ImageSaveResult(
+          return ImageSaveResult(
             status: ImageSaveStatus.failed,
-            message: '当前平台暂不支持保存图片',
+            message: l10n?.coreImageSaveUnsupported ?? '当前平台暂不支持保存图片',
           );
       }
     } on PlatformException catch (error) {
       return ImageSaveResult(
         status: ImageSaveStatus.failed,
-        message: error.message ?? '保存失败，请稍后重试',
+        message: error.message ?? l10n?.coreImageSaveFailed ?? '保存失败，请稍后重试',
       );
     } catch (_) {
-      return const ImageSaveResult(
+      return ImageSaveResult(
         status: ImageSaveStatus.failed,
-        message: '保存失败，请稍后重试',
+        message: l10n?.coreImageSaveFailed ?? '保存失败，请稍后重试',
       );
     }
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 @immutable
 class AppVersionInfoState {
@@ -18,6 +19,12 @@ class AppVersionInfoState {
 
   String get frontendVersionLabel => _versionOrPlaceholder(frontendVersion);
   String get backendVersionLabel => _versionOrPlaceholder(backendVersion);
+
+  /// 版本信息 tooltip；按当前语言渲染。
+  String tooltipLabelFor(AppLocalizations l10n) =>
+      l10n.appVersionTooltip(frontendVersionLabel, backendVersionLabel);
+
+  /// 旧的中文 tooltip，保留给尚未迁移的调用点。
   String get tooltipLabel =>
       '客户端 $frontendVersionLabel · 服务端 $backendVersionLabel';
 

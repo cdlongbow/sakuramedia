@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 /// 一套主题色的品牌锚点（明/暗各一组）。
 ///
@@ -18,6 +19,18 @@ class AppThemeColor {
   final String label;
   final AppBrandColors light;
   final AppBrandColors dark;
+
+  /// 主题色显示名；按当前语言渲染。
+  ///
+  /// [label] 是与 token 绑定的中文常量，保留给尚未迁移的调用点；新代码用
+  /// 本方法取当前语言的名称。
+  String labelFor(AppLocalizations l10n) => switch (id) {
+    burgundyId => l10n.themeColorBurgundyLabel,
+    crimsonId => l10n.themeColorCrimsonLabel,
+    kleinBlueId => l10n.themeColorKleinBlueLabel,
+    silhouetteId => l10n.themeColorSilhouetteLabel,
+    _ => label,
+  };
 
   static const String burgundyId = 'burgundy';
 

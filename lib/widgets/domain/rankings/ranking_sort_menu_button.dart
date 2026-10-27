@@ -36,7 +36,7 @@ class RankingSortMenuButton extends StatelessWidget {
           if (field != RankingSortField.rank) field,
       ],
       selectedField: filterState.selectedSortField,
-      fieldLabelBuilder: (value) => value.label,
+      fieldLabelBuilder: (value) => value.label(AppLocalizations.of(context)),
       onFieldChanged: (value) =>
           onSortChanged(value, filterState.selectedSortDirection),
       selectedDirection: filterState.selectedSortDirection,

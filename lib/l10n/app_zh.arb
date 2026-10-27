@@ -4670,5 +4670,236 @@
   "actorTasteSubscribedTitle": "已订阅",
   "actorTasteRecommendedTitle": "你可能想关注",
   "actorTastePanelTitle": "常看女优",
-  "actorRefreshFailed": "刷新失败"
+  "actorRefreshFailed": "刷新失败",
+  "discoveryActressReleaseTitle": "女优上新",
+  "@discoveryActressReleaseTitle": {},
+  "discoveryActressReleaseLoadFailed": "女优上新加载失败，请稍后重试",
+  "@discoveryActressReleaseLoadFailed": {},
+  "discoveryActressReleaseEmpty": "暂无女优上新，先订阅感兴趣的女优，等定时任务同步后展示",
+  "@discoveryActressReleaseEmpty": {},
+  "discoveryHotNewTitle": "热门新片",
+  "@discoveryHotNewTitle": {},
+  "discoveryHotNewEmpty": "暂无热门新片，待更多影片积累热度后展示",
+  "@discoveryHotNewEmpty": {},
+  "discoveryHotActressBadge": "热门：{name}",
+  "@discoveryHotActressBadge": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "discoveryDailyTitle": "今日推荐",
+  "@discoveryDailyTitle": {},
+  "discoveryDailyEmpty": "暂无每日推荐，去搜索看看吧",
+  "@discoveryDailyEmpty": {},
+  "discoveryDailyLoadFailed": "今日推荐加载失败，请稍后重试",
+  "@discoveryDailyLoadFailed": {},
+  "discoveryMomentTitle": "推荐时刻",
+  "@discoveryMomentTitle": {},
+  "discoveryMomentEmpty": "暂无推荐时刻，播放时添加标记，等定时任务处理后展示",
+  "@discoveryMomentEmpty": {},
+  "discoveryRecommendedEmpty": "暂无推荐影片，去搜索看看吧",
+  "@discoveryRecommendedEmpty": {},
+  "discoveryTasteTitle": "观影偏好",
+  "@discoveryTasteTitle": {},
+  "discoveryTasteSuggestedActors": "你可能想关注",
+  "@discoveryTasteSuggestedActors": {},
+  "discoveryTasteFrequentActors": "常看女优",
+  "@discoveryTasteFrequentActors": {},
+  "discoveryTasteFrequentTags": "常看标签",
+  "@discoveryTasteFrequentTags": {},
+  "discoveryTagSemanticLabel": "查看标签「{name}」的影片",
+  "@discoveryTagSemanticLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "rankingAllBoards": "全部榜单",
+  "@rankingAllBoards": {},
+  "rankingNoBoards": "暂无可用排行榜",
+  "@rankingNoBoards": {},
+  "rankingEmptyData": "暂无榜单数据",
+  "@rankingEmptyData": {},
+  "rankingFilterSource": "来源",
+  "@rankingFilterSource": {},
+  "rankingFilterBoard": "榜单",
+  "@rankingFilterBoard": {},
+  "rankingFilterPeriod": "周期",
+  "@rankingFilterPeriod": {},
+  "rankingPeriodDaily": "日榜",
+  "@rankingPeriodDaily": {},
+  "rankingPeriodWeekly": "周榜",
+  "@rankingPeriodWeekly": {},
+  "rankingPeriodMonthly": "月榜",
+  "@rankingPeriodMonthly": {},
+  "rankingPeriodAll": "总榜",
+  "@rankingPeriodAll": {},
+  "rankingPeriodCensored": "有码",
+  "@rankingPeriodCensored": {},
+  "rankingPeriodUncensored": "无码",
+  "@rankingPeriodUncensored": {},
+  "rankingPeriodYear": "{year}年",
+  "@rankingPeriodYear": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "rankingSortFieldRank": "榜单名次",
+  "@rankingSortFieldRank": {},
+  "rankingSortFieldCommentCount": "评论人数",
+  "@rankingSortFieldCommentCount": {},
+  "externalPlayerInAppTitle": "应用内播放器",
+  "@externalPlayerInAppTitle": {},
+  "externalPlayerInAppSubtitle": "使用樱视内置播放器",
+  "@externalPlayerInAppSubtitle": {},
+  "externalPlayerDetecting": "正在检测已安装的播放器…",
+  "@externalPlayerDetecting": {},
+  "externalPlayerNoneFound": "未发现外部播放器",
+  "@externalPlayerNoneFound": {},
+  "externalPlayerNoneFoundSubtitle": "安装网络视频播放器后，点击重新检测",
+  "@externalPlayerNoneFoundSubtitle": {},
+  "externalPlayerIntro": "选择播放器与播放方式，下次播放时生效。",
+  "@externalPlayerIntro": {},
+  "externalPlayerDefaultPlayer": "默认播放器",
+  "@externalPlayerDefaultPlayer": {},
+  "externalPlayerRescan": "重新检测",
+  "@externalPlayerRescan": {},
+  "externalPlayerGroupFooter": "选择外部播放器后，点击播放会直接打开该应用。",
+  "@externalPlayerGroupFooter": {},
+  "externalPlayerPlaybackMode": "播放模式",
+  "@externalPlayerPlaybackMode": {},
+  "externalPlayerModeFooter": "仅用于单个媒体的外部播放；合并播放和切片保持原有方式。所选模式不受媒体来源支持时会播放失败，不会自动切换。",
+  "@externalPlayerModeFooter": {},
+  "externalPlayerModeFollowBackendTitle": "默认",
+  "@externalPlayerModeFollowBackendTitle": {},
+  "externalPlayerModeFollowBackendDescription": "跟随后端提供的播放方式，不改变播放地址。",
+  "@externalPlayerModeFollowBackendDescription": {},
+  "externalPlayerModeProxyTitle": "代理（Proxy）",
+  "@externalPlayerModeProxyTitle": {},
+  "externalPlayerModeProxyDescription": "视频经服务器转发，兼容性更好；会占用服务器带宽。遇到直连或跨协议跳转失败时可尝试。",
+  "@externalPlayerModeProxyDescription": {},
+  "externalPlayerModeRedirectTitle": "直连",
+  "@externalPlayerModeRedirectTitle": {},
+  "externalPlayerModeRedirectDescription": "播放器直接连接媒体来源，减少服务器转发；需要播放器支持来源地址及重定向。",
+  "@externalPlayerModeRedirectDescription": {},
+  "externalPlayerUnavailable": "外部播放器不可用，已使用应用内播放",
+  "@externalPlayerUnavailable": {},
+  "sharedMovieCount": "{count} 部",
+  "@sharedMovieCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sharedMomentCount": "{count} 个",
+  "@sharedMomentCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sharedMore": "更多",
+  "@sharedMore": {},
+  "sharedFilter": "筛选",
+  "@sharedFilter": {},
+  "sharedRefreshFailed": "刷新失败",
+  "@sharedRefreshFailed": {},
+  "sharedFileTooLarge": "文件过大",
+  "@sharedFileTooLarge": {},
+  "sharedSortAscending": "升序",
+  "@sharedSortAscending": {},
+  "sharedSortDescending": "降序",
+  "@sharedSortDescending": {},
+  "sharedInteractionHeat": "热度",
+  "@sharedInteractionHeat": {},
+  "sharedInteractionScore": "评分",
+  "@sharedInteractionScore": {},
+  "sharedInteractionScoreNumber": "评分人数",
+  "@sharedInteractionScoreNumber": {},
+  "sharedInteractionWatchedCount": "看过人数",
+  "@sharedInteractionWatchedCount": {},
+  "sharedInteractionWantWatchCount": "想看人数",
+  "@sharedInteractionWantWatchCount": {},
+  "sharedInteractionCommentCount": "评论数",
+  "@sharedInteractionCommentCount": {},
+  "sharedInteractionUnlimited": "不限",
+  "@sharedInteractionUnlimited": {},
+  "sharedInteractionSummary": "互动数 · {count} 项",
+  "@sharedInteractionSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sharedBatchDeleteMedia": "批量删除媒体",
+  "@sharedBatchDeleteMedia": {},
+  "sharedBatchDeleteClip": "批量删除切片",
+  "@sharedBatchDeleteClip": {},
+  "sharedBatchDeleteMoment": "批量删除时刻",
+  "@sharedBatchDeleteMoment": {},
+  "sharedBatchDeleteVideo": "批量删除视频",
+  "@sharedBatchDeleteVideo": {},
+  "sharedBatchAddClipsToCollection": "批量加入切片合集",
+  "@sharedBatchAddClipsToCollection": {},
+  "sharedBatchRemoveClipsFromCollection": "批量移出切片合集",
+  "@sharedBatchRemoveClipsFromCollection": {},
+  "sharedBatchAddMomentsToCollection": "批量加入时刻合集",
+  "@sharedBatchAddMomentsToCollection": {},
+  "sharedBatchRemoveMomentsFromCollection": "批量移出时刻合集",
+  "@sharedBatchRemoveMomentsFromCollection": {},
+  "sharedBatchAddVideosToCollection": "批量加入视频合集",
+  "@sharedBatchAddVideosToCollection": {},
+  "sharedBatchRemoveVideosFromCollection": "批量移出视频合集",
+  "@sharedBatchRemoveVideosFromCollection": {},
+  "sharedBatchDeleteDownloadTask": "批量删除下载任务",
+  "@sharedBatchDeleteDownloadTask": {},
+  "sharedBatchTooManyItems": "{label}一次最多提交 {max} 项（当前 {count} 项），请减少选择后再试",
+  "@sharedBatchTooManyItems": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "max": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sharedBatchSubmitting": "{label}正在提交中，请稍候",
+  "@sharedBatchSubmitting": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "sharedBatchSubmitFailed": "{label}提交失败，请稍后重试",
+  "@sharedBatchSubmitFailed": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "sharedBatchSubmitted": "已提交{label}（{count} 项），可在活动中心查看进度，完成后请刷新列表",
+  "@sharedBatchSubmitted": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

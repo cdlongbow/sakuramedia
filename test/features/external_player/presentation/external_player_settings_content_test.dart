@@ -10,6 +10,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/external_player/data/external_playback_mode.dart';
 import 'package:sakuramedia/features/external_player/presentation/providers/external_player_preference_provider.dart';
 import 'package:sakuramedia/features/external_player/presentation/widgets/external_player_settings_content.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 void main() {
@@ -38,6 +39,12 @@ void main() {
         overrides: [sessionStoreProvider.overrideWithValue(session)],
         child: MaterialApp(
           theme: sakuraMobileThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(
               context,

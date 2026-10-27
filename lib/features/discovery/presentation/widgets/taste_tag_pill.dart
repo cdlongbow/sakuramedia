@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 
@@ -96,7 +97,7 @@ class TasteTagPill extends StatelessWidget {
 
     return AppInteractiveSurface(
       onTap: onTap,
-      semanticLabel: '查看标签「$name」的影片',
+      semanticLabel: AppLocalizations.of(context).discoveryTagSemanticLabel(name),
       child: pill,
     );
   }

@@ -19,6 +19,7 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
@@ -57,6 +58,7 @@ class DiscoveryMoviesContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final provider = dailyRecommendationFeedProvider(pageSize);
     return _DiscoveryMovieListContent<DailyRecommendationMovieDto>(
       keyPrefix: keyPrefix,
@@ -65,9 +67,9 @@ class DiscoveryMoviesContent extends StatelessWidget {
       placeholderCount: placeholderCount,
       basePath: basePath,
       enablePullToRefresh: enablePullToRefresh,
-      initialLoadErrorText: '推荐影片加载失败，请稍后重试',
-      loadMoreErrorText: '加载更多推荐影片失败，请点击重试',
-      emptyMessage: '暂无推荐影片，去搜索看看吧',
+      initialLoadErrorText: l10n.errorRecommendedMovieLoadFailed,
+      loadMoreErrorText: l10n.errorLoadMoreRecommendedMoviesFailed,
+      emptyMessage: l10n.discoveryRecommendedEmpty,
       // 中立化 loadMore 状态：翻页 loading/失败只重建独立页脚，不重建网格。
       watch: (ref) => ref.watch(
         provider.select(
@@ -119,6 +121,7 @@ class HotActressReleasesContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final provider = hotActressReleaseFeedProvider(pageSize);
     return _DiscoveryMovieListContent<HotActressReleaseMovieDto>(
       keyPrefix: keyPrefix,
@@ -127,9 +130,9 @@ class HotActressReleasesContent extends StatelessWidget {
       placeholderCount: placeholderCount,
       basePath: basePath,
       enablePullToRefresh: enablePullToRefresh,
-      initialLoadErrorText: '热门新片加载失败，请稍后重试',
-      loadMoreErrorText: '加载更多热门新片失败，请点击重试',
-      emptyMessage: '暂无热门新片，待更多影片积累热度后展示',
+      initialLoadErrorText: l10n.errorHotNewMovieLoadFailed,
+      loadMoreErrorText: l10n.errorLoadMoreHotNewMoviesFailed,
+      emptyMessage: l10n.discoveryHotNewEmpty,
       // 中立化 loadMore 状态：翻页 loading/失败只重建独立页脚，不重建网格。
       watch: (ref) => ref.watch(
         provider.select(
@@ -157,7 +160,7 @@ class HotActressReleasesContent extends StatelessWidget {
       useDefaultSubscriptionActions: true,
       secondaryLabelOf: (item) {
         final name = item.hotActressName.trim();
-        return name.isEmpty ? null : '热门：$name';
+        return name.isEmpty ? null : l10n.discoveryHotActressBadge(name);
       },
     );
   }
@@ -270,7 +273,7 @@ class _DiscoveryMovieListContent<T> extends HookConsumerWidget {
   Future<void> _handleRefresh(BuildContext context, WidgetRef ref) async {
     final errorMessage = await refresh(ref);
     if (errorMessage != null && context.mounted) {
-      showToast('刷新失败');
+      showToast(AppLocalizations.of(context).sharedRefreshFailed);
     }
   }
 
@@ -430,7 +433,7 @@ class DiscoveryMomentsContent extends HookConsumerWidget {
     final provider = momentRecommendationFeedProvider(pageSize);
     final errorMessage = await ref.read(provider.notifier).refresh();
     if (errorMessage != null && context.mounted) {
-      showToast('刷新失败');
+      showToast(AppLocalizations.of(context).sharedRefreshFailed);
     }
   }
 
@@ -454,14 +457,16 @@ class DiscoveryMomentsContent extends HookConsumerWidget {
       final provider = momentRecommendationFeedProvider(pageSize);
       return SliverToBoxAdapter(
         child: DiscoveryRetryEmptyState(
-          message: '推荐时刻加载失败，请稍后重试',
+          message: AppLocalizations.of(context).errorRecommendedMomentLoadFailed,
           onRetry: () => ref.read(provider.notifier).reload(),
         ),
       );
     }
     if (paged.isEmpty) {
-      return const SliverToBoxAdapter(
-        child: AppEmptyState(message: '暂无推荐时刻，播放时添加标记，等定时任务处理后展示'),
+      return SliverToBoxAdapter(
+        child: AppEmptyState(
+          message: AppLocalizations.of(context).discoveryMomentEmpty,
+        ),
       );
     }
     return MomentSliver(
@@ -520,7 +525,7 @@ class DiscoveryRetryEmptyState extends StatelessWidget {
         SizedBox(height: context.appSpacing.md),
         AppButton(
           key: retryKey,
-          label: '重试',
+          label: AppLocalizations.of(context).commonRetry,
           size: AppButtonSize.small,
           onPressed: () => unawaited(onRetry()),
         ),

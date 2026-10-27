@@ -113,11 +113,12 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
   /// 与移动榜单页共用同一条顶栏：筛选入口（当前榜单）+ 总数 / 更新时间信息槽。
   /// 差别只在筛选面板的容器——桌面就地浮层，移动底部抽屉。
   Widget _buildHeader(BuildContext context, RankingSummaryState summary) {
+    final l10n = AppLocalizations.of(context);
     // 与移动端同一套单值语义：只报「榜单」这一主维度。
     final boardLabel =
         summary.filters.selectedBoard?.name ??
         summary.filters.selectedSource?.name ??
-        '全部榜单';
+        l10n.rankingAllBoards;
     final syncedAtLabel = formatSyncedAtLabel(
       summary.paged.syncedAt,
       l10n: AppLocalizations.of(context),
@@ -168,7 +169,7 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
       informationSlots: [
         AppListHeaderInfo(
           key: const Key('desktop-rankings-page-total'),
-          label: '${summary.paged.total} 部',
+          label: l10n.sharedMovieCount(summary.paged.total),
         ),
         if (syncedAtLabel != null)
           AppListHeaderInfo(
@@ -195,6 +196,7 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final summary =
         ref.watch(rankingSummaryProvider(_scope)).value ??
         RankingSummaryState.initial;
@@ -250,8 +252,10 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
                       if (hasNoSources &&
                           !(summary.paged.filterUpdate.hasFailed &&
                               summary.paged.items.isEmpty))
-                        const SliverToBoxAdapter(
-                          child: AppEmptyState(message: '暂无可用排行榜'),
+                        SliverToBoxAdapter(
+                          child: AppEmptyState(
+                            message: l10n.rankingNoBoards,
+                          ),
                         )
                       else if (!summary.paged.filterUpdate.hasFailed ||
                           summary.paged.items.isNotEmpty)
@@ -285,7 +289,7 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
                             onMovieBlacklist: _hoverFeatureActions.blacklist,
                             isMovieSubscriptionUpdating: (movie) => summary
                                 .isSubscriptionUpdating(movie.movieNumber),
-                            emptyMessage: '暂无榜单数据',
+                            emptyMessage: l10n.rankingEmptyData,
                             selectionMode: selectionMode,
                             isMovieSelected: (movie) =>
                                 isSelected(movie.movieNumber),

@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/shared/data/sort_direction.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart';
@@ -266,7 +267,7 @@ class _AppSortSection<F> extends StatelessWidget {
               for (final direction in SortDirection.values)
                 AppTextButton(
                   key: directionKeyBuilder?.call(direction),
-                  label: direction.label,
+                  label: direction.label(AppLocalizations.of(context)),
                   size: AppTextButtonSize.xSmall,
                   isSelected: direction == selectedDirection,
                   onPressed: () => onDirectionChanged(direction),

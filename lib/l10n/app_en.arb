@@ -2026,5 +2026,176 @@
   "themeColorBurgundyLabel": "Burgundy",
   "themeColorCrimsonLabel": "Crimson",
   "themeColorKleinBlueLabel": "Klein Blue",
-  "themeColorSilhouetteLabel": "Silhouette"
+  "themeColorSilhouetteLabel": "Silhouette",
+  "momentConfirm": "Confirm",
+  "momentAddAction": "Add",
+  "momentRemoveAction": "Remove",
+  "momentSelectAction": "Select",
+  "momentSelectAll": "Select all",
+  "momentDeselectAll": "Deselect all",
+  "momentSelectedCount": "{count} selected",
+  "@momentSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "momentCountLabel": "{count, plural, =1{1 moment} other{{count} moments}}",
+  "@momentCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "momentCreateAction": "Create",
+  "momentViewAll": "View all",
+  "momentAddToCollection": "Add to collection",
+  "momentKindVideo": "Video",
+  "momentKindAll": "All",
+  "momentSortLatest": "Newest",
+  "momentSortEarliest": "Oldest",
+  "momentFilterKindTitle": "Content type",
+  "momentFilterSortTitle": "Sort",
+  "momentLabel": "Moment #{id}",
+  "@momentLabel": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "momentVideoLabel": "Video #{id}",
+  "@momentVideoLabel": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "momentSourceDeleted": "Source deleted",
+  "momentSourceMovie": "Movie",
+  "momentDeleteTitle": "Delete moment",
+  "momentDeletedToast": "Moment deleted",
+  "momentAddedToast": "Added",
+  "momentMovedOutToast": "Removed",
+  "momentDeleteConfirmMessage": "Delete “{label}”? The moment marker will be permanently deleted. This cannot be undone.",
+  "@momentDeleteConfirmMessage": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "momentDeleteMarkerConfirmMessage": "Delete “{label}”? The moment marker will be permanently deleted; the original video and clips will not be deleted.",
+  "@momentDeleteMarkerConfirmMessage": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "momentBatchDeleteConfirmMessage": "{count, plural, =1{Delete the selected moment? This cannot be undone.} other{Delete the {count} selected moments? This cannot be undone.}}",
+  "@momentBatchDeleteConfirmMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "momentBatchDeleteMarkerConfirmMessage": "{count, plural, =1{Delete the selected moment? This moment marker will be permanently deleted; the original video and clips will not be deleted.} other{Delete the {count} selected moments? These moment markers will be permanently deleted; the original video and clips will not be deleted.}}",
+  "@momentBatchDeleteMarkerConfirmMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "momentEmptyList": "No moments yet",
+  "momentPickerCountAvailable": "{added} added · {total} available",
+  "@momentPickerCountAvailable": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "momentPickerCountTotal": "{added} added · {total} total",
+  "@momentPickerCountTotal": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "momentPickerSearchHint": "Search by movie number or title",
+  "momentPickerOnlyUnadded": "Only unadded",
+  "momentEmptyNoMatchTitle": "No matching moments",
+  "momentEmptyNoMatchMessage": "Try another movie number or keyword",
+  "momentEmptyKindTitle": "No moments in this content type",
+  "momentEmptyKindMessage": "Try another content type",
+  "momentEmptyAllAddedTitle": "Everything has been added",
+  "momentEmptyAllAddedMessage": "This collection is complete. Switch to “All” to manage the moments you already added.",
+  "momentEmptyNoMomentsTitle": "No moments yet",
+  "momentEmptyNoMomentsMessage": "Create them by selecting clips in the player",
+  "momentErrorCollectionLoadFailed": "Collections could not be loaded. Please try again later.",
+  "momentErrorCollectionDetailLoadFailed": "This collection could not be loaded. Please try again later.",
+  "momentErrorCollectionsLoadFailed": "Failed to load collections",
+  "momentErrorPointsLoadFailed": "Failed to load moments",
+  "momentErrorDeleteFailed": "Delete failed. Please try again.",
+  "momentErrorRemoveFromCollectionFailed": "Failed to remove from the collection. Please try again.",
+  "momentErrorRemoveFromCollectionBriefFailed": "Failed to remove from the collection",
+  "momentErrorAddToCollectionFailed": "Failed to add to the collection",
+  "momentErrorSaveFailed": "Save failed",
+  "momentErrorCreateFailed": "Create failed",
+  "momentErrorInfoLoadFailed": "Moment information could not be loaded. Please try again later.",
+  "momentErrorGone": "This moment no longer exists and cannot be added to a collection.",
+  "momentErrorResultImageLoadFailed": "The result image could not be read. Please try again later.",
+  "momentErrorRefreshFailed": "Refresh failed",
+  "momentCollectionSectionTitle": "Moment collections",
+  "momentCollectionCreateTitle": "New collection",
+  "momentCollectionEditTitle": "Edit collection",
+  "momentCollectionSearchHint": "Search collections",
+  "momentCollectionNameHint": "e.g. Weekend watchlist",
+  "momentCollectionNameRequired": "Enter a collection name",
+  "momentCollectionDescriptionHint": "Description (optional)",
+  "momentCollectionUnnamed": "this collection",
+  "momentCollectionDeleteTitle": "Delete collection",
+  "momentCollectionDeleteMessage": "Delete {name}? Only the collection itself will be deleted; the moments inside it will not be deleted.",
+  "@momentCollectionDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "momentCollectionCreatedToast": "Collection created",
+  "momentCollectionCreatedFromMomentsToast": "Moment collection created",
+  "momentCollectionDeletedToast": "Collection deleted",
+  "momentCollectionRemovedToast": "Removed from collection",
+  "momentCollectionRemoveAction": "Remove from collection",
+  "momentCollectionBatchRemoveMessage": "{count, plural, =1{Remove the selected moment from this collection? The moment itself will not be deleted.} other{Remove the {count} selected moments from this collection? The moments themselves will not be deleted.}}",
+  "@momentCollectionBatchRemoveMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "momentCollectionEmptyDesktop": "No collections yet. Tap “New collection” in the top right to get started.",
+  "momentCollectionEmptyMobile": "No collections yet. Tap “New collection” below to get started.",
+  "momentCollectionEmptyHint": "No collections yet. Tap “New” to gather your favorite moments into one collection.",
+  "momentCollectionEmptyAddDialog": "No collections yet. Tap “+” in the top right to create one.",
+  "momentCollectionNoMatch": "No matching collections",
+  "momentCollectionEmptyDetailMobile": "This collection has no moments yet. Tap “Add” in the top right to add some.",
+  "momentCollectionEmptyDetailDesktop": "This collection has no moments yet. Add them from the Moments page.",
+  "momentAddMomentsAction": "Add moments",
+  "momentNewAction": "New"
 }

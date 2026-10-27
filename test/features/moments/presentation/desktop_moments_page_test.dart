@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/moments/presentation/pages/desktop/moments_page.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
@@ -400,7 +401,16 @@ Future<void> _pumpMomentsApp(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
       child: OKToast(
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          routerConfig: router,
+        ),
       ),
     ),
   );

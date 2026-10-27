@@ -13,6 +13,7 @@ import 'package:sakuramedia/features/moment_collections/presentation/providers/m
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/add_to_moment_collection_dialog.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
@@ -84,6 +85,12 @@ void main() {
         child: OKToast(
           child: MaterialApp(
             theme: sakuraThemeData,
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             home: Scaffold(body: child),
           ),
         ),

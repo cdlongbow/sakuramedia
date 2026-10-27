@@ -9,6 +9,7 @@ import 'package:sakuramedia/features/moments/presentation/moment_listing_models.
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
 import 'package:sakuramedia/features/videos/presentation/actions/video_playback_launcher.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_player_page.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
@@ -104,7 +105,7 @@ Future<void> addMomentItemToCollection(
       pointId = await _resolveRealPointId(context, item);
     } catch (_) {
       if (context.mounted) {
-        showToast('时刻信息加载失败，请稍后重试');
+        showToast(AppLocalizations.of(context).momentErrorInfoLoadFailed);
       }
       return;
     }
@@ -112,7 +113,7 @@ Future<void> addMomentItemToCollection(
       return;
     }
     if (pointId == null) {
-      showToast('该时刻已不存在，无法加入合集');
+      showToast(AppLocalizations.of(context).momentErrorGone);
       return;
     }
   }
@@ -183,7 +184,7 @@ Future<void> _searchSimilar(
     );
   } catch (_) {
     if (context.mounted) {
-      showToast('读取结果图片失败，请稍后重试');
+      showToast(AppLocalizations.of(context).momentErrorResultImageLoadFailed);
     }
   }
 }
@@ -216,18 +217,19 @@ Future<void> playMomentItem({
   if (videoId == null || videoId <= 0) {
     return;
   }
+  final title = item.localizedDisplayLabel(AppLocalizations.of(context));
   if (!isMobile) {
     await showVideoQuickPlayDialog(
       context,
       videoId: videoId,
-      title: item.displayLabel,
+      title: title,
     );
     return;
   }
   if (await tryLaunchExternalVideoPlayback(
     context,
     videoId: videoId,
-    title: item.displayLabel,
+    title: title,
   )) {
     return;
   }
@@ -236,8 +238,7 @@ Future<void> playMomentItem({
   }
   await Navigator.of(context, rootNavigator: true).push(
     MaterialPageRoute<void>(
-      builder: (_) =>
-          MobileVideoPlayerPage(videoId: videoId, title: item.displayLabel),
+      builder: (_) => MobileVideoPlayerPage(videoId: videoId, title: title),
     ),
   );
 }

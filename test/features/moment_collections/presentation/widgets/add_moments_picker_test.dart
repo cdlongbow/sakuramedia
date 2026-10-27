@@ -16,6 +16,7 @@ import 'package:sakuramedia/features/media/presentation/providers/media_api_prov
 import 'package:sakuramedia/features/moment_collections/data/api/moment_collections_api.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_api_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/add_moments_to_collection_dialog.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
@@ -108,6 +109,12 @@ void main() {
     final app = OKToast(
       child: MaterialApp(
         theme: sakuraThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Builder(
           builder: (context) {
             pickerContext = context;

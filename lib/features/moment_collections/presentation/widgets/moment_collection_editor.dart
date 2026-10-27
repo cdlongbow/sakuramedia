@@ -4,6 +4,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/moment_collections/data/dto/moment_collection_dto.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
@@ -78,6 +79,7 @@ class _MomentCollectionEditorState
 
   Widget _buildForm(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Form(
       key: _formKey,
       child: Column(
@@ -85,7 +87,9 @@ class _MomentCollectionEditorState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _isEditing ? '编辑合集' : '新建合集',
+            _isEditing
+                ? l10n.momentCollectionEditTitle
+                : l10n.momentCollectionCreateTitle,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s14,
@@ -97,16 +101,18 @@ class _MomentCollectionEditorState
           AppTextField(
             fieldKey: const Key('moment-collection-name-field'),
             controller: _nameController,
-            hintText: '例如：周末回看',
+            hintText: l10n.momentCollectionNameHint,
             enabled: !_isSubmitting,
             validator: (value) =>
-                value == null || value.trim().isEmpty ? '请输入合集名称' : null,
+                value == null || value.trim().isEmpty
+                ? l10n.momentCollectionNameRequired
+                : null,
           ),
           SizedBox(height: spacing.sm),
           AppTextField(
             fieldKey: const Key('moment-collection-description-field'),
             controller: _descriptionController,
-            hintText: '描述可选',
+            hintText: l10n.momentCollectionDescriptionHint,
             enabled: !_isSubmitting,
           ),
           SizedBox(height: spacing.md),
@@ -114,7 +120,7 @@ class _MomentCollectionEditorState
             children: [
               Expanded(
                 child: AppButton(
-                  label: '取消',
+                  label: l10n.commonCancel,
                   onPressed: _isSubmitting ? null : widget.onCancel,
                 ),
               ),
@@ -122,7 +128,9 @@ class _MomentCollectionEditorState
               Expanded(
                 child: AppButton(
                   key: const Key('moment-collection-submit-button'),
-                  label: _isEditing ? '保存' : '创建',
+                  label: _isEditing
+                      ? l10n.commonSave
+                      : l10n.momentCreateAction,
                   variant: AppButtonVariant.primary,
                   isLoading: _isSubmitting,
                   onPressed: _submit,
@@ -137,6 +145,7 @@ class _MomentCollectionEditorState
 
   Future<void> _submit() async {
     if (_isSubmitting || !_formKey.currentState!.validate()) return;
+    final l10n = AppLocalizations.of(context);
     setState(() => _isSubmitting = true);
     try {
       final api = ref.read(momentCollectionsApiProvider);
@@ -154,7 +163,14 @@ class _MomentCollectionEditorState
             );
       if (mounted) widget.onSaved(result);
     } catch (error) {
-      showToast(apiErrorMessage(error, fallback: _isEditing ? '保存失败' : '创建失败'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: _isEditing
+              ? l10n.momentErrorSaveFailed
+              : l10n.momentErrorCreateFailed,
+        ),
+      );
       if (mounted) setState(() => _isSubmitting = false);
     }
   }

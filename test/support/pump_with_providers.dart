@@ -31,9 +31,6 @@ Future<void> pumpWithProviders(
   ThemeData? theme,
   bool wrapInOkToast = true,
   Widget Function(Widget)? wrap,
-  Locale? locale,
-  Iterable<LocalizationsDelegate<dynamic>>? localizationsDelegates,
-  Iterable<Locale>? supportedLocales,
 }) async {
   var child = home;
   if (wrap != null) {
@@ -47,14 +44,12 @@ Future<void> pumpWithProviders(
     child: MaterialApp(
       home: child,
       theme: theme,
-      locale: locale ?? const Locale('zh'),
-      localizationsDelegates: localizationsDelegates ??
-          <LocalizationsDelegate<dynamic>>[
-            AppLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-      supportedLocales:
-          supportedLocales ?? const <Locale>[Locale('zh'), Locale('en')],
+      locale: const Locale('zh'),
+      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
     ),
   );
   if (wrapInOkToast) {

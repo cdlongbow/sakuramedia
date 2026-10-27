@@ -1265,5 +1265,157 @@
       }
     }
   },
-  "pluginMarketInstallablePlugins": "Installable plugins"
+  "pluginMarketInstallablePlugins": "Installable plugins",
+  "castNoPlayableMedia": "No playable media",
+  "castPlayUrlUnavailable": "Could not resolve the playback URL",
+  "castErrorFallback": "Casting failed. Please try again.",
+  "castDeviceCannotPlayVideo": "This device cannot play video",
+  "castUnnamedDevice": "Unnamed device",
+  "castTvCannotStartPlayback": "The TV could not start playback. Please try again later.",
+  "castTvUnsupportedFormat": "The TV does not support this video format.",
+  "castTvCannotAccessUrl": "The TV could not access the video URL.",
+  "castTvNotResponding": "The TV did not respond. Make sure it is powered on.",
+  "castTvConnectionFailed": "Could not connect to the TV. Make sure this device and the TV are on the same network.",
+  "castRestartFailed": "Could not play again. Please try again.",
+  "castControlFailed": "The action failed. Please try again.",
+  "castSeekFailed": "Could not seek. Please try again.",
+  "castThumbnailLoadFailed": "Failed to load thumbnails. Please try again.",
+  "castEndedTitle": "Casting ended",
+  "castEndedMessage": "There is no active casting session.",
+  "castBack": "Back",
+  "castPlayAgain": "Play again",
+  "castSeekBack10": "Back 10 seconds",
+  "castSeekForward10": "Forward 10 seconds",
+  "castPause": "Pause",
+  "castPlay": "Play",
+  "castStatusConnecting": "Connecting to the TV…",
+  "castStatusDisconnected": "The connection to the TV was lost",
+  "castStatusStopped": "The TV stopped playback",
+  "castStatusFinished": "Playback finished",
+  "castToDevice": "Casting to “{deviceName}”",
+  "@castToDevice": {
+    "placeholders": {
+      "deviceName": {
+        "type": "String"
+      }
+    }
+  },
+  "castDisconnect": "Disconnect",
+  "castPickerTitle": "Cast to TV",
+  "castRescan": "Search again",
+  "castSearchFailedTitle": "Device search failed",
+  "castSearchFailedMessage": "Make sure you are connected to the local Wi-Fi network, then try again.",
+  "castScanningTitle": "Searching for nearby devices…",
+  "castScanningSubtitle": "Looking for nearby casting devices",
+  "castDeviceNamePlaceholder": "Device name",
+  "castNoDeviceTitle": "No casting devices found",
+  "castNoDeviceMessage": "Make sure the TV and this device are on the same network and that casting is enabled on the TV.",
+  "tagBrowseTitle": "Discover by tags",
+  "tagBrowseSubtitle": "Pick one or more tags to build your list",
+  "tagSearchHint": "Search tags",
+  "tagEmpty": "No tags yet",
+  "tagForYou": "For you",
+  "tagForYouSubtitle": "Based on the tags you browse most",
+  "tagPopular": "Popular tags",
+  "tagCountLabel": "{count}",
+  "@tagCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tagSearchFindsAll": "Search to find all {count} tags",
+  "@tagSearchFindsAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tagSearchResults": "Search results",
+  "tagNoMatch": "No matching tags found",
+  "tagResultLimitHint": "Showing the first {limit} only. Keep typing to narrow it down",
+  "@tagResultLimitHint": {
+    "placeholders": {
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "tagSelected": "Selected",
+  "tagClear": "Clear",
+  "tagSelectedCount": "{count} tags selected",
+  "@tagSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tagViewMovies": "View movies",
+  "tagSemanticLabel": "Tag “{name}”",
+  "@tagSemanticLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tagMatch": "Match",
+  "tagMatchModeOr": "Any",
+  "tagMatchModeAnd": "All",
+  "tagSummarySelected": "Tags · {count}",
+  "@tagSummarySelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tagSummarySelect": "Select tags",
+  "tagSummaryMatchMode": "Match {mode}",
+  "@tagSummaryMatchMode": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "tagEmptyMovieList": "No movies under this tag yet",
+  "tagRefreshFailed": "Refresh failed",
+  "tagFilterTooltip": "Filter",
+  "tagMovieCountLabel": "{count}",
+  "@tagMovieCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recentLoadFailed": "Recently viewed items could not be loaded. Please try again later.",
+  "recentEmpty": "No browsing history yet",
+  "recentSectionTitle": "Recently viewed",
+  "recentMore": "More",
+  "recentRefreshFailed": "Refresh failed",
+  "searchSubscribeMovieFailed": "Failed to subscribe to the movie",
+  "searchSubscribeActorFailed": "Failed to subscribe to the performer",
+  "searchUnsubscribeActorFailed": "Failed to unsubscribe from the performer",
+  "searchStatsLabel": "{total} total, {created} added, {existing} already present, {failed} failed",
+  "@searchStatsLabel": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      },
+      "created": {
+        "type": "int"
+      },
+      "existing": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  }
 }

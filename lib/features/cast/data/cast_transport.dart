@@ -52,7 +52,7 @@ class UpnpCastTransport implements CastTransport {
   static AvTransportService _resolveAvTransport(CastDevice device) {
     final transport = device.renderer.avTransport;
     if (transport == null) {
-      throw const CastException('该设备不支持播放视频');
+      throw const CastException(CastErrorCode.deviceCannotPlayVideo);
     }
     return transport;
   }

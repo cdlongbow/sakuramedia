@@ -9,6 +9,7 @@ import 'package:sakuramedia/features/cast/data/cast_session.dart';
 import 'package:sakuramedia/features/cast/presentation/providers/cast_session_provider.dart';
 import 'package:sakuramedia/features/cast/presentation/widgets/cast_device_picker.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/desktop_routes.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 
@@ -33,7 +34,7 @@ Future<void> launchMovieCast(
   required MovieMediaItemDto? selectedMedia,
 }) async {
   if (selectedMedia == null || !selectedMedia.hasPlayableUrl) {
-    showToast('暂无可播放的媒体');
+    showToast(AppLocalizations.of(context).castNoPlayableMedia);
     return;
   }
   final baseUrl = ProviderScope.containerOf(
@@ -45,13 +46,13 @@ Future<void> launchMovieCast(
     baseUrl: baseUrl,
   );
   if (resolvedUrl == null || resolvedUrl.isEmpty) {
-    showToast('无法获取播放地址');
+    showToast(AppLocalizations.of(context).castPlayUrlUnavailable);
     return;
   }
   final title = movie.preferredTitle.isNotEmpty
       ? movie.preferredTitle
       : movie.movieNumber;
-  const director = CastDirector();
+  final director = CastDirector(l10n: () => AppLocalizations.of(context));
   final casted = await showCastDevicePicker(
     context: context,
     onCast: (device) => director.cast(

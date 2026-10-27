@@ -1265,5 +1265,157 @@
       }
     }
   },
-  "pluginMarketInstallablePlugins": "可安装插件"
+  "pluginMarketInstallablePlugins": "可安装插件",
+  "castNoPlayableMedia": "暂无可播放的媒体",
+  "castPlayUrlUnavailable": "无法获取播放地址",
+  "castErrorFallback": "投屏失败，请重试",
+  "castDeviceCannotPlayVideo": "该设备不支持播放视频",
+  "castUnnamedDevice": "未命名设备",
+  "castTvCannotStartPlayback": "电视暂时无法开始播放，请稍后重试",
+  "castTvUnsupportedFormat": "电视不支持播放该视频格式",
+  "castTvCannotAccessUrl": "电视无法访问该视频地址",
+  "castTvNotResponding": "电视未响应，请确认设备处于开机状态",
+  "castTvConnectionFailed": "连接电视失败，请确认设备与电视在同一网络",
+  "castRestartFailed": "重新播放失败，请重试",
+  "castControlFailed": "操作失败，请重试",
+  "castSeekFailed": "跳转失败，请重试",
+  "castThumbnailLoadFailed": "缩略图加载失败，请重试",
+  "castEndedTitle": "投屏已结束",
+  "castEndedMessage": "当前没有进行中的投屏会话",
+  "castBack": "返回",
+  "castPlayAgain": "重新播放",
+  "castSeekBack10": "快退 10 秒",
+  "castSeekForward10": "快进 10 秒",
+  "castPause": "暂停",
+  "castPlay": "播放",
+  "castStatusConnecting": "正在连接电视…",
+  "castStatusDisconnected": "与电视的连接已断开",
+  "castStatusStopped": "电视已停止播放",
+  "castStatusFinished": "播放已结束",
+  "castToDevice": "投屏到「{deviceName}」",
+  "@castToDevice": {
+    "placeholders": {
+      "deviceName": {
+        "type": "String"
+      }
+    }
+  },
+  "castDisconnect": "断开",
+  "castPickerTitle": "投屏到电视",
+  "castRescan": "重新搜索",
+  "castSearchFailedTitle": "搜索设备失败",
+  "castSearchFailedMessage": "请确认已连接局域网 Wi-Fi 后重试",
+  "castScanningTitle": "正在搜索附近设备…",
+  "castScanningSubtitle": "正在搜索附近的投屏设备",
+  "castDeviceNamePlaceholder": "设备名称",
+  "castNoDeviceTitle": "未发现可投屏设备",
+  "castNoDeviceMessage": "请确认电视与本机在同一网络，且电视已开启投屏功能",
+  "tagBrowseTitle": "按标签发现",
+  "tagBrowseSubtitle": "选择一个或多个标签，组合你想看的",
+  "tagSearchHint": "搜索标签",
+  "tagEmpty": "暂无标签",
+  "tagForYou": "为你",
+  "tagForYouSubtitle": "根据常看标签",
+  "tagPopular": "热门标签",
+  "tagCountLabel": "{count} 个",
+  "@tagCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tagSearchFindsAll": "搜索可找到全部 {count} 个标签",
+  "@tagSearchFindsAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tagSearchResults": "搜索结果",
+  "tagNoMatch": "没有找到匹配的标签",
+  "tagResultLimitHint": "只显示前 {limit} 个，继续输入以缩小范围",
+  "@tagResultLimitHint": {
+    "placeholders": {
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "tagSelected": "已选",
+  "tagClear": "清空",
+  "tagSelectedCount": "已选 {count} 个标签",
+  "@tagSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tagViewMovies": "查看影片",
+  "tagSemanticLabel": "标签「{name}」",
+  "@tagSemanticLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tagMatch": "匹配",
+  "tagMatchModeOr": "任一",
+  "tagMatchModeAnd": "全部",
+  "tagSummarySelected": "标签 · {count}",
+  "@tagSummarySelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tagSummarySelect": "选择标签",
+  "tagSummaryMatchMode": "匹配{mode}",
+  "@tagSummaryMatchMode": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "tagEmptyMovieList": "该标签下暂无影片",
+  "tagRefreshFailed": "刷新失败",
+  "tagFilterTooltip": "筛选",
+  "tagMovieCountLabel": "{count} 部",
+  "@tagMovieCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recentLoadFailed": "最近浏览暂时无法加载，请稍后重试",
+  "recentEmpty": "还没有浏览记录",
+  "recentSectionTitle": "最近浏览",
+  "recentMore": "更多",
+  "recentRefreshFailed": "刷新失败",
+  "searchSubscribeMovieFailed": "订阅影片失败",
+  "searchSubscribeActorFailed": "订阅女优失败",
+  "searchUnsubscribeActorFailed": "取消订阅女优失败",
+  "searchStatsLabel": "共 {total} 条，新增 {created}，已存在 {existing}，失败 {failed}",
+  "@searchStatsLabel": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      },
+      "created": {
+        "type": "int"
+      },
+      "existing": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  }
 }

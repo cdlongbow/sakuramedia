@@ -9,6 +9,7 @@ import 'package:sakuramedia/features/cast/presentation/providers/cast_remote_thu
 import 'package:sakuramedia/features/cast/presentation/providers/cast_session_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../support/cast_test_helpers.dart';
@@ -54,6 +55,12 @@ Future<ProviderContainer> _pumpPage(
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: sakuraMobileThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: CastRemotePage(
           controllerFactory: (session) => CastRemoteController(
             session: session,

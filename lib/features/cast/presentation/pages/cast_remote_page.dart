@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/features/cast/data/cast_remote_controller.dart';
 import 'package:sakuramedia/features/cast/data/cast_session.dart';
@@ -12,6 +13,7 @@ import 'package:sakuramedia/features/cast/presentation/providers/cast_session_pr
 import 'package:sakuramedia/features/cast/presentation/widgets/cast_remote_progress_bar.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
@@ -66,6 +68,7 @@ class _CastRemotePageState extends ConsumerState<CastRemotePage> {
     return CastRemoteController(
       session: session,
       transport: UpnpCastTransport(session.device),
+      l10n: () => ref.read(appLocalizationsProvider),
       reportProgress:
           ({required int mediaId, required int positionSeconds}) async {
             await mediaApi.updateMediaProgress(
@@ -166,7 +169,9 @@ class _CastRemotePageState extends ConsumerState<CastRemotePage> {
                               thumbnails: thumbnails,
                               isLoading: thumbnailsAsync.isLoading,
                               errorMessage: thumbnailsAsync.hasError
-                                  ? '缩略图加载失败，请重试'
+                                  ? AppLocalizations.of(
+                                      context,
+                                    ).castThumbnailLoadFailed
                                   : null,
                               columns: _columns,
                               activeIndex: _resolveActiveIndex(
@@ -212,19 +217,20 @@ class _CastRemotePageState extends ConsumerState<CastRemotePage> {
 
   Widget _buildEndedState(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const AppEmptyState(
+          AppEmptyState(
             icon: Icons.cast_connected_rounded,
-            title: '投屏已结束',
-            message: '当前没有进行中的投屏会话',
+            title: l10n.castEndedTitle,
+            message: l10n.castEndedMessage,
           ),
           SizedBox(height: spacing.lg),
           AppButton(
             key: const Key('cast-remote-ended-back'),
-            label: '返回',
+            label: l10n.castBack,
             onPressed: () => Navigator.of(context).pop(),
           ),
         ],
@@ -239,7 +245,8 @@ class _CastRemotePageState extends ConsumerState<CastRemotePage> {
     Duration displayPosition,
   ) {
     final spacing = context.appSpacing;
-    final statusMessage = _statusMessageOf(state.phase);
+    final l10n = AppLocalizations.of(context);
+    final statusMessage = _statusMessageOf(state.phase, l10n);
     if (statusMessage != null) {
       return SizedBox(
         height: 28,
@@ -265,7 +272,7 @@ class _CastRemotePageState extends ConsumerState<CastRemotePage> {
             if (state.phase == CastRemotePhase.disconnected)
               AppTextButton(
                 key: const Key('cast-remote-retry'),
-                label: '重试',
+                label: l10n.commonRetry,
                 size: AppTextButtonSize.small,
                 onPressed: () => unawaited(controller.retry()),
               ),
@@ -273,7 +280,7 @@ class _CastRemotePageState extends ConsumerState<CastRemotePage> {
                 state.phase == CastRemotePhase.finished)
               AppTextButton(
                 key: const Key('cast-remote-restart'),
-                label: '重新播放',
+                label: l10n.castPlayAgain,
                 size: AppTextButtonSize.small,
                 onPressed: () => unawaited(controller.restartFromBeginning()),
               ),
@@ -322,6 +329,7 @@ class _CastRemotePageState extends ConsumerState<CastRemotePage> {
   ) {
     final enabled = state.isInteractive;
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return SizedBox(
       height: 44,
       child: Row(
@@ -329,7 +337,7 @@ class _CastRemotePageState extends ConsumerState<CastRemotePage> {
         children: [
           AppIconButton(
             key: const Key('cast-remote-back-10'),
-            tooltip: '快退 10 秒',
+            tooltip: l10n.castSeekBack10,
             onPressed: enabled
                 ? () => unawaited(
                     controller.seekBy(const Duration(seconds: -10)),
@@ -340,7 +348,7 @@ class _CastRemotePageState extends ConsumerState<CastRemotePage> {
           SizedBox(width: spacing.xxl),
           AppIconButton(
             key: const Key('cast-remote-play-pause'),
-            tooltip: state.isPlaying ? '暂停' : '播放',
+            tooltip: state.isPlaying ? l10n.castPause : l10n.castPlay,
             onPressed: enabled
                 ? () => unawaited(
                     state.isPlaying ? controller.pause() : controller.play(),
@@ -353,7 +361,7 @@ class _CastRemotePageState extends ConsumerState<CastRemotePage> {
           SizedBox(width: spacing.xxl),
           AppIconButton(
             key: const Key('cast-remote-forward-10'),
-            tooltip: '快进 10 秒',
+            tooltip: l10n.castSeekForward10,
             onPressed: enabled
                 ? () => unawaited(
                     controller.seekBy(const Duration(seconds: 10)),
@@ -367,12 +375,12 @@ class _CastRemotePageState extends ConsumerState<CastRemotePage> {
   }
 }
 
-String? _statusMessageOf(CastRemotePhase phase) {
+String? _statusMessageOf(CastRemotePhase phase, AppLocalizations l10n) {
   return switch (phase) {
-    CastRemotePhase.connecting => '正在连接电视…',
-    CastRemotePhase.disconnected => '与电视的连接已断开',
-    CastRemotePhase.stopped => '电视已停止播放',
-    CastRemotePhase.finished => '播放已结束',
+    CastRemotePhase.connecting => l10n.castStatusConnecting,
+    CastRemotePhase.disconnected => l10n.castStatusDisconnected,
+    CastRemotePhase.stopped => l10n.castStatusStopped,
+    CastRemotePhase.finished => l10n.castStatusFinished,
     _ => null,
   };
 }
@@ -413,6 +421,7 @@ class _CastRemoteTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final dotColor = switch (phase) {
       CastRemotePhase.playing || CastRemotePhase.paused =>
         resolveAppTextToneColor(context, AppTextTone.success),
@@ -429,7 +438,7 @@ class _CastRemoteTopBar extends StatelessWidget {
         children: [
           AppIconButton(
             key: const Key('cast-remote-back'),
-            tooltip: '返回',
+            tooltip: l10n.castBack,
             onPressed: onBack,
             icon: const Icon(Icons.arrow_back_rounded),
           ),
@@ -443,7 +452,7 @@ class _CastRemoteTopBar extends StatelessWidget {
           SizedBox(width: spacing.sm),
           Expanded(
             child: Text(
-              '投屏到「$deviceName」',
+              l10n.castToDevice(deviceName),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: resolveAppTextStyle(
@@ -456,7 +465,7 @@ class _CastRemoteTopBar extends StatelessWidget {
           ),
           AppTextButton(
             key: const Key('cast-remote-disconnect'),
-            label: '断开',
+            label: l10n.castDisconnect,
             size: AppTextButtonSize.small,
             onPressed: () => unawaited(onDisconnect()),
           ),

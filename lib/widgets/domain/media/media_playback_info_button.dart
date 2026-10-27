@@ -25,6 +25,7 @@ class MediaPlaybackInfoController {
        _sampler = MoviePlayerNativeStatsSampler(
          readNativeProperty: createMediaKitNativePropertyReader(player),
          originalUrl: '',
+         l10n: l10n,
        ) {
     _attach();
   }

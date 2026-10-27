@@ -2,97 +2,95 @@
 outline: [2, 3]
 ---
 
-# 为什么做 SakuraMedia：让喜欢的内容留下来
+# Why SakuraMedia: keeping what you love
 
-我做 SakuraMedia，是希望有一个地方，能把发现、观看和收藏连起来。遇到感兴趣的影片，可以记下来；看到喜欢的画面，可以收藏成时刻；碰到真正想留下的片段，可以切出来，整理好，再认真备份。
+I built SakuraMedia because I wanted one place that connects discovery, watching, and collecting. When a movie catches my eye, I can note it down; when a frame moves me, I can keep it as a moment; when a scene is something I truly want to keep, I can cut it out, organize it, and back it up properly.
 
-对我来说，一个媒体库的价值，也体现在这些慢慢积累起来的选择里。这篇文章想聊聊，我希望 SakuraMedia 帮我留下什么，也希望你能从中找到适合自己的收藏方式。
+To me, the value of a media library also shows in these choices that accumulate slowly. This article is about what I hope SakuraMedia keeps for me, and I hope you can find a way of collecting that suits you.
 
-## 我究竟想留下什么
+## What do I actually want to keep
 
-以前收藏影片，我最直观的想法就是下载下来、放进硬盘。看着媒体库越来越大，会觉得自己留下了很多东西。
+When I used to collect movies, my most direct thought was to download them and put them on a drive. Watching the library grow made me feel I had kept a lot.
 
-但时间久了，我开始分不清：哪些是真的喜欢，哪些只是当时觉得不错，哪些下载之后就再也没有打开过。
+But over time I began to lose track: which ones I truly liked, which ones just seemed good at the time, and which ones I never opened again after downloading.
 
-文件越来越多，真正想回看的内容却不一定更容易找到。
+The files kept piling up, yet the things I actually wanted to revisit weren't necessarily any easier to find.
 
-所以现在，我更愿意从一个问题开始考虑收藏：**这部影片里，我究竟想留下什么？**
+So now I prefer to start collecting from one question: **what do I actually want to keep from this movie?**
 
-## 从记住一部影片开始
+## Start by remembering a movie
 
-有些影片，我想完整保留；有些只是想记住它，等以后有兴趣再看。
+Some movies I want to keep in full; others I only want to remember, to watch later when I'm in the mood.
 
-对后者来说，番号、元数据，以及“我想收藏它”这条记录，就足够了。只要资源仍然能找到，原片丢失后还能重新获取。
+For the latter, the movie number, the metadata, and a record saying "I want to collect this" are enough. As long as the source can still be found, I can get the original back after losing it.
 
-自己的收藏清单一旦丢了，却很难凭记忆重新整理出来。
+But if my own collection list is lost, it's very hard to rebuild from memory.
 
-因此，我不会给所有能重新获取的影片都做多份备份。我更在意保住自己的收藏记录。
+So I don't keep multiple backups of every movie that can be re-obtained. What I care about more is keeping my own collecting record.
 
+## Moments, to remember why I like it
 
-## 时刻，记住我为什么喜欢它
+Remembering a movie alone is sometimes not enough.
 
-只记住一部影片，有时还不够。
+It might be a frame in a two-hour video that made me pause; or after watching, only a few places I still want to revisit.
 
-可能是一段两小时的视频里，某个画面让我停了一下；也可能是看完之后，只有其中几处还想再回看。
+If I just put the whole movie into my collection, next time I open it I still have to drag the progress bar to search. Over time I may even forget why I collected it in the first place.
 
-如果只是把整部影片放进收藏，下次打开时，仍然要拖着进度条寻找。时间一长，甚至连当初为什么收藏都忘了。
+A moment keeps that more specific liking: which work, which position, what the frame looked like.
 
-时刻保存的，就是这份更具体的喜欢：哪部作品、哪个位置、当时是什么画面。
+To me, the instant I mark a moment, a round of selection is already done. That choice is worth keeping, and even if the original is cleaned up later, it shouldn't disappear with it.
 
-对我来说，点下标记时刻的那一瞬间，已经完成了一次筛选。这个选择值得留下，即使后来原片被清理了，也不应该跟着消失。
+**I want moments to be a long-term record.** Ideally, if the original is still there, I can go back to the movie from here; if it isn't, I can still see the collected frame, its position, and the collection it belongs to. When I find the source again later, I can try to reconnect the record.
 
-**我希望时刻成为一种长期记录。** 理想中，原片还在，就能从这里回到影片；原片不在，仍然能看到收藏的画面、位置，以及它所在的合集。以后重新找到资源，再尝试接回这条记录。
+The current version does not yet support keeping a moment independently of its source media: deleting media also deletes its moments and collection memberships. To keep a moment, keep the source media; to keep a segment independently, create a clip first. For the actual steps, see [Collections and organization](/manual/collections).
 
-当前版本还没有实现这种脱离来源媒体的保存方式：删除媒体会同时删除它的时刻及合集成员关系。要保留时刻，请保留来源媒体；要独立保留某一段，可以先生成切片。实际操作见[收藏与整理](/manual/collections)。
+Of course, finding the same work again doesn't necessarily mean finding exactly the same file. Different versions may have different intros and edits, and the original timestamp may not be accurate. But as long as the frame and the record are still there, there is still a lead to follow.
 
+## Clips, to actually keep the segment I like
 
-当然，找回同一部作品，也不一定意味着找回了完全相同的文件。不同版本可能有不同的片头和剪辑，原来的时间点未必准确。但只要画面和记录还在，就还保留着寻找的线索。
+Some segments I really like, and I want to keep them properly. Even if I clean up the original one day, these few minutes are still in my collection.
 
-## 切片，把喜欢的那一段实际留下
+That's why I use clips.
 
-有些片段，我是真的喜欢，想把它们好好留下来。即使有一天清理了原片，这几分钟也仍然在我的收藏里。
+After cutting a favorite range into a separate file, I can watch it directly, or put segments from different movies into the same collection. For movies where I only like a short part, this also gives me room to clean up the original.
 
-这就是我使用切片的理由。
+I back these clips up carefully. They are what I spent time picking out and truly want to keep. Fortunately, clips are usually much smaller than the whole original, so an extra backup doesn't take much space. With that little space, keeping the segments I like safe and sound is very much worth it to me.
 
-把喜欢的区间切成独立文件之后，可以直接回看，也可以把不同影片里的片段放进同一个合集里。对于只喜欢其中一小段的影片，这也给了我清理原片的余地。
+I don't cut every moment into a file. Most likes are fine to just note down first; only the passages I revisit repeatedly and truly want to keep get saved as clips.
 
-这些切片，我会认真备份。它们是我花时间挑出来、真正想留下的内容。好在，比起整部原片，切片通常小得多，即使多留一份备份，也不会占用太多空间。用这点空间，把自己喜欢的片段稳稳当当地留下来，对我来说很值得。
+<Screenshot src="/images/readme/clips-page.png" alt="SakuraMedia clips page" caption="The clips page: standalone videos that keep the ranges you like." />
 
-我不会把每个时刻都切成文件。大部分喜欢，先记下来就好；那些反复回看、确实想留下的段落，再保存成切片。
+## Collections, to keep my own way of organizing
 
-<Screenshot src="/images/readme/clips-page.png" alt="SakuraMedia 切片页" caption="切片页：把喜欢的区间留下来的独立视频。" />
+Once the collection grows, I also need a way to reorganize it.
 
-## 合集，留下自己的整理方式
+I can group by actor or theme, or just put things together because they look good together, or record a preference from a certain period. Moment collections gather the frames and positions I like; clip collections organize the segments I actually kept.
 
-收藏多了之后，我还需要一种方式，把它们重新组织起来。
+There is no single answer to these categories. Their value lies in being my own choice.
 
-可以按演员、主题分类，也可以只是放在一起看起来舒服，或者记录某一阶段的偏好。时刻合集收拢喜欢的画面和位置，切片合集组织实际留下的片段。
+The same set of movies: different people will pick different moments, keep different clips, and organize them into completely different collections. Only then does a collection gradually take on a personal shape.
 
-这些分类没有统一答案。它们的价值就在于，这是我自己的选择。
+So what needs preserving isn't just the entries themselves, but the relationships between them: which collection they went into, how they're arranged, and why they belong together.
 
-同样一批影片，不同的人会挑出不同的时刻，留下不同的切片，整理成完全不同的合集。这样的收藏，才逐渐有了个人的样子。
+## How I arrange my own collection
 
-所以，需要保留的不只是条目本身，还有它们之间的关系：放进了哪个合集、怎样排列、为什么归在一起。
+My media library keeps receiving new movies. I browse the rankings to see what's worth watching lately; I follow actors I like and look forward to their new work. Part of the fun of collecting lies in these things I haven't watched yet and might like.
 
-## 我会怎样安排自己的收藏
+For me, a fairly natural process is:
 
-我的媒体库会不断迎来新的影片。逛逛排行榜，看看最近有什么值得一看；关注喜欢的女优，也期待她们的新作品。收藏的乐趣，有一部分就在于这些还没看过、也许会喜欢的内容。
+- Discover movies I'm interested in from the rankings, or find new releases by following subscribed actors.
+- Hand the movies I want to watch to subscriptions and auto-download, and watch them slowly when they're ready and I have time.
+- When I hit something I like while watching, keep it as a moment.
+- After revisiting, turn the passages I really want to keep independently into clips.
+- If I especially like the whole thing, or the source is hard to re-obtain, keep and back up the original.
+- When space runs short, clean up based on actual preference, not just on "whether I downloaded it back then".
 
-对我来说，一个比较自然的过程是：
+I allocate backup effort the same way: collecting records and collections deserve protection first, standalone clips need their files kept, and scarce originals need extra care. When backing up, also cover actual files such as preview images; don't assume backing up the database covers everything.
 
-- 从排行榜里发现感兴趣的影片，或跟着订阅的女优发现新作。
-- 把想看的影片交给订阅和自动下载，等它们准备好，有空时慢慢看。
-- 观看时碰到喜欢的地方，收藏成时刻。
-- 回看之后，确实想独立保留的段落，再做成切片。
-- 特别喜欢整部，或者难以重新获取的资源，保留并备份原片。
-- 空间不足时，根据实际喜好清理，而不是只看“当初有没有下载”。
+I hope the library I end up with is a place I'm willing to open often. New movies are waiting to be explored, and I can also find works I once liked, recognizing at a glance the frame that moved me back then.
 
-备份也按这个思路分配精力：收藏记录和合集值得优先保护，独立切片需要保留文件，稀缺原片需要额外照顾。具体备份时，也要覆盖预览图片等实际文件，不能以为只备份数据库就包含了一切。
-
-我希望最后留下的媒体库，是一个自己愿意经常打开的地方。有新影片等着探索，也能找到曾经喜欢的作品，一眼认出当初打动自己的画面。
-
-我希望原片可以有来有去，收藏却能慢慢积累。几年之后再打开，仍然知道自己喜欢过什么，也还有线索回到那里。
+I hope originals can come and go, while the collection slowly accumulates. Years later, when I open it again, I still know what I liked, and I still have a lead back there.
 
 ---
 
-下一篇：[从喜欢的画面开始看](/guide/watch-from-a-frame)
+Next: [Start watching from a frame you like](/guide/watch-from-a-frame)

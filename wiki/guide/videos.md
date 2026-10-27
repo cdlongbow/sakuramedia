@@ -2,51 +2,51 @@
 outline: [2, 3]
 ---
 
-# PornBox 与普通视频
+# PornBox and Regular Videos
 
-PornBox 用于浏览和管理普通视频，例如没有番号的收藏、录制或剪辑内容。它使用视频标题和视频合集组织内容，也支持播放、缩略图和播放进度。
+PornBox is for browsing and managing regular videos, such as collections, recordings or edited content that have no movie number. It organizes content by video title and video collection, and also supports playback, thumbnails and playback progress.
 
-有明确 JAV 番号、希望关联女优和影片资料的文件，请使用[JAV 影片导入](/manual/import)。
+For files that have a clear JAV movie number and that you want to associate with actors and movie metadata, use [JAV movie import](/manual/import).
 
-## 导入普通视频
+## Importing regular videos
 
-1. 进入「管理 → 资源导入」，切换到「视频」。
-2. 点击「新建导入」，选择目标媒体库。
-3. 在来源浏览器中选择文件或目录。
-4. 按需选择视频合集，也可以新建合集。
-5. 确认「导入方式」，点击「开始导入」。
-6. 到「任务中心」查看进度和结果，完成后打开侧边栏「PornBox」确认视频。
+1. Go to "Manage → Media Import" and switch to "Videos".
+2. Click "New Import" and select the target media library.
+3. Select files or directories in the source browser.
+4. Choose a video collection if needed, or create a new one.
+5. Confirm the "Import mode" and click "Start Import".
+6. Check progress and results in the "Task Center", then open "PornBox" in the sidebar to confirm the video.
 
-来源浏览范围由所选媒体库的存储插件提供。找不到文件时，检查该媒体库的来源配置和存储访问情况。
+The source browsing scope is provided by the storage plugin of the selected media library. If you cannot find a file, check that library's source configuration and storage access.
 
-::: warning 导入方式
-「保留源文件」是默认选择。「导入成功后删除源文件」会在成功入库后删除源文件，请在提交前核对。
+::: warning Import modes
+"Keep source file" is the default. "Delete source file after import" removes the source file once it has been imported successfully, so double-check before submitting.
 :::
 
-视频标题默认来自导入来源的名称。导入可能部分成功，任务完成后还需要查看失败和跳过统计。
+A video's title comes from the name of the import source by default. An import may partly succeed; after the task finishes, review the failed and skipped statistics.
 
-## 浏览和播放
+## Browsing and playback
 
-从 PornBox 列表打开视频详情，再进入播放。有观看进度时，可以通过续播提示继续；缩略图由后台生成，刚导入时可能需要等待。
+Open a video's detail page from the PornBox list and then start playback. When there is watch progress, you can continue from the resume prompt; thumbnails are generated in the background, so they may take a moment right after import.
 
-<Screenshot src="/images/readme/pornbox-collection.png" alt="PornBox 视频合集详情" caption="合集详情可以调整成员顺序，并从当前顺序开始播放。" />
+<Screenshot src="/images/readme/pornbox-collection.png" alt="PornBox video collection detail" caption="On the collection detail page you can reorder the members and start playback from the current order." />
 
-移动端也有 PornBox 浏览和播放入口，管理教程中的页面路径以桌面端为准。
+Mobile also has entry points for browsing and playing PornBox content; the page paths in this management guide follow the desktop client.
 
-## 用视频合集组织内容
+## Organizing content with video collections
 
-在 PornBox 的合集入口创建合集，将相关视频加入，再到合集详情调整成员顺序。播放合集时，客户端按成员顺序播放。
+Create a collection from the collections entry in PornBox, add the relevant videos, then adjust the member order on the collection detail page. When you play a collection, the client plays the members in order.
 
-- 一个视频可以加入多个合集。
-- 合集保存成员关系和顺序，不会为每个合集复制文件。
-- 删除合集不会删除视频；删除视频时会移除它在合集中的成员关系。
+- A video can belong to multiple collections.
+- A collection stores member relationships and order; it does not copy files for each collection.
+- Deleting a collection does not delete the videos; deleting a video removes its membership from collections.
 
-视频合集与影片播放列表、时刻合集、切片合集管理不同对象，按你要整理的内容选择。
+Video collections manage different objects than movie playlists, moment collections and clip collections — choose according to what you want to organize.
 
-<Screenshot variant="narrow" src="/images/readme/pornbox-timeline.png" alt="PornBox 合集连播缩略图" caption="合集连播时，右侧缩略图把各集关键帧拼成一条时间轴。" />
+<Screenshot variant="narrow" src="/images/readme/pornbox-timeline.png" alt="PornBox collection playback thumbnails" caption="During continuous collection playback, the thumbnails on the right stitch the key frames of each episode into a single timeline." />
 
-## 与影片订阅的区别
+## Differences from movie subscriptions
 
-普通视频不使用 JAV 影片的番号、女优订阅和订阅自动找资源流程。需要新增普通视频时，从资源导入进入；需要查进度时，到任务中心查看对应视频导入任务。
+Regular videos do not use JAV movie numbers, actor subscriptions or the subscription-based resource search. To add a regular video, start from Media Import; to check progress, look up the corresponding video import task in the Task Center.
 
-返回[使用手册](/manual/)。
+Back to the [User Manual](/manual/).

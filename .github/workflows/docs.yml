@@ -66,19 +66,21 @@ jobs:
 
           ## 目录说明
 
-          - \`faq.md\`: 常见问题
-          - \`guide/\`: 部署与使用指南（快速开始、飞牛 NAS 部署、Docker、配置、切片等）
+          站点默认英文，中文站位于 \`/zh-CN/\`，离线包两种语言都收录：
+
+          - \`index.md\` / \`faq.md\` / \`guide/\` / \`manual/\`: 英文站点内容
+          - \`zh-CN/\`: 中文站点内容（同样的结构）
           - \`public/\`: 图片与品牌资源
 
           ## 阅读建议
 
           Markdown 文件可用任何编辑器/预览工具查看，推荐 Typora、Obsidian、VS Code 等。
 
-          文档内部链接（如 \`/guide/xxx\`）指向在线站点路径，离线阅读时可能无法直接跳转，建议对照在线版一起看。
+          文档内部链接（如 \`/guide/xxx\`、\`/zh-CN/guide/xxx\`）指向在线站点路径，离线阅读时可能无法直接跳转，建议对照在线版一起看。
           EOF
 
           zip -r .vitepress/dist/downloads/sakuramedia-wiki.zip \
-            README.md faq.md guide public
+            README.md index.md faq.md guide manual zh-CN public
           rm README.md
           echo "Archive size:"
           ls -lh .vitepress/dist/downloads/sakuramedia-wiki.zip

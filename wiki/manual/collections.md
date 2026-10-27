@@ -1,54 +1,54 @@
-# 收藏与整理：播放列表、时刻和切片
+# Collections and organizing: playlists, moments and clips
 
-看过影片以后，可以按自己想留下的内容选择整理方式。
+After watching a movie, choose how to organize it depending on what you want to keep.
 
-| 想留下什么 | 使用什么 | 以后怎样回看 |
+| What you want to keep | What to use | How to come back to it |
 | --- | --- | --- |
-| 一组影片 | 播放列表 | 从列表打开影片 |
-| 某个画面和时间位置 | 时刻、时刻合集 | 有可用来源时，从该位置跳回影片 |
-| 一段实际视频 | 切片、切片合集 | 播放生成的独立片段 |
+| A group of movies | Playlist | Open movies from the list |
+| A particular frame and position | Moment, moment collection | Jump back into the movie at that position when a usable source exists |
+| An actual stretch of video | Clip, clip collection | Play the generated standalone file |
 
-这些组织方式与订阅各有用途。订阅表达获取和保留影片的意愿，播放列表用于分类；把影片加入列表不应当当作订阅操作的替代。
+Each of these ways of organizing serves a different purpose than subscriptions. Subscriptions express the intent to obtain and keep movies, while playlists are for sorting; adding a movie to a playlist should not be treated as a substitute for subscribing.
 
-## 用播放列表组织影片
+## Organize movies with playlists
 
-1. 在「播放列表」页面创建列表，填写名称。
-2. 从影片的播放列表操作中，选择要加入的列表。
-3. 返回列表详情，确认成员并继续浏览。
+1. Create a playlist on the "Playlists" page and give it a name.
+2. From a movie's playlist action, choose which lists to add it to.
+3. Go back to the playlist details to confirm the members and keep browsing.
 
-可以按题材、演员或自己的观看计划命名。加入列表是整理影片关系，不会为每个列表复制一份视频。
+Name lists by genre, actor or your own viewing plan. Adding to a list organizes the relationship between movies; it does not copy the video for each list.
 
-## 标记时刻
+## Mark moments
 
-在影片的缩略图或画面预览中，选择「添加标记」保存感兴趣的位置。到侧边栏「时刻」查看收藏的画面；选中时刻后，可以通过「加入合集」归类。
+In a movie's thumbnails or frame preview, choose "Add marker" to save a position you are interested in. View saved frames under "Moments" in the sidebar; once a moment is selected, you can group it with "Add to collection".
 
-<Screenshot src="/images/readme/thumbnail-menu.png" alt="缩略图操作菜单" caption="缩略图操作菜单：相似图片、保存到本地、添加标记、播放。" />
+<Screenshot src="/images/readme/thumbnail-menu.png" alt="Thumbnail action menu" caption="Thumbnail action menu: similar images, save locally, add marker, play." />
 
-想回看时，从时刻打开可用的来源媒体。时刻记录画面与位置，不会截取出一段独立视频。来源不可用时，不能把仍能看到预览图当成原片仍可播放。
+To revisit, open a moment using an available source media. A moment records a frame and a position; it does not extract a standalone video. When the source is unavailable, a visible preview image does not mean the original still plays.
 
-::: warning 时刻依赖来源媒体
-当前版本删除媒体时，会同时删除该媒体的时刻及其合集成员关系，不支持删掉媒体后再自动接回时刻。要保留这些时刻，请保留来源媒体；需要独立保留一段视频时，先生成并验证切片。
+::: warning Moments depend on the source media
+In the current version, deleting media also deletes that media's moments and their collection memberships; moments are not automatically reattached after the media is deleted. To keep these moments, keep the source media; when you need to keep a video separately, generate and verify a clip first.
 :::
 
-## 创建切片
+## Create clips
 
-1. 打开影片媒体的缩略图面板，点击「圈选切片」。
-2. 选择起点和终点，在圈选状态栏检查区间与时长。
-3. 点击创建，按需填写切片标题并确认。
-4. 等待生成成功，再到「切片」页面查看并播放。
+1. Open a movie media's thumbnail panel and click "Select clip range".
+2. Choose the start and end points and check the range and duration in the selection bar.
+3. Click create, optionally fill in a clip title and confirm.
+4. Wait for generation to succeed, then view and play it on the "Clips" page.
 
-<Screenshot variant="narrow" src="/images/readme/clip-selection.png" alt="圈选切片区间" caption="选择起点和终点，确认区间与时长后创建切片。" />
+<Screenshot variant="narrow" src="/images/readme/clip-selection.png" alt="Selecting a clip range" caption="Choose the start and end points, confirm the range and duration, then create the clip." />
 
-切片生成需要时间，也受服务器配置的最大时长等限制。失败时先看提示，必要时缩短区间并检查服务配置，详见[切片常见问题](/faq#切片与视频合集)。
+Clip generation takes time and is limited by server settings such as the maximum duration. If it fails, read the message first and, if needed, shorten the range and check the service configuration; see [Clips FAQ](/faq#clips-and-video-collections).
 
-生成成功的切片是独立视频文件，可以加入切片合集并按合集回看。准备清理原片前，先确认切片已经生成且可以播放。
+A successfully generated clip is a standalone video file that you can add to a clip collection and revisit from it. Before cleaning up the original, confirm the clip has been generated and can play.
 
-<Screenshot src="/images/readme/clips-page.png" alt="SakuraMedia 切片页" caption="切片页集中查看切片合集和全部切片。" />
+<Screenshot src="/images/readme/clips-page.png" alt="SakuraMedia Clips page" caption="The Clips page brings clip collections and all clips together." />
 
-## 整理与备份
+## Organizing and backup
 
-播放列表、时刻合集和切片合集组织的是不同类型的内容，按自己的习惯命名即可，不必把每个时刻都做成切片。
+Playlists, moment collections and clip collections organize different kinds of content, so name them however you like — there is no need to turn every moment into a clip.
 
-需要保住独立切片时，必须备份切片文件；需要保住收藏关系和预览画面时，也要保留对应数据库与图片文件。仅复制原片目录不能保住全部整理成果。
+To keep standalone clips, you must back up the clip files; to keep collections and preview frames, you also need the corresponding database and image files. Copying only the original movie directory does not preserve all of your organizing.
 
-接下来：[媒体库管理](./media-management)。
+Next: [Media library management](./media-management).

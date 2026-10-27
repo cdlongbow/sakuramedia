@@ -1,58 +1,58 @@
-# 获得第一部想看的影片
+# Get your first movie
 
-这次只选一部影片，从搜索、订阅一直走到播放。先确认整个流程可用，再逐步增加订阅。
+This time, pick just one movie and go all the way from search and subscription to playback. Confirm the whole flow works before adding subscriptions gradually.
 
-## 1. 确认下载所需的配置
+## 1. Confirm the configuration downloads need
 
-登录桌面端，打开「系统设置」，检查：
+Sign in to the desktop client, open "System settings" and check:
 
-| 配置 | 用途 | 需要确认的关系 |
+| Configuration | Purpose | Relationship to confirm |
 | --- | --- | --- |
-| 存储插件与媒体库 | 保存和播放导入后的文件 | 媒体库使用的插件已启用、存储可访问 |
-| 下载器 | 接收下载任务 | 已选择正确的目标媒体库 |
-| 索引器 | 搜索影片资源 | 已绑定可用下载器 |
+| Storage plugin and media library | Store and play the imported file | The plugin the media library uses is enabled and the storage is reachable |
+| Download client | Receives download jobs | The correct target media library is selected |
+| Indexer | Searches for movie resources | A usable download client is bound |
 
-尚未配置时，按[自动下载与索引器](/guide/auto-download)操作。已有配置时，在「概览」运行「组件诊断」，先处理相关组件的连接问题。
+If nothing is configured yet, follow [Auto download and indexers](/guide/auto-download). If configuration exists, run "Component diagnostics" on the "Overview" page and fix connection problems for the affected components first.
 
-自动查资源、同步下载状态和导入由不同后台任务完成。服务部署时需要启动调度器；具体任务见[后台任务](/guide/tasks)。
+Resource lookup, download status sync and importing are handled by different background tasks. A deployed server needs the scheduler started; see [Background tasks](/guide/tasks) for the individual tasks.
 
-## 2. 搜索一部影片
+## 2. Search for a movie
 
-打开搜索入口，输入番号或关键词，默认会在本地资料库中搜索。第一次使用时，本地可能没有任何资料，可以点结果区的「从外部数据源获取」，或开启搜索框的「联网搜索」。
+Open the search entry point, type a movie number or keyword, and the search runs against the local library by default. On first use the local library may be empty, so click "Fetch from external source" in the results area, or turn on "Online search" in the search box.
 
-<Screenshot src="/images/guide/online-search-network-toggle.png" alt="搜索框右侧的联网搜索开关" caption="搜索框右侧的联网开关；开启后才向外部数据源查询。" />
+<Screenshot src="/images/guide/online-search-network-toggle.png" alt="The online search switch to the right of the search box" caption="The online switch to the right of the search box; external sources are queried only when it is on." />
 
-找到结果后，打开详情，核对番号、封面和演员，确认是你想要的影片。在线搜索会获取资料，视频文件还需要下载或导入。
+Once you get results, open the details and check the movie number, cover and cast to confirm this is the movie you want. Online search fetches records; the video file still has to be downloaded or imported.
 
-<Screenshot src="/images/readme/desktop-detail.png" alt="SakuraMedia 影片详情页" caption="在详情中核对番号、封面和演员；媒体列表在页面下方。" />
+<Screenshot src="/images/readme/desktop-detail.png" alt="SakuraMedia movie details page" caption="Check the movie number, cover and cast in the details; the media list is further down the page." />
 
-没有结果时，先检查输入的关键词和联网开关，再到「概览」检查元数据来源的连通性。
+If there are no results, check the keywords you entered and the online switch first, then check connectivity to the metadata source on the "Overview" page.
 
-## 3. 订阅影片
+## 3. Subscribe to the movie
 
-在影片卡片或详情的操作菜单中选择「订阅影片」。订阅成功后，到「订阅管理」查看它。
+Choose "Subscribe to movie" in the action menu of the movie card or the details page. After subscribing, look it up under "Subscriptions".
 
-新订阅通常先处于「待查」。订阅管理默认可能显示某个状态筛选；找不到刚订阅的影片时，切换到「全部」或「待查」，再按番号查找。
+A new subscription usually starts in "Pending lookup". Subscriptions may open with a status filter applied; when you cannot find the movie you just subscribed to, switch to "All" or "Pending lookup" and search by movie number.
 
-订阅不会保证立即出现下载任务。系统要等待相关任务执行，并找到符合条件的资源。
+A subscription does not guarantee an immediate download job. The system waits for the relevant tasks to run and for a resource that meets the conditions.
 
-## 4. 跟进下载和导入
+## 4. Follow up on download and import
 
-先看「订阅管理」，再按需进入「任务中心」：
+Check "Subscriptions" first, then go to the "Task center" as needed:
 
-- **待查、缺资源**：还没有提交可用下载。等待后续查询，或按[订阅与下载进度](./subscriptions)检查。
-- **下载中**：查看对应下载记录，确认下载进展。下载完成、等待导入时，也可能仍显示这一状态。
-- **导入失败**：到任务中心查看导入结果，处理存储或文件识别等问题。
-- **已入库**：打开影片详情，查看媒体列表。
+- **Pending lookup, missing resource**: no usable download has been submitted yet. Wait for the next lookup, or check [Subscriptions and download progress](./subscriptions).
+- **Downloading**: look at the corresponding download record to confirm progress. A completed download that is waiting to be imported may still show this status.
+- **Import failed**: check the import result in the task center and deal with storage or file detection problems.
+- **Imported**: open the movie details and check the media list.
 
-若想主动验证自动流程，可在任务中心手动触发「已订阅缺失影片自动下载」，然后查看运行结果。没有合适资源时，任务运行完成也不代表成功下载。
+To actively verify the automated flow, trigger "Auto download missing subscribed movies" manually in the task center and check the run result. When no suitable resource exists, the task can finish without a successful download.
 
-## 5. 打开媒体播放
+## 5. Open a media item and play
 
-进入影片详情，从媒体列表选择一个版本播放。有多个文件时，留意文件名、大小和媒体库。
+Go to the movie details and pick a version from the media list to play. When there are several files, pay attention to the file name, size and media library.
 
-<Screenshot src="/images/readme/desktop-player.png" alt="SakuraMedia 播放器与缩略图面板" caption="有可用媒体后，选择版本进入播放器；右侧缩略图可以快速定位。" />
+<Screenshot src="/images/readme/desktop-player.png" alt="SakuraMedia player with the thumbnail panel" caption="Once playable media exists, choose a version to enter the player; thumbnails on the right help you locate scenes." />
 
-能播放后，这条流程就走通了。订阅会继续保留；之后可以订阅更多影片，或[关注喜欢的女优](./discover)。
+Once playback works, this flow is complete. The subscription stays; from here you can subscribe to more movies or [follow actors you like](./discover).
 
-如果你已经有这部影片的文件，无需等待下载，直接[导入已有资源](./import)。
+If you already have this movie's file, there is no need to wait for a download — go straight to [Import existing files](./import).

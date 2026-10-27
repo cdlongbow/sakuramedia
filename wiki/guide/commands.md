@@ -2,56 +2,56 @@
 outline: [2, 4]
 ---
 
-# 常用命令
+# Common Commands
 
-以下命令都在后端容器中执行。示例中的容器名是 `sakuramedia`，部署时如有调整请替换。
+Run all of the following commands inside the backend container. The container name in the examples is `sakuramedia`; replace it if your deployment differs.
 
-## 账号
+## Account
 
-### 重置账号
+### Reset the account
 
 ```bash
 docker exec -it --user app -w /app sakuramedia python -m src.start.commands reset-account
 ```
 
-也可以直接传入新账号：
+You can also pass the new credentials directly:
 
 ```bash
 docker exec --user app -w /app sakuramedia python -m src.start.commands reset-account --username admin --password 'your-new-password'
 ```
 
-命令会覆盖数据库中的账号并清空 refresh token，已登录客户端需要重新登录。
+The command overwrites the account in the database and clears refresh tokens, so signed-in clients have to log in again.
 
-## 数据库与服务
+## Database and services
 
-### 初始化数据库
+### Initialize the database
 
 ```bash
 docker exec --user app -w /app sakuramedia python -m src.start.commands initdb
 ```
 
-### 应用数据库结构
+### Apply the database schema
 
 ```bash
 docker exec --user app -w /app sakuramedia python -m src.start.commands migrate
 ```
 
-### 等待数据库就绪
+### Wait for the database to be ready
 
 ```bash
 docker exec --user app -w /app sakuramedia python -m src.start.commands wait-db --timeout 60 --interval 2
 ```
 
-### 测试 JavDB 查询
+### Test JavDB queries
 
 ```bash
 docker exec --user app -w /app sakuramedia python -m src.start.commands test-javdb --movie-number ABP-001
 docker exec --user app -w /app sakuramedia python -m src.start.commands test-javdb --movie-number ABP-001 --json
 ```
 
-## 手动触发后台任务
+## Triggering background tasks manually
 
-`aps` 子命令会把任务放入任务中心，任务中心可以查看进度和结果：
+The `aps` subcommand puts tasks into the Task Center, where you can check progress and results:
 
 ```bash
 docker exec --user app -w /app sakuramedia python -m src.start.commands aps sync-subscribed-actor-movies
@@ -61,36 +61,36 @@ docker exec --user app -w /app sakuramedia python -m src.start.commands aps auto
 docker exec --user app -w /app sakuramedia python -m src.start.commands aps generate-media-thumbnails
 ```
 
-完整任务名和默认频率见[后台任务](/guide/tasks)。插件注册的任务也会自动出现在 `aps` 命令组中。
+See [Background Tasks](/guide/tasks) for the full list of task names and default schedules. Tasks registered by plugins also appear automatically in the `aps` command group.
 
-## 插件管理
+## Plugin management
 
 ```bash
-# 列出插件
+# List plugins
 docker exec --user app -w /app sakuramedia python -m src.start.commands plugins list
 
-# 安装目录或 zip 包
+# Install from a directory or a zip package
 docker exec --user app -w /app sakuramedia python -m src.start.commands plugins install /path/to/plugin.zip
 
-# 启用或停用
+# Enable or disable
 docker exec --user app -w /app sakuramedia python -m src.start.commands plugins enable plugin_id
 docker exec --user app -w /app sakuramedia python -m src.start.commands plugins disable plugin_id
 
-# 删除
+# Remove
 docker exec --user app -w /app sakuramedia python -m src.start.commands plugins remove plugin_id
 
-# 校验插件目录
+# Validate a plugin directory
 docker exec --user app -w /app sakuramedia python -m src.start.commands plugins check /path/to/plugin
 ```
 
-插件变更后按命令输出重启 `api` 与 `aps` 服务。
+After changing plugins, restart the `api` and `aps` services as instructed by the command output.
 
-## 其他维护命令
+## Other maintenance commands
 
-为缺少精简封面的影片补生成封面：
+Generate covers for movies that lack a thin cover image:
 
 ```bash
 docker exec --user app -w /app sakuramedia python -m src.start.commands backfill-movie-thin-cover-images
 ```
 
-普通影片和视频的导入从客户端「管理 → 媒体导入」发起。来源浏览由媒体库 provider 提供，提交的数据包含 provider 能理解的 `source_ref`。
+Imports of regular movies and videos are started from "Manage → Media Import" in the client. Source browsing is provided by the media library provider, and the submitted data contains a `source_ref` that the provider understands.

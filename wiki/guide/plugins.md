@@ -2,66 +2,66 @@
 outline: [2, 3]
 ---
 
-# 推荐插件
+# Recommended Plugins
 
-SakuraMedia 的媒体存储、下载和部分自动化能力由插件提供。可直接在「系统设置 → 插件 → 插件市场」中浏览、安装和更新插件（移动端在「插件」页底部进入），也可以手动上传 zip 安装包。插件与宿主的接口兼容规则见[插件开发文档](/guide/plugin-development#版本兼容)。
+SakuraMedia's media storage, download and some automation capabilities are provided by plugins. You can browse, install and update plugins directly in "System Settings → Plugins → Plugin Market" (on mobile, enter from the bottom of the "Plugins" page), or upload a zip package manually. See the [plugin development guide](/guide/plugin-development#version-compatibility) for the compatibility rules between plugins and the host.
 
-::: info 关于插件来源
-官方发布镜像已预装并启用「本地存储与 qBittorrent」「JavDB 排行榜」「合集影片判定」。首次部署直接创建媒体库即可；下表中其余插件按需安装。
+::: info About plugin sources
+The official image already has "Local Storage & qBittorrent", "JavDB Rankings" and "Detect collection movies by duration, number pattern or tag" installed and enabled. On a first deployment you can create a media library right away; install the other plugins in the table below as needed.
 
-下面只收录源码仓库公开且提供 Release 安装包的插件。授权范围以各仓库的声明为准。
+Only plugins whose source repository is public and that provide a Release package are listed here. Licensing terms follow each repository's own statement.
 :::
 
-## 通过插件市场安装
+## Installing from the plugin market
 
-1. 打开「系统设置 → 插件」，切到「插件市场」分栏。
-2. 找到需要的插件点击「安装」；已安装的插件有新版本时，按钮会变成「更新」。
-3. 安装完成后，重启 SakuraMedia 容器，使 API 和 APS 重新加载插件及其依赖。
+1. Open "System Settings → Plugins" and switch to the "Plugin Market" tab.
+2. Find the plugin you need and click "Install"; when an installed plugin has a newer version, the button changes to "Update".
+3. After installing, restart the SakuraMedia container so that the API and APS reload the plugins and their dependencies.
 
-官方镜像预装的三个插件在首次启动时已经安装并启用，不需要再执行安装和重启。
+The three plugins preinstalled in the official image are already installed and enabled on first start; you do not need to install or restart again.
 
-市场索引来自官方维护的 [sakuramedia-plugin-market](https://github.com/tinypinglite/sakuramedia-plugin-market) 仓库，收录官方与社区插件；社区插件会标注「社区」徽章，安装前请确认来源可信。
+The market index comes from the officially maintained [sakuramedia-plugin-market](https://github.com/tinypinglite/sakuramedia-plugin-market) repository, which lists both official and community plugins. Community plugins carry a "Community" badge; make sure the source is trustworthy before installing.
 
-## 手动安装 zip
+## Installing a zip manually
 
-不使用插件市场时，也可以手动下载安装包：
+If you do not use the plugin market, you can also download the package manually:
 
-1. 从插件的「下载最新版」页面下载 zip 安装包。
-2. 进入「系统设置 → 插件」，在「已安装」分栏点击「安装插件」上传 zip 并确认插件已启用。
-3. 安装完所有需要的插件后，重启 SakuraMedia 容器，使 API 和 APS 重新加载插件及其依赖。
-4. Provider 插件安装后，先在「系统设置 → 媒体库」创建媒体库；需要下载时，再创建绑定该媒体库的下载器。
-5. 排行榜、合集判定、字幕和女优资料补全插件的后台任务可在任务中心查看或手动触发。
+1. Download the zip package from the plugin's "Download latest" page.
+2. Go to "System Settings → Plugins", click "Install Plugin" on the "Installed" tab, upload the zip and confirm that the plugin is enabled.
+3. After installing all the plugins you need, restart the SakuraMedia container so that the API and APS reload the plugins and their dependencies.
+4. After installing a provider plugin, first create a media library in "System Settings → Media Library"; when you need downloads, create a download client bound to that media library.
+5. Background tasks from ranking, collection detection, subtitle and actor metadata plugins can be viewed or triggered manually in the Task Center.
 
-::: warning 安全提示
-插件会在 SakuraMedia 后端进程内运行。请只安装可信来源的插件；社区插件未经官方审计，安装前建议先阅读其源码。
+::: warning Security notice
+Plugins run inside the SakuraMedia backend process. Only install plugins from trustworthy sources; community plugins are not audited officially, so read their source before installing.
 :::
 
-本页列出的插件安装或更新后均需重启容器才会生效；官方镜像预装的插件在首次启动时已启用。插件的底层目录和配置项见[配置说明](/guide/config#plugins)，命令行管理方式见[常用命令](/guide/commands#插件管理)。
+Plugins listed on this page take effect only after the container is restarted once installed or updated; the plugins preinstalled in the official image are already enabled on first start. See the [Configuration Reference](/guide/config#plugins) for plugin directories and settings, and [Common Commands](/guide/commands#plugin-management) for command-line management.
 
-## 插件目录
+## Plugin directory
 
-| 插件 | 插件 ID | 用途 | 地址 |
+| Plugin | Plugin ID | Purpose | Links |
 |---|---|---|---|
-| 115 网盘 Provider | `sakuramedia_115_provider` | 接入 115 网盘，提供目录浏览、影片导入、115 离线下载、302/后端代理播放、缩略图和片段。 | [源码](https://github.com/tinypinglite/sakuramedia_115_provider) · [下载最新版](https://github.com/tinypinglite/sakuramedia_115_provider/releases/latest) |
-| 光鸭云盘 Provider | `sakuramedia_guangyapan_provider` | 接入光鸭云盘，提供目录浏览、影片导入、302 直链或后端代理播放、缩略图、片段，以及磁力/种子云添加下载。 | [源码](https://github.com/tinypinglite/sakuramedia_guangyapan_provider) · [下载最新版](https://github.com/tinypinglite/sakuramedia_guangyapan_provider/releases/latest) |
-| 本地存储与 qBittorrent | `sakuramedia_local_provider` | 接入本地媒体目录，提供手动导入、qBittorrent 下载、后端代理播放、缩略图和片段。 | [源码](https://github.com/tinypinglite/sakuramedia_local_provider) · [下载最新版](https://github.com/tinypinglite/sakuramedia_local_provider/releases/latest) |
-| 女优资料补全 | `sakuramedia_actor_metadata` | 从 JavDB 和 MinnanoAV 补全本地女优资料，包括生日、身高、三围、罩杯、出生地、血型和性别。 | [源码](https://github.com/tinypinglite/sakuramedia-actor-metadata) · [下载最新版](https://github.com/tinypinglite/sakuramedia-actor-metadata/releases/latest) |
-| JavBus 元数据 | `sakuramedia_javbus_metadata` | JavDB 未收录时，按番号从 JavBus 补全影片标题、发行日期、时长、片商、演员、标签、封面和剧照等元数据。 | [源码](https://github.com/tinypinglite/sakuramedia_javbus_metadata) · [下载最新版](https://github.com/tinypinglite/sakuramedia_javbus_metadata/releases/latest) |
-| 影片文案抓取与翻译 | `sakuramedia_movie_scrape_translate` | 从 DMM 抓取影片的日文标题和简介，可选翻译成中文后写回影片标题与简介。 | [源码](https://github.com/tinypinglite/sakuramedia_movie_scrape_translate) · [下载最新版](https://github.com/tinypinglite/sakuramedia_movie_scrape_translate/releases/latest) |
-| JavDB 排行榜 | `sakuramedia_javdb_ranking` | 提供 JavDB 热播、高评分、有码、无码、FC2 和 TOP250 榜单，并注册定时同步任务。 | [源码](https://github.com/tinypinglite/sakuramedia_javdb_ranking) · [下载最新版](https://github.com/tinypinglite/sakuramedia_javdb_ranking/releases/latest) |
-| 更多影片榜单 | `sakuramedia_more_rank_movies` | 接入 Minnano AV 和 JavLibrary，提供 Minnano AV 日榜/周榜/月榜以及 JavLibrary 高评价、最想要榜单（上个月/全部），并注册定时同步任务。 | [源码](https://github.com/tinypinglite/sakuramedia_more_rank_movies) · [下载最新版](https://github.com/tinypinglite/sakuramedia_more_rank_movies/releases/latest) |
-| 合集影片判定 | `sakuramedia_judge_collecttion_movie` | 按影片时长和番号前缀自动标记合集影片，不覆盖 App 内的手动判定。 | [源码](https://github.com/tinypinglite/sakuramedia_judge_collecttion_movie) · [下载最新版](https://github.com/tinypinglite/sakuramedia_judge_collecttion_movie/releases/latest) |
-| SubtitleCat 中文字幕 | `sakuramedia_subtitlecat` | 为已有影片抓取 `zh-CN` 字幕，支持手动抓取单部影片和定时处理已订阅影片。 | [源码](https://github.com/tinypinglite/sakuramedia_subtitlecat) · [下载最新版](https://github.com/tinypinglite/sakuramedia_subtitlecat/releases/latest) |
+| 115 Cloud Drive Provider | `sakuramedia_115_provider` | Connects to the 115 cloud drive and provides directory browsing, movie import, 115 offline downloads, 302/backend-proxied playback, thumbnails and clips. | [Source](https://github.com/tinypinglite/sakuramedia_115_provider) · [Download latest](https://github.com/tinypinglite/sakuramedia_115_provider/releases/latest) |
+| Guangyapan Cloud Drive Provider | `sakuramedia_guangyapan_provider` | Connects to the Guangyapan cloud drive and provides directory browsing, movie import, 302 direct-link or backend-proxied playback, thumbnails, clips, and adding magnet/torrent downloads to the cloud. | [Source](https://github.com/tinypinglite/sakuramedia_guangyapan_provider) · [Download latest](https://github.com/tinypinglite/sakuramedia_guangyapan_provider/releases/latest) |
+| Local Storage & qBittorrent | `sakuramedia_local_provider` | Connects to local media directories and provides manual import, qBittorrent downloads, backend-proxied playback, thumbnails and clips. | [Source](https://github.com/tinypinglite/sakuramedia_local_provider) · [Download latest](https://github.com/tinypinglite/sakuramedia_local_provider/releases/latest) |
+| Actor Metadata Completion | `sakuramedia_actor_metadata` | Completes local actor profiles from JavDB and MinnanoAV, including birthday, height, measurements, cup size, birthplace, blood type and gender. | [Source](https://github.com/tinypinglite/sakuramedia-actor-metadata) · [Download latest](https://github.com/tinypinglite/sakuramedia-actor-metadata/releases/latest) |
+| JavBus Metadata | `sakuramedia_javbus_metadata` | When JavDB does not list a movie, fills in its title, release date, runtime, label, cast, tags, cover, stills and other metadata from JavBus by movie number. | [Source](https://github.com/tinypinglite/sakuramedia_javbus_metadata) · [Download latest](https://github.com/tinypinglite/sakuramedia_javbus_metadata/releases/latest) |
+| Movie Text Scraping & Translation | `sakuramedia_movie_scrape_translate` | Scrapes the Japanese title and synopsis of a movie from DMM, and can optionally translate them into Chinese and write them back to the movie title and synopsis. | [Source](https://github.com/tinypinglite/sakuramedia_movie_scrape_translate) · [Download latest](https://github.com/tinypinglite/sakuramedia_movie_scrape_translate/releases/latest) |
+| JavDB Rankings | `sakuramedia_javdb_ranking` | Provides the JavDB trending, top-rated, censored, uncensored, FC2 and TOP250 boards, and registers scheduled sync tasks. | [Source](https://github.com/tinypinglite/sakuramedia_javdb_ranking) · [Download latest](https://github.com/tinypinglite/sakuramedia_javdb_ranking/releases/latest) |
+| More Movie Rankings | `sakuramedia_more_rank_movies` | Connects to Minnano AV and JavLibrary, providing the Minnano AV daily/weekly/monthly boards and the JavLibrary top-rated and most-wanted boards (last month/all time), and registers scheduled sync tasks. | [Source](https://github.com/tinypinglite/sakuramedia_more_rank_movies) · [Download latest](https://github.com/tinypinglite/sakuramedia_more_rank_movies/releases/latest) |
+| Detect collection movies by duration, number pattern or tag | `sakuramedia_judge_collecttion_movie` | Automatically flags collection movies based on movie runtime and movie number prefix, without overriding manual flags made in the app. | [Source](https://github.com/tinypinglite/sakuramedia_judge_collecttion_movie) · [Download latest](https://github.com/tinypinglite/sakuramedia_judge_collecttion_movie/releases/latest) |
+| SubtitleCat Chinese Subtitles | `sakuramedia_subtitlecat` | Fetches `zh-CN` subtitles for existing movies, supporting manual fetching for a single movie and scheduled processing of subscribed movies. | [Source](https://github.com/tinypinglite/sakuramedia_subtitlecat) · [Download latest](https://github.com/tinypinglite/sakuramedia_subtitlecat/releases/latest) |
 
-## 怎么选
+## How to choose
 
-- 官方镜像已预装「本地存储与 qBittorrent」，首次部署直接创建媒体库即可，适合本机或 NAS 挂载目录；需要自动下载时再配置 qBittorrent，需要 115 离线下载时再从插件市场安装「115 网盘 Provider」。
-- 排行榜、合集判定、字幕、女优资料补全、JavBus 元数据和影片文案抓取与翻译插件可以按需独立安装，不决定媒体的存储方式。
-- 影片文案抓取与翻译需要容器能访问 DMM（通常需日本 IP 或代理），启用翻译时还需配置兼容 `chat_completions` 的大模型 API。
-- JavBus 元数据只在 JavDB 明确未收录影片时补缺，不会替换 JavDB 作为主数据源。
-- JavDB 排行榜只有 TOP250 需要配置 JavDB 账号，其余榜单无需账号也能同步。
-- SubtitleCat 当前只抓取中文字幕，且影片必须已经存在于 SakuraMedia。
+- The official image already includes "Local Storage & qBittorrent", so on a first deployment you can create a media library right away; it suits local or NAS-mounted directories. Configure qBittorrent when you want automatic downloads, and install "115 Cloud Drive Provider" from the plugin market when you want 115 offline downloads.
+- Ranking, collection detection, subtitle, actor metadata, JavBus metadata and movie text scraping & translation plugins can be installed independently as needed; they do not determine how media is stored.
+- Movie text scraping & translation requires the container to reach DMM (usually a Japanese IP or a proxy is needed); when translation is enabled, you also need an LLM API compatible with `chat_completions`.
+- JavBus metadata only fills gaps when JavDB explicitly does not list a movie; it does not replace JavDB as the primary data source.
+- On the JavDB rankings, only TOP250 requires a JavDB account; the other boards can be synced without an account.
+- SubtitleCat currently only fetches Chinese subtitles, and the movie must already exist in SakuraMedia.
 
-## 配套服务不是插件
+## Companion services are not plugins
 
-SigLIP2 嵌入服务和 SakuraMedia Torznab Server 是独立部署的配套服务，不能从「系统设置 → 插件」安装，因此不列入本页。
+The SigLIP2 embedding service and the SakuraMedia Torznab Server are companion services deployed separately. They cannot be installed from "System Settings → Plugins", so they are not listed on this page.

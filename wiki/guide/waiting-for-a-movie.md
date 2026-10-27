@@ -2,48 +2,48 @@
 outline: [2, 3]
 ---
 
-# 有空的时候，想看的已经在了
+# When you have time, what you want to watch is already there
 
-有时看到一部感兴趣的影片，它还没有上映。我会先订阅下来，等之后有了合适的资源，让系统自动下载、导入。
+Sometimes I see a movie I'm interested in, but it hasn't been released yet. I subscribe to it first, and later, when a suitable source appears, let the system download and import it automatically.
 
-这样就不用记着上映日期，也不用隔几天去搜一次。有空打开媒体库时，再看看之前订阅的影片有哪些已经可以看了。
+That way I don't have to remember the release date, or search every few days. When I have time to open the media library, I can see which of the movies I subscribed to are ready to watch.
 
-这是我使用订阅和自动下载最主要的方式。
+This is the main way I use subscriptions and auto-download.
 
-## 感兴趣的影片，先订阅下来
+## Subscribe to movies you're interested in first
 
-发现新片的途径有很多。可能是喜欢的女优公布了新作，也可能是浏览影片时，看了封面和介绍，觉得这部可以看看。
+There are many ways to find new movies. Maybe an actor I like announced a new work, or while browsing movies, I looked at the cover and description and thought this one was worth a look.
 
-<Screenshot src="/images/readme/desktop-discover.png" alt="SakuraMedia 发现页" caption="女优上新、热门新片和今日推荐，都可以作为订阅的起点。" />
+<Screenshot src="/images/readme/desktop-discover.png" alt="SakuraMedia discover page" caption="New releases from actors, popular new movies, and today's recommendations can all be starting points for a subscription." />
 
-如果还没上映，或者暂时没有资源，就先订阅。现在已经有资源、但没有时间观看的影片，也可以这样处理。
+If it hasn't been released yet, or there's no source for now, subscribe first. Movies that already have a source but I have no time to watch can be handled the same way.
 
-我不需要在发现它的那一刻，把搜索、下载和观看都安排好。先记下想看哪一部，后面的事情可以慢慢完成。
+I don't need to arrange searching, downloading, and watching the moment I discover it. I just note down which one I want to watch, and the rest can be done slowly.
 
-## 喜欢的女优，持续关注新作
+## Keep following new releases from actors you like
 
-有些女优的作品，我会经常看。比起每次想起来再搜一下，订阅女优更方便。
+Some actors' work I watch often. Rather than searching each time I think of it, subscribing to the actor is more convenient.
 
-系统会定期同步已订阅女优的作品资料。我可以从「女优上新」里看看她们最近出了什么，再订阅其中想看的影片，让这些影片进入后续的自动下载流程。订阅女优不会主动订阅她的作品。
+The system periodically syncs the work data of subscribed actors. I can check what they've released recently under "new releases from actors", then subscribe to the movies I want to watch, bringing them into the later auto-download flow. Subscribing to an actor does not automatically subscribe to her works.
 
-如果只是对某一部感兴趣，订阅那部影片就够了；想持续关注她之后的作品，再订阅女优。按自己的观看习惯来就好。
+If I'm only interested in one movie, subscribing to that movie is enough; if I want to keep following her future works, then subscribe to the actor. Just follow your own viewing habits.
 
-## 下载和入库，交给系统接着做
+## Let the system handle downloading and importing
 
-找到资源、提交下载、等下载完成，再导入媒体库，这些步骤每次都差不多。我希望配置好之后，就不用一直手动接着做。
+Finding a source, submitting the download, waiting for it to finish, then importing into the media library—these steps are much the same every time. I want to configure it once and not keep manually picking it up.
 
-在索引器、下载器、目标媒体库和相关自动任务配置好之后，系统会定期为已订阅、还没有可播放媒体的影片寻找资源。找到符合条件的资源，就提交下载；下载完成后，再自动导入媒体库。
+Once the indexers, download clients, target media library, and related automatic tasks are configured, the system periodically looks for sources for subscribed movies that don't yet have playable media. When a matching source is found, it submits the download; after the download completes, it imports into the media library automatically.
 
-影片上映后不一定马上就有可用资源，下载和导入也可能遇到问题。所以订阅并不保证上映当天就能看，具体进度和失败原因可以到任务中心查看。
+A movie may not have a usable source right after release, and downloads and imports can run into problems. So a subscription doesn't guarantee you can watch on release day; you can check specific progress and failure reasons in the Task Center.
 
-正常情况下，我只需要先选好想看的影片，等有空时打开媒体库，看看哪些已经准备好了。想看的时候，可以直接开始，不必临时再去等下载。
+Normally, I just need to pick the movies I want to watch first, then open the media library when I have time and see which ones are ready. When I feel like watching, I can start right away instead of waiting for a download on the spot.
 
-## 看过之后，再决定留下什么
+## After watching, decide what to keep
 
-订阅的时候，我只是觉得这部影片值得看看，还不知道自己会不会喜欢。
+When subscribing, I only thought the movie was worth a look; I didn't know yet whether I'd like it.
 
-下载下来之后，可以先浏览缩略图，挑感兴趣的地方看，也可以从头慢慢观看。看过之后，再决定是保留整部、标记几个时刻，还是把喜欢的一段做成切片。
+After downloading, I can browse the thumbnails first and pick the parts I'm interested in, or watch slowly from the beginning. After watching, I decide whether to keep the whole thing, mark a few moments, or turn the part I like into a clip.
 
-没有那么喜欢的，也可以在整理空间时清理掉。不必因为订阅过、下载过，就一直留着。
+If I don't like it that much, I can clean it up when organizing space. I don't have to keep it forever just because I subscribed and downloaded it.
 
-对我来说，这样的过程比较顺手：发现感兴趣的影片时先订阅，资源可用后自动下载入库，有空再看，最后留下自己真正喜欢的内容。
+For me, this process is quite smooth: subscribe when I discover a movie I'm interested in, let it download and import automatically once a source is available, watch when I have time, and finally keep what I truly like.

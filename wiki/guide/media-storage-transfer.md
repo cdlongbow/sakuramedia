@@ -2,53 +2,53 @@
 outline: [2, 3]
 ---
 
-# 媒体存储迁移
+# Media Storage Migration
 
-当本地或 NAS 媒体库空间不足、希望将已入库内容迁入另一种存储时，不必删除后重新导入。媒体存储迁移会把选中的媒体批量迁到支持的目标媒体库，同时保留原来的媒体记录。
+When a local or NAS media library runs out of space, or you want to move already-imported content to a different kind of storage, you do not have to delete it and import it again. Media storage migration moves the selected media to a supported target media library in bulk while keeping the original media records.
 
-简单说：**换的是媒体实际存放的位置，不是 SakuraMedia 里的那条媒体。**
+In short: **what changes is where the media actually lives, not the media entry in SakuraMedia.**
 
-因此，媒体 ID、影片归属、播放进度、缩略图、时刻和片段等已有关联都会继续保留；迁移完成后，列表、详情页和活动中心仍指向同一项媒体。
+So the media ID, movie association, playback progress, thumbnails, moments, clips and other existing associations all stay intact; after migration, lists, detail pages and the Activity Center still point at the same media.
 
-## 当前支持范围
+## What is supported today
 
-迁移能力由源和目标媒体库所属的 Provider 共同决定。界面只会列出能够安全完成迁移的目标库；没有可用目标时会给出提示。
+Migration capabilities are determined jointly by the providers of the source and target media libraries. The interface only lists target libraries that can complete a migration safely, and shows a hint when there is no available target.
 
-官方当前实现首先覆盖 **本地存储媒体库 → 115 网盘媒体库**：
+The official implementation currently covers **local storage media library → 115 cloud drive media library** first:
 
-- 目标端只使用 115 秒传，不回退为普通上传；115 未命中时会跳过该文件，源文件和原媒体记录保持不变。
-- 迁移前会计算并核验文件大小与 SHA-1；115 返回目标后还会再次确认目标的名称、大小、哈希和目录可见性。
-- 只有目标确认可用后，系统才会将原媒体记录切换到目标媒体库，并清理本地媒体库中的对应文件链接。
+- The target side only uses 115's instant upload and does not fall back to a normal upload; when 115 does not hit, that file is skipped and both the source file and the original media record stay unchanged.
+- Before migrating, file size and SHA-1 are computed and verified; after 115 returns a target, the target's name, size, hash and directory visibility are confirmed once more.
+- Only after the target is confirmed usable does the system switch the original media record to the target media library and clean up the corresponding file link in the local media library.
 
-这不是备份、同步或双向镜像功能。它的目标是安全地完成一次“换库”；其他 Provider 将来可在实现相同迁移能力后接入。
+This is not a backup, sync or two-way mirror feature. Its goal is to complete a one-time "library switch" safely; other providers can join in the future once they implement the same migration capability.
 
-## 如何使用
+## How to use it
 
-1. 先创建并确认源、目标媒体库均可正常使用。本地迁往 115 时，需要使用支持迁移能力的 SakuraMedia、Local Provider 和 115 Provider 版本。
-2. 进入媒体管理，在**同一个源媒体库**中勾选需要迁移的媒体。
-3. 点击「迁移」，从可用的目标媒体库中选择一项并提交。
-4. 到活动中心查看进度和结果。任务会分别显示「已迁移」「已跳过」「迁移失败」「源文件待确认」与「未执行」的数量。
+1. First create and confirm that both the source and target media libraries work normally. To migrate from local to 115, you need SakuraMedia, Local Provider and 115 Provider versions that support migration.
+2. Open media management and select the media to migrate **within the same source media library**.
+3. Click "Migrate", choose one of the available target media libraries and submit.
+4. Check progress and results in the Activity Center. The task reports separate counts for "Migrated", "Skipped", "Failed", "Source file unconfirmed" and "Not run".
 
-迁移按项串行执行。已成功的项目会保留结果；如果后续某一项遇到文件变化、库忙、网络或清理异常，任务会停止，而不会把尚未处理的项目冒险继续下去。
+Migration runs items serially. Items that succeeded keep their results; if a later item runs into a changed file, a busy library, a network error or a cleanup error, the task stops instead of risking the items that have not been processed yet.
 
-## 会保留什么
+## What is preserved
 
-迁移不会新建一条“目标媒体”，而是更新原媒体的存储归属和存储引用。因此下列信息保持关联：
+Migration does not create a new "target media" entry; it updates the storage ownership and storage reference of the original media. So the following stay associated:
 
-- 影片或普通视频的归属、媒体 ID 和已保存的元数据；
-- 播放进度、缩略图、时刻、片段和片段合集；
-- 影片级字幕记录，以及图片搜索和推荐等依赖该媒体记录的数据。
+- The movie or regular video association, media ID and saved metadata;
+- playback progress, thumbnails, moments, clips and clip collections;
+- movie-level subtitle records, plus data that depends on this media record such as image search and recommendations.
 
-内嵌字幕随视频字节进入目标端；单独管理的外挂字幕记录不会被上传。已有片段文件也不会随这次迁移移动。
+Embedded subtitles travel with the video bytes into the target; separately managed external subtitle records are not uploaded. Existing clip files are not moved by this migration either.
 
-## 安全边界与注意事项
+## Safety boundaries and caveats
 
-- 迁移期间，源和目标媒体库的配置、扫描及插件管理会与迁移互斥；请不要同时修改这两个媒体库、升级或卸载 Provider。
-- 系统只清理**媒体库内的那条源文件链接**，不会递归删除目录，也不会删除下载器任务或管理做种关系。
-- 如果媒体库文件和下载目录是硬链接，删掉媒体库链接未必释放磁盘空间；如果两者本来就是同一文件路径，清理会影响下载器。请在迁移前确认自己的目录和做种策略。
-- 任务中断或源文件清理结果无法确认时，系统不会自动重试、反向迁移或猜测文件状态。活动中心会如实标为“源文件待确认”，需要自行检查处理。
-- 正在播放的本地视频不保证无缝切换；迁移后如需继续播放，请重新打开该媒体。
+- During migration, configuration, scanning and plugin management of the source and target media libraries are mutually exclusive with the migration; do not modify these two media libraries, upgrade providers or uninstall providers at the same time.
+- The system only cleans up **that one source file link inside the media library**; it does not recursively delete directories, delete download client tasks or manage seeding relationships.
+- If the media library file and the download directory are hard links, removing the media library link may not free disk space; if they are literally the same file path, the cleanup affects the download client. Confirm your directory and seeding strategy before migrating.
+- When a task is interrupted or the source file cleanup result cannot be confirmed, the system does not retry automatically, migrate back or guess the file state. The Activity Center honestly marks it as "Source file unconfirmed", and you need to inspect and handle it yourself.
+- A local video that is currently playing is not guaranteed to switch seamlessly; if you want to keep watching after migration, reopen that media.
 
 ::: tip
-建议先选少量非关键媒体验证存储 Provider、115 账号和目录配置，再迁移整批内容。
+Start by migrating a few non-critical items to verify the storage provider, the 115 account and the directory configuration, then migrate the whole batch.
 :::

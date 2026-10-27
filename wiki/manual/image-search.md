@@ -1,43 +1,43 @@
-# 从一张画面发现更多内容
+# Discover more from a single frame
 
-以图搜图适合这样的情况：你喜欢眼前的场景，却不容易用番号、演员或标签描述它。用这张图作为线索，可以寻找系统中已经建立索引的相似画面。
+Search by image suits a situation like this: you like the scene in front of you, but describing it with a movie number, actor or tag is not easy. Using that image as a clue, you can look for similar frames that are already indexed in the system.
 
-## 开始前需要什么
+## What you need first
 
-系统需要有可搜索的图片、可用的嵌入服务和向量索引。媒体缩略图要先生成，再建立索引；剧情图也有对应索引任务。
+The system needs searchable images, a working embedding service and a vector index. Media thumbnails have to be generated before they can be indexed; plot images have their own indexing task too.
 
-首次使用时，在「概览」检查相关组件，在任务中心检查「媒体缩略图生成」「以图搜图缩略图向量索引」和「以图搜图剧情图向量索引」。服务部署说明见[进阶部署](/guide/docker)。
+On first use, check the relevant components on the "Overview" page, and check "Media thumbnail generation", "Search-by-image thumbnail vector index" and "Search-by-image plot image vector index" in the task center. See [Advanced deployment](/guide/docker) for deploying the services.
 
-这项功能搜索的是系统已建立索引的图片，不会替你搜索整个互联网。
+This feature searches images already indexed by the system; it does not search the whole internet for you.
 
-## 从喜欢的缩略图开始
+## Start from a thumbnail you like
 
-1. 打开影片的缩略图面板，找到感兴趣的画面。
-2. 打开该图片的操作菜单，选择「相似图片」。
-3. 在以图搜图页面查看结果，按需要调整范围和筛选。
-4. 打开感兴趣的结果查看详情；具备可播放来源的缩略图结果，可以跳到对应时间继续观看。
+1. Open a movie's thumbnail panel and find a frame you are interested in.
+2. Open that image's action menu and choose "Similar images".
+3. Review the results on the search-by-image page and adjust the scope and filters as needed.
+4. Open a result you are interested in to view details; thumbnail results with a playable source can jump to the matching time and keep playing.
 
-<Screenshot src="/images/readme/thumbnail-menu.png" alt="缩略图操作菜单" caption="从缩略图菜单选择「相似图片」发起搜索。" />
+<Screenshot src="/images/readme/thumbnail-menu.png" alt="Thumbnail action menu" caption="Start a search from the thumbnail menu with 'Similar images'." />
 
-<Screenshot src="/images/readme/desktop-image-search.png" alt="SakuraMedia 以图搜图结果页" caption="以图搜图和文字搜图共用结果页，按相似度排序。" />
+<Screenshot src="/images/readme/desktop-image-search.png" alt="SakuraMedia search-by-image results page" caption="Search by image and search by text share the results page, ordered by similarity." />
 
-影片剧情图的操作菜单也可以发起相似图片搜索。图片相似并不代表有同样的演员、情节或内容，需要自己查看结果。
+The action menu on a movie's plot images can also start a similar-image search. Similar images do not mean the same actors, story or content; check the results yourself.
 
-## 结果能看图，为什么不能直接播放
+## The result shows an image, so why can it not play
 
-搜索结果可能来自不同类型的图片。剧情图不一定对应一个可跳转的媒体时间点，影片资料也可能尚未关联媒体。
+Search results can come from different kinds of images. A plot image does not necessarily map to a seekable point in a media item, and a movie record may not be linked to media yet.
 
-因此，有图片结果不等于拥有视频。先打开对应影片详情，检查媒体是否可用；需要获取影片时再订阅。
+So having an image result does not mean having the video. Open the corresponding movie details and check whether media is available; subscribe if you need to obtain the movie.
 
-## 没有结果或结果很少
+## No results or very few results
 
-按顺序检查：
+Check in order:
 
-1. 系统是否已有足够的图片和媒体。
-2. 缩略图是否生成成功。
-3. 对应的图片索引任务是否完成。
-4. 搜索范围和筛选条件是否过窄。
+1. Whether the system already has enough images and media.
+2. Whether thumbnails were generated successfully.
+3. Whether the corresponding image indexing task finished.
+4. Whether the search scope and filters are too narrow.
 
-索引是后台任务，刚导入的内容可能尚未出现在搜索结果中。重复发起搜索不能代替索引生成。
+Indexing is a background task, so newly imported content may not appear in results yet. Repeating a search cannot replace index generation.
 
-找到喜欢的画面后，可以[标记时刻或创建切片](./collections)，方便以后回来。
+Once you find a frame you like, you can [mark a moment or create a clip](./collections) to come back to it later.

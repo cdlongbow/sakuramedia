@@ -2,37 +2,37 @@
 outline: [2, 3]
 ---
 
-# 容器路径与硬链接
+# Container Paths and Hard Links
 
-这页解决两件事：
+This page answers two questions:
 
-1. **导入已有影片**：宿主机上的影片目录怎么映射进容器，来源浏览器才能看到。
-2. **自动下载**：qBittorrent 和 SakuraMedia 的下载路径怎么填。
+1. **Importing existing movies**: how to map the movie directory on the host into the container so the source browser can see it.
+2. **Automatic downloading**: which paths to enter for qBittorrent and SakuraMedia.
 
-先记住一句话：**配置里填的是容器内路径，不是宿主机路径。宿主机目录必须先挂进容器。**
+Remember one sentence first: **configuration takes paths inside the container, not paths on the host. A host directory must be mounted into the container first.**
 
-## `/data` 和 `/media`
+## `/data` and `/media`
 
-| 容器路径 | 用途 | 谁在用 |
+| Container path | Purpose | Used by |
 |---|---|---|
-| `/data` | 后端运行数据：配置、日志、插件、缓存、切片 | SakuraMedia |
-| `/media` | 媒体数据：已有影片、媒体库、下载 | SakuraMedia；自动下载时 qBittorrent 也会挂载下载子目录 |
+| `/data` | Backend runtime data: configuration, logs, plugins, cache, clips | SakuraMedia |
+| `/media` | Media data: existing movies, media libraries, downloads | SakuraMedia; with automatic downloading, qBittorrent also mounts the download subdirectory |
 
-`config.toml` 里的 `/data/...` 是后端自己的运行数据；媒体库路径和手动导入根目录在系统设置里填，通常用 `/media/...`。两者不要混。
+The `/data/...` paths in `config.toml` are the backend's own runtime data; the media library path and the manual import root are entered in System Settings and usually use `/media/...`. Do not mix the two.
 
-## 导入已有影片：目录怎么映射
+## Importing existing movies: how directories map
 
-### 推荐布局
+### Recommended layout
 
-宿主机：
+Host:
 
 ```text
 ${STORAGE_ROOT}/
-├── av/          # 已有影片（示例名，换成你的实际目录）
-└── library/     # SakuraMedia 媒体库
+├── av/          # Existing movies (example name; use your own directory)
+└── library/     # SakuraMedia media library
 ```
 
-容器挂载：
+Container mounts:
 
 ```yaml
 volumes:
@@ -40,18 +40,18 @@ volumes:
   - ${STORAGE_ROOT}:/media
 ```
 
-媒体库表单：
+Media library form:
 
-| 字段 | 填写 | 对应宿主机 |
+| Field | Value | Host equivalent |
 |---|---|---|
-| 媒体库路径 | `/media/library` | `${STORAGE_ROOT}/library` |
-| 手动导入根目录 | `/media/av` | `${STORAGE_ROOT}/av` |
+| Media library path | `/media/library` | `${STORAGE_ROOT}/library` |
+| Manual import root | `/media/av` | `${STORAGE_ROOT}/av` |
 
-`/media/av` 是容器内路径。已有影片目录没有挂进容器时，来源浏览器里看不到它，也无法导入。
+`/media/av` is a path inside the container. If the existing movies directory is not mounted into the container, the source browser cannot see it and you cannot import from it.
 
-### 为什么不要分别挂子目录
+### Why not mount the subdirectories separately
 
-错误示例：
+Incorrect example:
 
 ```yaml
 # SakuraMedia
@@ -60,126 +60,126 @@ volumes:
   - ${STORAGE_ROOT}/library:/media/library
 ```
 
-看起来都在 `/media` 下，但 Docker 会把它们当成两个独立的挂载点。导入时选择「保留源文件」无法跨挂载点创建硬链接，只能复制文件。
+They look like they are both under `/media`, but Docker treats them as two independent mount points. When importing with "Keep source file", a hard link cannot be created across mount points, so files are copied instead.
 
-正确做法是只挂父目录：
+The correct approach is to mount only the parent directory:
 
 ```yaml
 volumes:
   - ${STORAGE_ROOT}:/media
 ```
 
-这样 `/media/av` 和 `/media/library` 在同一个挂载点下，硬链接才能工作。
+Now `/media/av` and `/media/library` are on the same mount point, and hard links work.
 
-### 已有影片在别的目录或磁盘
+### Existing movies elsewhere or on another disk
 
-- **已有影片和媒体库在同一个父目录下**：挂父目录即可，硬链接可用。
-- **已有影片在另一个目录**：把它挂到 `/media/av`，媒体库挂到 `/media/library`。导入仍然可用，但两个目录是不同挂载点，「保留源文件」会复制文件。
-- **已有影片分散在多个目录**：把它们的共同父目录挂到 `/media/av`，手动导入根目录填 `/media/av`，再在来源浏览器里选择子目录。
-- **已有影片在另一个磁盘或网络存储**：同样挂到 `/media/av`。跨文件系统无法硬链接，导入会复制文件。
-- **文件已经整理好、不想复制**：使用「原地导入」。原地导入不依赖硬链接，只要源文件在容器里可见即可。
+- **Existing movies and media library under the same parent directory**: mount the parent directory and hard links are available.
+- **Existing movies in another directory**: mount it at `/media/av` and the media library at `/media/library`. Import still works, but the two directories are different mount points, so "Keep source file" copies files.
+- **Existing movies spread across several directories**: mount their common parent at `/media/av`, set the manual import root to `/media/av`, and then pick subdirectories in the source browser.
+- **Existing movies on another disk or network storage**: mount it at `/media/av` the same way. Hard links do not work across filesystems, so the import copies files.
+- **Files are already organized and you do not want to copy them**: use "Import in place". It does not rely on hard links; the source file only has to be visible inside the container.
 
-## 三种导入方式
+## The three import modes
 
-| 方式 | 实际行为 | 源文件 | 适合 |
+| Mode | What actually happens | Source file | Best for |
 |---|---|---|---|
-| 保留源文件 | 优先硬链接；不能硬链接时复制 | 保留 | 同一挂载点，想省空间、保持做种 |
-| 导入成功后删除源文件 | 复制到媒体库，成功后删除源文件（效果等同移动） | 删除 | 不想保留原件 |
-| 原地导入 | 不复制也不硬链接，媒体直接引用源文件 | 不动 | 文件已整理好，不想动 |
+| Keep source file | Prefers a hard link; copies when a hard link is not possible | Kept | Same mount point, saving space and keeping the torrent seeding |
+| Delete source file after import | Copies into the media library and deletes the source file on success (effectively a move) | Deleted | You do not want to keep the original |
+| Import in place | No copy and no hard link; the media references the source file directly | Untouched | Files are already organized and you do not want to touch them |
 
-### 保留源文件
+### Keep source file
 
-- 同一挂载点且文件系统支持硬链接：导入几乎瞬间完成，不占额外空间。
-- 不能硬链接：自动复制，导入会慢一些，并占用双倍空间。
-- 硬链接的两个文件名指向同一份数据。删除其中一个文件名，另一个仍可用；修改文件内容会影响两边。
+- Same mount point and a filesystem that supports hard links: the import finishes almost instantly and uses no extra space.
+- Hard link not possible: files are copied automatically, the import is slower, and it uses twice the space.
+- Two hard-linked names point at the same data. Deleting one name leaves the other usable; modifying the file content affects both.
 
-### 导入成功后删除源文件
+### Delete source file after import
 
-- 先复制到媒体库，导入成功后再删除源文件。
-- 导入期间会临时占用双倍空间；跨文件系统也能用。
-- 效果类似移动，但不是原子移动；源文件在导入成功前仍然存在。
+- The file is copied into the media library first, and the source is deleted after a successful import.
+- It temporarily uses twice the space during the import, and it also works across filesystems.
+- The effect is similar to a move, but it is not an atomic move; the source file still exists until the import succeeds.
 
-### 原地导入
+### Import in place
 
-- 只支持从「手动导入目录」来源导入。
-- 不复制也不建立硬链接，媒体直接引用源文件当前位置。
-- 之后移动、重命名或修改源文件，媒体会失效。
-- 删除 SakuraMedia 中的媒体记录不会删除源文件。
+- Only supported when importing from a "manual import directory" source.
+- Nothing is copied and no hard link is created; the media references the source file at its current location.
+- If the source file is later moved, renamed or modified, the media becomes broken.
+- Deleting the media record in SakuraMedia does not delete the source file.
 
-## 自动下载时的 qBittorrent 路径
+## qBittorrent paths for automatic downloading
 
-这节只在配置自动下载时需要。只导入已有影片可以跳过。
+This section is only needed when you configure automatic downloading. Skip it if you only import existing movies.
 
-### qBittorrent 和 SakuraMedia 都用 Docker
+### qBittorrent and SakuraMedia both run in Docker
 
-qBittorrent 只需要看到下载目录：
+qBittorrent only needs to see the download directory:
 
 ```yaml
 volumes:
   - ${STORAGE_ROOT}/downloads:/media/downloads
 ```
 
-SakuraMedia 已经挂载 `${STORAGE_ROOT}:/media`，所以两边看到的都是 `/media/downloads`。在 qBittorrent 的默认保存路径中也填 `/media/downloads`，下载器两个根目录都填 `/media/downloads`。
+SakuraMedia already mounts `${STORAGE_ROOT}:/media`, so both sides see `/media/downloads`. Enter `/media/downloads` as qBittorrent's default save path, and `/media/downloads` for both root directories of the download client.
 
-### qBittorrent 是 NAS 套件，路径改不了
+### qBittorrent is a NAS package and its paths cannot be changed
 
-qBittorrent 看到的是宿主机路径，例如 `/volume1/downloads`。SakuraMedia 把下载目录和媒体库的共同父目录挂到 `/media`：
+qBittorrent sees host paths, for example `/volume1/downloads`. Mount the common parent of the download directory and the media library into `/media` in SakuraMedia:
 
 ```yaml
 volumes:
   - /volume1:/media
 ```
 
-下载器填写：
+Enter in the download client:
 
 ```text
-qBittorrent 保存根目录  /volume1/downloads
-后端下载根目录          /media/downloads
+qBittorrent save root   /volume1/downloads
+Backend download root   /media/downloads
 ```
 
-只要 `/volume1/downloads` 和 `/media/downloads` 是同一个目录，映射测试就会通过。媒体库和下载目录都在 `/volume1` 下时，硬链接仍然可用。
+As long as `/volume1/downloads` and `/media/downloads` are the same directory, the mapping test passes. When the media library and the download directory are both under `/volume1`, hard links still work.
 
-自动下载的完整配置步骤见[自动下载与索引器](/guide/auto-download)。
+See [Auto-Download and Indexers](/guide/auto-download) for the full automatic download setup.
 
-## 验证
+## Verification
 
-### 导入已有影片
+### Importing existing movies
 
-- 来源浏览器能看到 `/media/av` 下的文件。
-- 任务中心的导入任务成功。
-- 影片详情出现媒体，能播放。
+- The source browser shows the files under `/media/av`.
+- The import task in the Task Center succeeds.
+- The movie detail page shows media that plays.
 
-### 下载器「测试配置」
+### Download client "Test Configuration"
 
-保存下载器前点「测试配置」，会检查：
+Click "Test Configuration" before saving the download client; it checks:
 
-- qBittorrent 连接和认证；
-- 两个下载根目录是否指向同一个物理目录；
-- 下载目录和媒体库是否能创建硬链接。
+- qBittorrent connectivity and authentication;
+- whether the two download root directories point at the same physical directory;
+- whether the download directory and the media library can create hard links.
 
-连接和目录映射都通过再保存。硬链接显示警告时仍可保存，但导入会复制文件。
+Save only after both connectivity and directory mapping pass. If hard links show a warning you can still save, but imports will copy files.
 
-### 手动检查硬链接
+### Checking hard links manually
 
-在宿主机执行：
+Run this on the host:
 
 ```bash
 ls -alhi /path/to/library /path/to/av
 ```
 
-在输出中找到同一个文件，两个硬链接应该有相同的 inode，链接计数至少为 2。
+Find the same file in the output; the two hard links should share an inode and the link count should be at least 2.
 
-## 常见错误
+## Common errors
 
-| 现象 | 常见原因 | 处理 |
+| Symptom | Common cause | Fix |
 |---|---|---|
-| 来源浏览器看不到已有影片 | 目录没有挂进容器；手动导入根目录填错 | 检查 compose 挂载和媒体库的手动导入根目录 |
-| 保留源文件很慢、磁盘占用翻倍 | 两个目录不在同一个挂载点；文件系统不支持硬链接 | 改成一个父目录挂载；换 ext4/btrfs/xfs 等支持硬链接的文件系统 |
-| 原地导入后媒体失效 | 源文件被移动、重命名或修改 | 保持源文件位置和内容不变 |
-| 下载器提示两个路径没有映射到同一目录 | qB 和后端的根目录不是同一个物理目录 | 对照上面的 qB 映射表，检查两端挂载 |
-| 权限错误 | PUID/PGID 与目录属主不一致 | 统一 PUID/PGID，或确保 SakuraMedia 能读写 `${STORAGE_ROOT}`；自动下载时 qB 也要能读写下载目录 |
-| 路径配置被拒绝 | 路径中包含符号链接 | 使用真实目录，不要用符号链接指向媒体目录 |
+| The source browser does not show existing movies | The directory is not mounted into the container; the manual import root is wrong | Check the compose mounts and the media library's manual import root |
+| Keep source file is slow and disk usage doubles | The two directories are on different mount points; the filesystem does not support hard links | Mount a single parent directory; switch to a filesystem that supports hard links such as ext4/btrfs/xfs |
+| Media breaks after importing in place | The source file was moved, renamed or modified | Keep the source file's location and content unchanged |
+| The download client reports that the two paths are not mapped to the same directory | The root directories in qB and the backend are not the same physical directory | Check both mounts against the qB mapping table above |
+| Permission errors | PUID/PGID do not match the directory owner | Align PUID/PGID, or make sure SakuraMedia can read and write `${STORAGE_ROOT}`; for automatic downloading, qB must also be able to read and write the download directory |
+| The path configuration is rejected | The path contains a symbolic link | Use the real directory instead of a symlink pointing at the media directory |
 
-## 115 和其他 provider
+## 115 and other providers
 
-以上规则只适用于本地存储 + qBittorrent。115 网盘 Provider 不使用本地媒体目录和硬链接，按[推荐插件](/guide/plugins)中的 115 插件说明配置即可。
+The rules above only apply to local storage + qBittorrent. The 115 cloud drive provider does not use local media directories or hard links; configure it as described in the 115 plugin section of [Recommended Plugins](/guide/plugins).

@@ -24,7 +24,7 @@ type HomeCopy = {
 }
 
 const copy: Record<string, HomeCopy> = {
-  root: {
+  'zh-CN': {
     demoEyebrow: '产品演示 · 45 秒',
     demoTitle: '看一遍完整流程',
     demoNote: '演示数据，封面与缩略图已虚化；视频无旁白。',
@@ -49,7 +49,7 @@ const copy: Record<string, HomeCopy> = {
     previewCaption: '截图使用演示数据，封面与缩略图已虚化。',
     previewLink: '从使用手册开始 →',
   },
-  en: {
+  root: {
     demoEyebrow: 'Product demo · 45 seconds',
     demoTitle: 'Watch the whole flow once',
     demoNote: 'Demo data: posters and thumbnails are blurred, and the video has no narration.',
@@ -84,11 +84,15 @@ const text = computed(() => copy[localeIndex.value] ?? copy.root)
 const previewImage = withBase('/images/readme/home-hero.jpg')
 
 const storyLink = computed(() =>
-  withBase(localeIndex.value === 'en' ? '/en/guide/collection-strategy' : '/guide/collection-strategy'),
+  withBase(
+    localeIndex.value === 'root'
+      ? '/guide/collection-strategy'
+      : '/zh-CN/guide/collection-strategy',
+  ),
 )
 
 const manualLink = computed(() =>
-  withBase(localeIndex.value === 'en' ? '/en/manual/' : '/manual/'),
+  withBase(localeIndex.value === 'root' ? '/manual/' : '/zh-CN/manual/'),
 )
 </script>
 

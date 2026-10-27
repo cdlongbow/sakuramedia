@@ -1,62 +1,62 @@
-# 认识 SakuraMedia 的使用方式
+# How SakuraMedia works
 
-SakuraMedia 将发现、订阅、下载、观看和收藏连在一起。你可以先选出想看的影片，让系统持续寻找资源；也可以把已有文件导入，再慢慢观看和整理。
+SakuraMedia links discovery, subscription, download, watching and collecting together. You can pick the movies you want first and let the system keep looking for resources; or import files you already have, then watch and organize them over time.
 
-## 资料、媒体和媒体库
+## Records, media and media libraries
 
-| 名称 | 保存的内容 | 你可以做什么 |
+| Name | What it holds | What you can do |
 | --- | --- | --- |
-| 影片资料 | 番号、标题、封面、女优、标签等 | 浏览、搜索、订阅，决定是否想看 |
-| 媒体 | 与影片关联的实际视频文件及播放信息 | 播放、查看缩略图、选择版本 |
-| 媒体库 | 媒体存放位置及存储配置 | 将文件交给对应存储管理和播放 |
+| Movie record | Movie number, title, cover, actors, tags and more | Browse, search and subscribe; decide whether you want to watch it |
+| Media | The actual video files linked to a movie, plus playback information | Play, view thumbnails, choose a version |
+| Media library | Where media is stored and its storage configuration | Hand files to the matching storage for management and playback |
 
-看到封面和影片详情，只说明系统有这部影片的资料。详情中有可用媒体后，才能播放。一部影片可以对应多个媒体，例如不同画质或不同剪辑版本。
+Seeing a cover and movie details only means the system has the record for that movie. You can play only once the details show available media. One movie can have several media items, for example different quality levels or different cuts.
 
-<Screenshot src="/images/readme/desktop-detail.png" alt="SakuraMedia 影片详情页" caption="详情页同时展示影片资料和媒体列表；有封面不代表有可播放媒体。" />
+<Screenshot src="/images/readme/desktop-detail.png" alt="SakuraMedia movie details page" caption="The details page shows the movie record and the media list together; a cover does not mean playable media exists." />
 
-本手册用「同步资料」描述抓取影片信息，用「媒体入库」描述文件导入完成。在线搜索和女优作品同步得到资料，并不代表下载了视频。
+This manual uses "sync records" for fetching movie information and "media imported" for a completed file import. Online search and actor release sync produce records; they do not mean the video has been downloaded.
 
-## 两种订阅，表达两种意愿
+## Two kinds of subscription, two kinds of intent
 
-**订阅影片：这部影片我感兴趣，想下载入库，之后观看。**
+**Subscribe to a movie: I am interested in this movie, want it downloaded into the library, and will watch it later.**
 
-系统会通过定时任务，为符合条件、缺少媒体的已订阅影片寻找资源；找到合适资源后提交下载，完成后再导入。这个过程依赖已配置的索引器、下载器、媒体库和后台任务，也依赖资源是否可用。
+Through scheduled tasks, the system looks for resources for eligible subscribed movies that lack media; when it finds a suitable resource it submits a download and imports the result after it completes. This process depends on the configured indexers, download clients, media libraries and background tasks, and on whether a resource is available.
 
-订阅是长期保留的意愿。影片入库后仍保持订阅，不需要因为已经下载完成就取消。
+A subscription is a long-term intent. The movie stays subscribed after it is imported; there is no need to cancel just because the download has finished.
 
-**订阅女优：我喜欢她，希望持续知道她有哪些作品。**
+**Subscribe to an actor: I like her and want to keep knowing which releases she has.**
 
-系统会定期同步她的作品资料。首次同步会抓取作品列表，之后增量检查更新。作品出现在系统里后，由你选择哪些影片值得订阅；系统不会因为订阅了女优，就主动订阅她的所有作品。
+The system periodically syncs her release records. The first sync fetches the release list, and later syncs check incrementally for updates. Once releases appear in the system, you decide which movies are worth subscribing to; subscribing to an actor does not make the system subscribe to all of her releases.
 
-例如：你订阅了一位女优，发现她有三部新作，只对其中一部感兴趣。只订阅那部影片即可，其余两部仍可浏览资料。
+For example: you subscribe to an actor and find she has three new releases, but you are only interested in one of them. Subscribe to that movie only; you can still browse the records of the other two.
 
-## 从发现到观看
+## From discovery to watching
 
-1. 通过搜索、女优作品、标签或排行榜找到影片。
-2. 订阅想看的影片。
-3. 系统查找资源并提交下载。
-4. 下载完成后，系统将文件导入媒体库。
-5. 打开影片详情，选择媒体开始播放。
-6. 用播放列表、时刻或切片整理喜欢的内容。
+1. Find a movie through search, an actor's releases, tags or rankings.
+2. Subscribe to the movies you want to watch.
+3. The system looks for resources and submits a download.
+4. When the download completes, the system imports the file into the media library.
+5. Open the movie details, choose a media item and start playback.
+6. Organize the content you like with playlists, moments or clips.
 
-你已有文件时，可以从第 4 步开始，阅读[导入已有资源](./import)。
+If you already have files, you can start from step 4 and read [Import existing files](./import).
 
-## 去哪里看结果
+## Where to see results
 
-| 你关心的事情 | 页面 |
+| What you care about | Page |
 | --- | --- |
-| 哪些影片还没找到资源 | 订阅管理 |
-| 下载、导入或后台作业做到哪一步 | 任务中心 |
-| 系统发来的提醒 | 通知 |
-| 一部影片有哪些可播放文件 | 影片详情中的媒体列表 |
-| 哪些文件重复、失效，或者需要清理 | 媒体管理 |
+| Which movies have no resource yet | Subscriptions |
+| How far a download, import or background job has got | Task center |
+| Reminders from the system | Notifications |
+| Which playable files a movie has | The media list in the movie details |
+| Which files are duplicated, broken or need cleaning up | Media management |
 
-::: warning 取消订阅前先看清提示
-已有媒体的影片默认不能取消订阅。「删除媒体并强制取消订阅」会删除对应媒体文件及记录。清理前请阅读[媒体库管理](./media-management)。
+::: warning Read the prompt carefully before cancelling a subscription
+A movie that already has media cannot be unsubscribed by default. "Delete media and force unsubscribe" deletes the corresponding media files and records. Read [Media library management](./media-management) before cleaning up.
 :::
 
-## 界面语言
+## Interface language
 
-客户端支持简体中文与 English 两种界面语言。登录后可在「设置 → 外观 → 界面语言」中切换，未登录时也可以使用登录页右上角的语言切换。界面文案会按所选语言显示。
+The client supports two interface languages, Simplified Chinese and English. Once signed in, switch languages under "Settings → Appearance → Interface language"; before signing in, use the language switcher in the top-right corner of the sign-in page. Interface text follows the language you choose.
 
-接下来：[获得第一部想看的影片](./first-movie)。
+Next: [Get the first movie you want](./first-movie).

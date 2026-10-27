@@ -2,80 +2,80 @@
 outline: [2, 3]
 ---
 
-# 从喜欢的画面开始看
+# Starting from a frame you like
 
-打开一部影片，我往往想先看看：这里面，有没有我喜欢的画面？
+When I open a movie, I often want to see first: is there a frame in here that I like?
 
-可能是排行榜里看到的新片，也可能是喜欢的女优刚出的作品。下载之前，封面、介绍和演员让我产生了兴趣；真正打开之后，我还是想看看影片本身，找到自己想看的地方。
+It might be a new release I saw in the rankings, or a work just out from an actor I like. Before downloading, the cover, description, and cast got me interested; once I actually open it, I still want to look at the movie itself and find the part I want to watch.
 
-有时我会从头慢慢看，有时只是想挑一段感兴趣的。于是，我在播放器右侧放了一列缩略图，把影片里的画面按时间铺开。
+Sometimes I watch slowly from the beginning; sometimes I just want to pick a segment I'm interested in. So I put a column of thumbnails on the right side of the player, laying out the frames of the movie along the timeline.
 
-看到喜欢的地方，就从那里开始看。这是我做这个功能最直接的想法。
+When I see a place I like, I start watching from there. That was the most direct idea behind this feature.
 
-## 先看看，一部影片里有什么
+## First, see what's in a movie
 
-过去想快速了解一部影片，我通常会拖动进度条。往后挪一点，看几秒，再挪一点。能找到什么，很大程度上取决于这次刚好拖到了哪里。
+In the past, to get a quick sense of a movie, I usually dragged the progress bar. Move forward a bit, watch a few seconds, move a bit more. What I could find depended largely on where I happened to land this time.
 
-**缩略图让我可以先浏览，再决定。**
+**Thumbnails let me browse first, then decide.**
 
-沿着右侧的画面往下看，大致能知道影片里有哪些场景、内容怎样变化。哪一张让我感兴趣，点一下，就能跳到对应的位置看看。画面铺在那里，我可以按自己的兴趣选择。
+Looking down the frames on the right, I can roughly tell what scenes are in the movie and how the content changes. Whichever one interests me, one click jumps to the corresponding position to take a look. The frames are laid out there, and I can choose according to my own interest.
 
-一张缩略图当然不能代替一段视频。但它足够让我产生一个念头：这里，我想多看一会儿。
+A thumbnail certainly can't replace a video segment. But it's enough to give me a thought: here, I want to watch a little longer.
 
-**我希望把寻找的时间少花一点，把观看的时间留给自己喜欢的内容。**
+**I want to spend less time searching and save the watching time for what I like.**
 
-## 让缩略图陪着观看
+## Let the thumbnails accompany viewing
 
-把缩略图放在播放器旁边，是因为我希望它在观看时也能随手用到。
+I put the thumbnails next to the player because I want them handy while watching.
 
-正在看的这一段不错，可以继续看下去；想知道后面还有什么，往旁边扫一眼，再翻一翻。需要时让缩略图跟着播放位置走，想自己浏览时，也可以解除跟随，慢慢找感兴趣的地方。
+If the part I'm watching is good, I can keep going; if I want to know what's next, I can glance to the side and flip through. When needed, I can let the thumbnails follow the playback position; when I want to browse on my own, I can stop following and slowly look for places I'm interested in.
 
-我喜欢这种随时可以选择的感觉。一部影片可以从头看到尾，也可以从一个吸引我的画面开始。每次打开，都不必给自己安排好完整的观看计划。
+I like that feeling of being able to choose at any time. A movie can be watched from start to finish, or started from a frame that draws me in. Every time I open one, I don't have to plan a complete viewing schedule for myself.
 
-有空就多看一会儿，看到喜欢的地方就停下来。
+Watch a bit longer when I have time, and stop when I see something I like.
 
-<Screenshot src="/images/readme/desktop-player.png" alt="SakuraMedia 播放器与缩略图面板" caption="缩略图面板放在播放器右侧，可以跟随播放位置，也可以自行浏览。" />
+<Screenshot src="/images/readme/desktop-player.png" alt="SakuraMedia player with the thumbnail panel" caption="The thumbnail panel sits to the right of the player; it can follow the playback position or be browsed freely." />
 
-## 这个画面不错，还有更多吗
+## This frame is nice—is there more?
 
-找到一个喜欢的画面之后，我有时还会想：库里有没有更多类似的？
+After finding a frame I like, I sometimes wonder: is there more like this in the library?
 
-喜欢的原因可能很具体。某种场景、光线、构图，或者几样东西凑在一起的感觉。真要写成关键词，却未必说得清楚。
+The reason I like it might be very specific. A certain scene, light, composition, or the feeling of several things coming together. But when I try to put it into keywords, I may not be able to explain it clearly.
 
-这时候，眼前这张图就是最方便的线索。
+At that point, the image in front of me is the most convenient clue.
 
-在缩略图的操作菜单里选择「相似图片」，就能拿它发起以图搜图，看看媒体库里还有哪些相似画面。遇到感兴趣、带有可播放来源的缩略图结果，还可以跳到对应的位置继续看。
+In the thumbnail action menu, choose "Similar images" to start an image search with it and see what similar frames exist in the media library. When a thumbnail result is interesting and has a playable source, I can jump to the corresponding position and keep watching.
 
-原本只是打开一部影片，后来可能顺着其中一个画面，发现另一部影片里也有自己喜欢的内容。
+What started as opening one movie may lead, through one frame, to discovering something I like in another movie.
 
-相似不一定意味着喜欢。有些结果只是颜色或场景接近，看过之后未必感兴趣。但偶尔找到一个合心意的片段，就会觉得这次顺手的探索很值得。
+Similar doesn't necessarily mean liked. Some results are just close in color or scene, and I may not be interested after looking. But occasionally finding a segment that suits me makes this casual exploration feel worthwhile.
 
-<Screenshot src="/images/readme/desktop-image-search.png" alt="SakuraMedia 以图搜图结果页" caption="从缩略图发起以图搜图，在已经建立索引的图片里找相似画面。" />
+<Screenshot src="/images/readme/desktop-image-search.png" alt="SakuraMedia image search results page" caption="Start an image search from a thumbnail to find similar frames among indexed images." />
 
-## 让已经下载的影片，再次被看见
+## Let downloaded movies be seen again
 
-媒体库小的时候，我大概记得每一部影片。慢慢积累起来之后，总会有一些内容被忘在里面。
+When the media library was small, I roughly remembered every movie. As it slowly grows, some content always gets forgotten inside it.
 
-有的是下载之后一直没看，有的是看过一遍，却没留意其中某一段。再次翻到封面时，也不一定有重新打开的念头。
+Some were downloaded and never watched; some I watched once but didn't notice a certain segment. When I come across the cover again, I don't necessarily feel like reopening it.
 
-以图搜图给了我另一个认识它们的机会。
+Image search gives me another chance to get to know them.
 
-我可能从来没注意过这部影片，却因为搜索结果里的一张画面，想点进去看看。也可能是一部熟悉的作品，这次才发现里面还有一段正合自己的喜好。
+I may never have noticed this movie, yet a frame in the search results makes me want to click in and look. Or it may be a familiar work, and only this time do I discover there's a segment in it that matches my taste.
 
-这种发现让我觉得，已经下载的影片也还有很多可以探索的地方。库里的内容越丰富，就越有机会沿着一个喜欢的画面，遇到下一个。
+This kind of discovery makes me feel that downloaded movies still have a lot to explore. The richer the library, the more chances to follow a frame I like and meet the next one.
 
-这里找的是媒体库中已经建立索引的图片，并不是去网上搜索所有影片。缩略图和搜索索引准备好之后，这些画面之间的联系才有机会被找到。
+What's searched here are the images already indexed in the media library, not all movies on the internet. Only after thumbnails and the search index are ready do these connections between frames have a chance to be found.
 
-## 找到喜欢的，再决定留下什么
+## Find what you like, then decide what to keep
 
-对我来说，这两个功能连起来，是一个很自然的过程。
+For me, these two features connect into a very natural process.
 
-打开一部想看的影片，先浏览右侧的缩略图。看到感兴趣的地方，就跳过去看一会儿。如果还想找更多类似的画面，再拿这张图搜一搜，让它带我看看库里的其他内容。
+Open a movie I want to watch, and first browse the thumbnails on the right. When I see something interesting, jump there and watch for a while. If I want more similar frames, search with that image and let it show me other content in the library.
 
-确实喜欢的，可以标记成时刻，方便以后回来。想独立保存的那一段，再做成切片，好好留下。
+What I really like, I can mark as a moment to come back to later. The segment I want to keep independently, I turn into a clip and keep properly.
 
-在[上一篇文章](/guide/collection-strategy)里，我聊的是自己想留下什么。这些选择，总要从某一次观看开始。
+In the [previous article](/guide/collection-strategy), I talked about what I want to keep. These choices always have to start from some viewing session.
 
-我希望 SakuraMedia 能让这样的开始容易一点。打开一部影片，很快找到自己喜欢的地方；顺着一个画面，又发现一些原本没有注意到的内容。
+I hope SakuraMedia can make such a start a little easier. Open a movie and quickly find the part you like; follow one frame and discover something you hadn't noticed.
 
-慢慢看，慢慢挑。最后留在收藏里的，也就越来越像自己的喜欢。
+Watch slowly, choose slowly. What ends up in the collection becomes more and more like your own liking.

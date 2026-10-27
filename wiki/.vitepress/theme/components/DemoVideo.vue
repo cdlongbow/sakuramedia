@@ -28,14 +28,14 @@ type DemoCopy = {
 }
 
 const copy: Record<string, DemoCopy> = {
-  root: {
+  'zh-CN': {
     title: 'SakuraMedia 产品演示',
     openVideo: '打开演示视频',
     playAria: '播放 45 秒演示视频',
     playText: '播放 45 秒',
     chaptersAria: '演示章节',
   },
-  en: {
+  root: {
     title: 'SakuraMedia product demo',
     openVideo: 'Open the demo video',
     playAria: 'Play the 45-second demo video',

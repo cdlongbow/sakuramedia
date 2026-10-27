@@ -1,46 +1,46 @@
-# 媒体库管理
+# Media library management
 
-在「媒体管理」集中查看文件、重复项、多版本和失效媒体。清理之前，先决定自己想删除的是某个文件版本，还是不再保留整部影片的订阅意愿。
+"Media management" brings files, duplicates, multiple versions and broken media together. Before cleaning up, decide whether you want to delete a particular file version, or to stop wanting the movie at all.
 
-## 几种操作有什么不同
+## How the operations differ
 
-| 操作 | 影响 |
+| Operation | Effect |
 | --- | --- |
-| 删除媒体 | 删除选中的媒体记录及对应存储文件，同时删除该媒体的时刻、播放进度和缩略图；不会因此自动取消影片订阅 |
-| 取消影片订阅 | 移除订阅意愿；已有媒体时默认被阻止 |
-| 删除媒体并强制取消订阅 | 先删除相关媒体文件及记录，再取消订阅；失败时可能已完成部分删除 |
-| 屏蔽影片 | 将影片加入黑名单；已订阅影片要先取消订阅，才能屏蔽 |
-| 删除下载任务 | 处理下载任务；是否同步删除下载器端任务和文件，要看确认时的选择 |
+| Delete media | Deletes the selected media record and its storage file, along with that media's moments, playback progress and thumbnails; it does not cancel the movie subscription |
+| Unsubscribe from movie | Removes the intent to have the movie; blocked by default when media exists |
+| Delete media and force unsubscribe | Deletes the related media files and records first, then unsubscribes; a failure may leave part of the deletion done |
+| Block movie | Adds the movie to the blocklist; a subscribed movie must be unsubscribed before it can be blocked |
+| Delete download job | Handles the download job; whether the task and files on the download client are deleted too depends on the choice you make when confirming |
 
-::: warning 清理后可能重新寻找资源
-只删除媒体、继续保留影片订阅时，影片在没有其他媒体、没有阻挡查询的下载任务且符合查询条件后，仍可能再次被自动下载。若你已不想要这部影片，需要同时处理订阅意愿。
+::: warning Cleaning up can trigger a new resource search
+If you delete only the media and keep the movie subscribed, the movie can be downloaded again automatically once it has no other media, no download job blocking lookups, and still meets the lookup conditions. If you no longer want the movie, deal with the subscription as well.
 :::
 
-下载任务与媒体库记录分别管理。删除下载任务不会替你清理已入库记录；若下载目录与媒体库实际共用文件，删除下载端文件仍可能影响播放，操作时需核对存储关系。
+Download jobs and media library records are managed separately. Deleting a download job does not clean up imported records for you; if the download directory and the media library effectively share files, deleting files on the download client can still break playback, so verify the storage relationship when acting.
 
-## 清理重复文件与多版本
+## Clean up duplicate files and multiple versions
 
-1. 打开媒体管理中对应的重复媒体或多版本视图。
-2. 比较文件名、大小、媒体库和版本信息。
-3. 选中要删除的项目，阅读确认框后执行。
-4. 返回影片详情，确认保留的版本仍然可播放。
+1. Open the matching duplicate media or multiple-version view in media management.
+2. Compare file names, sizes, media libraries and version information.
+3. Select the items to delete, read the confirmation dialog and proceed.
+4. Go back to the movie details and confirm the kept version still plays.
 
-重复媒体按文件内容指纹分组，多版本按影片组织。相同影片的两个版本未必内容相同。专门的分组清理界面会要求每组或每部影片至少保留一项。
+Duplicate media are grouped by file content fingerprint, while multiple versions are organized by movie. Two versions of the same movie do not necessarily have identical content. The dedicated grouping views require at least one item to be kept per group or per movie.
 
-## 处理失效媒体
+## Handle broken media
 
-失效媒体是巡检发现实际来源不可用的记录。先确认是否只是网盘、挂载或存储服务暂时离线，再判断文件是否真的丢失。
+Broken media are records whose actual source was found unavailable during inspection. First check whether a cloud drive, mount or storage service is just temporarily offline, then judge whether the file is really gone.
 
-确认来源已丢失后，可以删除相应记录。若影片仍保持订阅，后续能否重新获取取决于资源、下载任务和查询状态，不能保证删完即刻重下。
+Once you have confirmed the source is lost, you can delete the corresponding record. If the movie stays subscribed, whether it can be fetched again depends on resources, download jobs and lookup state; deleting does not guarantee an immediate re-download.
 
-## 将媒体迁移到其他存储
+## Migrate media to other storage
 
-在同一源媒体库内选择媒体，点击「迁移」，选择界面提供的目标库并提交。之后到任务中心查看结果。
+Select media within the same source media library, click "Migrate", choose one of the target libraries offered in the interface and submit. Then check the result in the task center.
 
-迁移沿用原媒体记录，保留播放进度等关联。可选目标取决于源、目标存储插件的能力；目标验证成功后才会切换存储归属并处理源文件。
+Migration reuses the original media record and keeps associations such as playback progress. The available targets depend on the capabilities of the source and target storage plugins; storage ownership is switched and source files are handled only after the target is verified.
 
-具体支持范围、跳过和中断后的处理见[媒体存储迁移](/guide/media-storage-transfer)。
+See [Media storage migration](/guide/media-storage-transfer) for supported combinations and for handling of skips and interruptions.
 
-## 清理收藏前
+## Before cleaning up collections
 
-当前时刻依赖媒体记录，删除媒体会同时删除这些时刻及其合集成员关系。已生成的独立切片会保留。清理原片前先验证准备保留的切片可以播放，并备份收藏记录与必要文件。需要了解整理方式时，回到[收藏与整理](./collections)。
+Moments currently depend on the media record, so deleting media also deletes those moments and their collection memberships. Standalone clips that were already generated are kept. Before cleaning up an original, verify that the clips you intend to keep can play, and back up the collection records and necessary files. To review organizing options, go back to [Collections and organizing](./collections).

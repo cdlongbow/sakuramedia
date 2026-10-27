@@ -22,8 +22,8 @@ const props = withDefaults(
 )
 
 const zoomLabel: Record<string, (alt: string) => string> = {
-  root: (alt: string) => `查看大图：${alt}`,
-  en: (alt: string) => `View full size: ${alt}`,
+  'zh-CN': (alt: string) => `查看大图：${alt}`,
+  root: (alt: string) => `View full size: ${alt}`,
 }
 
 const { localeIndex } = useData()

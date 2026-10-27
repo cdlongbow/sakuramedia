@@ -13,9 +13,9 @@
 <p align="center">
   <a href="https://github.com/tinypinglite/sakuramedia/releases/latest"><strong>Download the client</strong></a>
   ·
-  <a href="https://tinypinglite.github.io/sakuramedia/en/guide/quick-start"><strong>Deploy the backend</strong></a>
+  <a href="https://tinypinglite.github.io/sakuramedia/guide/quick-start"><strong>Deploy the backend</strong></a>
   ·
-  <a href="https://tinypinglite.github.io/sakuramedia/en/"><strong>Browse the Wiki</strong></a>
+  <a href="https://tinypinglite.github.io/sakuramedia/"><strong>Browse the Wiki</strong></a>
   ·
   <a href="https://tinypinglite.github.io/sakuramedia/videos/sakuramedia-demo.mp4"><strong>Watch the demo</strong></a>
 </p>
@@ -39,7 +39,7 @@
 
 <p align="center">
   After collecting for years, I started asking myself: what do I actually want to keep from this movie?<br />
-  <a href="https://tinypinglite.github.io/sakuramedia/en/guide/collection-strategy"><strong>Why I built SakuraMedia →</strong></a>
+  <a href="https://tinypinglite.github.io/sakuramedia/guide/collection-strategy"><strong>Why I built SakuraMedia →</strong></a>
 </p>
 
 ## Core features
@@ -184,11 +184,11 @@ Get the client from [GitHub Releases](https://github.com/tinypinglite/sakuramedi
 
 ## Quick start
 
-1. **Deploy the backend**: Follow [Quick start](https://tinypinglite.github.io/sakuramedia/en/guide/quick-start) to launch the backend with Docker Compose; the default port is `38000`. 4 CPU cores and 2GB or more of RAM are recommended, with runtime data on an SSD; if movies live in 115, you don't need a large local disk.
+1. **Deploy the backend**: Follow [Quick start](https://tinypinglite.github.io/sakuramedia/guide/quick-start) to launch the backend with Docker Compose; the default port is `38000`. 4 CPU cores and 2GB or more of RAM are recommended, with runtime data on an SSD; if movies live in 115, you don't need a large local disk.
 2. **Download the client and sign in**: On first sign-in, enter the backend address, for example `http://your-ip:38000`; the default account is `account / account` — change the password right after signing in.
-3. **Create a media library and import movies**: The backend image ships with "Local Storage & qBittorrent", so once a library exists you can import movies already on the host; for automatic downloads, follow [Automatic downloads and indexers](https://tinypinglite.github.io/sakuramedia/en/guide/auto-download) to configure qBittorrent and an indexer (Jackett / Prowlarr).
+3. **Create a media library and import movies**: The backend image ships with "Local Storage & qBittorrent", so once a library exists you can import movies already on the host; for automatic downloads, follow [Automatic downloads and indexers](https://tinypinglite.github.io/sakuramedia/guide/auto-download) to configure qBittorrent and an indexer (Jackett / Prowlarr).
 
-Full steps, path mapping, automatic downloads, and plugin choices are covered in [Quick start](https://tinypinglite.github.io/sakuramedia/en/guide/quick-start), [Container paths and hard links](https://tinypinglite.github.io/sakuramedia/en/guide/container-paths), [Automatic downloads and indexers](https://tinypinglite.github.io/sakuramedia/en/guide/auto-download), and [Recommended plugins](https://tinypinglite.github.io/sakuramedia/en/guide/plugins).
+Full steps, path mapping, automatic downloads, and plugin choices are covered in [Quick start](https://tinypinglite.github.io/sakuramedia/guide/quick-start), [Container paths and hard links](https://tinypinglite.github.io/sakuramedia/guide/container-paths), [Automatic downloads and indexers](https://tinypinglite.github.io/sakuramedia/guide/auto-download), and [Recommended plugins](https://tinypinglite.github.io/sakuramedia/guide/plugins).
 
 ## Who it's for
 
@@ -207,8 +207,8 @@ Full steps, path mapping, automatic downloads, and plugin choices are covered in
 ## Contributing
 
 - Star the project so more people find it.
-- Help improve the [Wiki](https://tinypinglite.github.io/sakuramedia/en/) and the docs.
-- Build plugins: see the [plugin development guide](https://tinypinglite.github.io/sakuramedia/en/guide/plugin-development); to list one in the plugin market, send a PR to [sakuramedia-plugin-market](https://github.com/tinypinglite/sakuramedia-plugin-market).
+- Help improve the [Wiki](https://tinypinglite.github.io/sakuramedia/) and the docs.
+- Build plugins: see the [plugin development guide](https://tinypinglite.github.io/sakuramedia/guide/plugin-development); to list one in the plugin market, send a PR to [sakuramedia-plugin-market](https://github.com/tinypinglite/sakuramedia-plugin-market).
 - Send PRs for bug fixes or new features. The client is built with Flutter, currently on 3.47.2; after `flutter pub get`, run the tests with `./scripts/test.sh -j 4`.
 
 The project doesn't need donations; stars, docs, plugins, and PRs are all help.

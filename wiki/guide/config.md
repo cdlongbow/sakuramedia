@@ -1,10 +1,10 @@
-# 配置说明
+# Configuration Reference
 
-配置文件位于 `sakuramedia-data/config/config.toml`。配置中的路径均指容器内路径。`/data` 是后端运行数据；媒体库、下载目录等 provider 路径通常挂在 `/media`，填写方法见[容器路径与硬链接](/guide/container-paths)。
+The configuration file lives at `sakuramedia-data/config/config.toml`. Every path in the configuration refers to a path inside the container. `/data` holds backend runtime data; provider paths such as media libraries and download directories are usually mounted under `/media` — see [Container Paths and Hard Links](/guide/container-paths) for how to fill them in.
 
-## 配置总览
+## Configuration overview
 
-- 根级：`enable_docs`
+- Root level: `enable_docs`
 - `[database]`
 - `[auth]`
 - `[media]`
@@ -22,7 +22,7 @@
 enable_docs = false
 ```
 
-控制是否开启 Swagger / ReDoc 文档页面。普通使用保持 `false`，需要查看 API 文档时再改为 `true`。
+Controls whether the Swagger / ReDoc documentation pages are enabled. Keep it `false` for normal use and switch it to `true` only when you need to read the API documentation.
 
 ## `[database]`
 
@@ -32,12 +32,12 @@ engine = "postgres"
 url = "postgresql://sakuramedia:sakuramedia@postgres:5432/sakuramedia"
 ```
 
-| 字段 | 默认值 | 作用 |
+| Field | Default | Purpose |
 |---|---|---|
-| `engine` | `postgres` | 数据库类型。当前使用 PostgreSQL。 |
-| `url` | `postgresql://sakuramedia:sakuramedia@postgres:5432/sakuramedia` | PostgreSQL 连接串。 |
+| `engine` | `postgres` | Database type. PostgreSQL is used at present. |
+| `url` | `postgresql://sakuramedia:sakuramedia@postgres:5432/sakuramedia` | PostgreSQL connection string. |
 
-照抄快速开始中的 compose 时无需修改；使用外部 PostgreSQL 时填写可访问的连接串，并在启动前准备数据库。
+No changes are needed if you copy the compose file from Quick Start; with an external PostgreSQL, enter a reachable connection string and prepare the database before starting.
 
 ## `[auth]`
 
@@ -52,14 +52,14 @@ refresh_token_expire_minutes = 10080
 file_signature_secret = ""
 ```
 
-| 字段 | 作用 |
+| Field | Purpose |
 |---|---|
-| `username` / `password` | 首次登录账号。登录后可在系统设置修改。 |
-| `secret_key` | JWT 签名密钥。留空时首次启动自动生成并写入配置。 |
-| `algorithm` | JWT 签名算法，默认 `HS256`。 |
-| `access_token_expire_minutes` | Access Token 有效期（分钟）。 |
-| `refresh_token_expire_minutes` | Refresh Token 有效期（分钟）。 |
-| `file_signature_secret` | 媒体、图片和字幕文件签名密钥。留空时首次启动自动生成。 |
+| `username` / `password` | Credentials for the first login. They can be changed in System Settings after signing in. |
+| `secret_key` | JWT signing key. When left empty, it is generated automatically on first start and written to the configuration. |
+| `algorithm` | JWT signing algorithm, `HS256` by default. |
+| `access_token_expire_minutes` | Access token lifetime (minutes). |
+| `refresh_token_expire_minutes` | Refresh token lifetime (minutes). |
+| `file_signature_secret` | Signing key for media, image and subtitle files. Generated automatically on first start when left empty. |
 
 ## `[media]`
 
@@ -72,15 +72,15 @@ media_clip_max_duration_seconds = 900
 media_clip_ffmpeg_timeout_seconds = 120
 ```
 
-| 字段 | 作用 |
+| Field | Purpose |
 |---|---|
-| `allowed_min_video_file_size` | 媒体导入的最小视频体积（字节），默认 256 MB。 |
-| `import_image_root_path` | 导入时缓存图片的目录。 |
-| `media_clip_root_path` | 切片文件存储目录。 |
-| `media_clip_max_duration_seconds` | 单个切片允许的最大时长，默认 900 秒。 |
-| `media_clip_ffmpeg_timeout_seconds` | 单次 ffmpeg 切片超时，默认 120 秒。 |
+| `allowed_min_video_file_size` | Minimum video size for media import (bytes), 256 MB by default. |
+| `import_image_root_path` | Directory where images are cached during import. |
+| `media_clip_root_path` | Directory where clip files are stored. |
+| `media_clip_max_duration_seconds` | Maximum allowed duration of a single clip, 900 seconds by default. |
+| `media_clip_ffmpeg_timeout_seconds` | Timeout for one ffmpeg clip operation, 120 seconds by default. |
 
-影片合集判定由已安装插件负责。进入「系统设置 → 插件」安装、启用并配置对应插件。
+Collection detection for movies is handled by an installed plugin. Go to "System Settings → Plugins" to install, enable and configure the corresponding plugin.
 
 ## `[metadata]`
 
@@ -93,15 +93,15 @@ gfriends_filetree_cache_ttl_hours = 168
 import_metadata_max_workers = 3
 ```
 
-| 字段 | 作用 |
+| Field | Purpose |
 |---|---|
-| `gfriends_filetree_url` | GFriends 文件树索引地址。 |
-| `gfriends_cdn_base_url` | GFriends CDN 根地址。 |
-| `gfriends_filetree_cache_path` | 文件树本地缓存路径。 |
-| `gfriends_filetree_cache_ttl_hours` | 文件树缓存有效期（小时）。 |
-| `import_metadata_max_workers` | 导入影片时抓取元数据的并发线程数。 |
+| `gfriends_filetree_url` | URL of the GFriends file-tree index. |
+| `gfriends_cdn_base_url` | Base URL of the GFriends CDN. |
+| `gfriends_filetree_cache_path` | Local cache path for the file tree. |
+| `gfriends_filetree_cache_ttl_hours` | File-tree cache lifetime (hours). |
+| `import_metadata_max_workers` | Number of concurrent threads used to fetch metadata during movie import. |
 
-外部站点请求统一使用容器环境变量 `HTTP_PROXY`、`HTTPS_PROXY` 和 `NO_PROXY`。索引器、下载 provider 和媒体 provider 的连接由各自插件配置管理。
+Requests to external sites uniformly use the container environment variables `HTTP_PROXY`, `HTTPS_PROXY` and `NO_PROXY`. Connections to indexers, download providers and media providers are managed by each plugin's own configuration.
 
 ## `[plugins]`
 
@@ -113,18 +113,18 @@ job_crons = {}
 settings = {}
 ```
 
-| 字段 | 作用 |
+| Field | Purpose |
 |---|---|
-| `root_dir` | 插件安装根目录。 |
-| `enabled` | 已启用的插件 ID 列表。 |
-| `job_crons` | 插件后台任务的 cron 覆盖值，按插件 ID 分组。 |
-| `settings` | 插件私有配置，按插件 ID 分组。 |
+| `root_dir` | Root directory where plugins are installed. |
+| `enabled` | List of enabled plugin IDs. |
+| `job_crons` | Cron overrides for plugin background tasks, grouped by plugin ID. |
+| `settings` | Private plugin settings, grouped by plugin ID. |
 
-插件安装、启用和配置入口是「系统设置 → 插件」；也可以使用[常用命令](/guide/commands)中的 `plugins` 命令。
+The entry point for installing, enabling and configuring plugins is "System Settings → Plugins"; you can also use the `plugins` commands in [Common Commands](/guide/commands).
 
 ## `[scheduler]`
 
-这一组控制宿主定时任务。每项值都是 cron 表达式，默认值如下：
+This group controls host scheduled tasks. Every value is a cron expression; the defaults are as follows:
 
 ```toml
 [scheduler]
@@ -148,28 +148,28 @@ activity_task_run_retention_per_key = 200
 activity_notification_read_retention_days = 3
 ```
 
-| 字段 | 作用 |
+| Field | Purpose |
 |---|---|
-| `enabled` | 是否启用后台定时任务。 |
-| `log_dir` | 后台任务日志目录。 |
-| `actor_subscription_sync_cron` | 订阅女优影片同步。 |
-| `subscribed_movie_auto_download_cron` | 已订阅缺失影片自动下载。 |
-| `download_task_sync_cron` | 同步 provider 下载任务状态。 |
-| `download_task_auto_import_cron` | 将 provider 已完成任务交给导入流程。 |
-| `movie_heat_cron` | 影片热度重算。 |
-| `movie_interaction_sync_cron` | 影片互动数同步。 |
-| `media_file_hash_backfill_cron` | 补齐缺少哈希的媒体文件。 |
-| `media_thumbnail_cron` | 媒体缩略图生成。 |
-| `image_search_index_cron` | 媒体缩略图和剧情图向量索引。 |
-| `movie_similarity_recompute_cron` | 影片相似度重算。 |
-| `moment_recommendation_generate_cron` | 推荐时刻生成。 |
-| `daily_recommendation_generate_cron` | 每日推荐快照生成。 |
-| `activity_cleanup_cron` | 活动中心记录清理。 |
-| `gfriends_filetree_refresh_cron` | GFriends 文件树缓存刷新。 |
-| `activity_task_run_retention_per_key` | 每个任务键保留的运行记录条数。 |
-| `activity_notification_read_retention_days` | 已读通知保留天数。 |
+| `enabled` | Whether background scheduled tasks are enabled. |
+| `log_dir` | Log directory for background tasks. |
+| `actor_subscription_sync_cron` | Sync of movies for subscribed actors. |
+| `subscribed_movie_auto_download_cron` | Auto-download of missing subscribed movies. |
+| `download_task_sync_cron` | Sync of provider download task status. |
+| `download_task_auto_import_cron` | Hands completed provider tasks to the import flow. |
+| `movie_heat_cron` | Movie heat recalculation. |
+| `movie_interaction_sync_cron` | Sync of movie interaction counts. |
+| `media_file_hash_backfill_cron` | Fills in hashes for media files that lack them. |
+| `media_thumbnail_cron` | Media thumbnail generation. |
+| `image_search_index_cron` | Vector indexing of media thumbnails and scene images. |
+| `movie_similarity_recompute_cron` | Movie similarity recalculation. |
+| `moment_recommendation_generate_cron` | Recommended moment generation. |
+| `daily_recommendation_generate_cron` | Daily recommendation snapshot generation. |
+| `activity_cleanup_cron` | Cleanup of Activity Center records. |
+| `gfriends_filetree_refresh_cron` | Refresh of the GFriends file-tree cache. |
+| `activity_task_run_retention_per_key` | Number of run records kept per task key. |
+| `activity_notification_read_retention_days` | Days to keep read notifications. |
 
-任务详情和手动触发方式见[后台任务](/guide/tasks)。
+See [Background Tasks](/guide/tasks) for task details and how to trigger them manually.
 
 ## `[downloads]`
 
@@ -180,13 +180,13 @@ subscription_search_stale_attempt_limit = 3
 torznab_timeout_seconds = 60.0
 ```
 
-| 字段 | 作用 |
+| Field | Purpose |
 |---|---|
-| `subscription_search_fresh_days` | 按影片发行日期划分新片的天数；新片查询未找到资源时不消耗老片尝试次数。 |
-| `subscription_search_stale_attempt_limit` | 老片每轮未找到可用资源的次数上限；达到后标记为「已放弃」，需手动重置查询。 |
-| `torznab_timeout_seconds` | 索引器搜索单次请求超时（秒），默认 60。|
+| `subscription_search_fresh_days` | Number of days by which a movie counts as new based on its release date; when a search for a new movie finds no resources, it does not consume the stale attempt count. |
+| `subscription_search_stale_attempt_limit` | Maximum number of rounds in which no usable resource is found for an older movie; once reached, it is marked as "given up" and the search must be reset manually. |
+| `torznab_timeout_seconds` | Timeout for a single indexer search request (seconds), 60 by default. |
 
-索引器与下载器的选择通过索引器绑定关系决定；provider 自己的连接参数在媒体库或下载器配置中填写。
+Which indexer and download client are used is decided by the indexer bindings; the provider's own connection parameters are entered in the media library or download client configuration.
 
 ## `[logging]`
 
@@ -195,7 +195,7 @@ torznab_timeout_seconds = 60.0
 level = "INFO"
 ```
 
-支持 `DEBUG`、`INFO`、`WARNING`、`ERROR`、`CRITICAL`。平时使用 `INFO`，排查问题时临时改为 `DEBUG`。
+Supported values are `DEBUG`, `INFO`, `WARNING`, `ERROR` and `CRITICAL`. Use `INFO` normally and switch to `DEBUG` temporarily when troubleshooting.
 
 ## `[image_search]`
 
@@ -214,15 +214,15 @@ search_scan_batch_size = 100
 index_upsert_batch_size = 100
 ```
 
-`enabled` 控制图片／文字搜图、图片向量索引和视觉推荐，需要同时开启 `[qdrant].enabled`。桌面端可在「系统设置 → 高级设置 → 图搜 / 相似度」编辑两个开关、连接地址及 API Key，保存后重启后端容器（API 与 APS）生效。
+`enabled` controls image/text frame search, image vector indexing and visual recommendations, and it requires `[qdrant].enabled` to be on as well. On desktop you can edit both switches, the connection address and the API key in "System Settings → Advanced Settings → Image Search / Similarity"; restart the backend container (API and APS) after saving for the change to take effect.
 
-新部署两个开关默认关闭；旧部署升级时只将缺失开关补为开启，用户已经保存的值不会被覆盖。移动端不提供配置表单，但会根据服务器能力调整入口。
+Both switches are off by default on new deployments; when upgrading an older deployment, only missing switches are filled in as enabled, so values you have already saved are never overwritten. Mobile does not provide a settings form, but adjusts its entry points based on server capabilities.
 
-这些字段控制 SigLIP2 嵌入服务连接、搜索会话和 Qdrant 索引批处理。默认地址对应[进阶部署](/guide/docker#完整-compose-示例)中的 `siglip2-embed` 服务名；只有把嵌入服务部署到其他主机、修改服务名或开启鉴权时，才需要改连接字段。
+These fields control the SigLIP2 embedding service connection, search sessions and Qdrant index batching. The default address matches the `siglip2-embed` service name in the [Full Compose example](/guide/docker#full-compose-example); you only need to change the connection fields when the embedding service runs on another host, uses a different service name, or has authentication enabled.
 
-文字搜画面还需要 SigLIP2 容器加载文本塔（默认加载）；容器设了 `TEXT_TOWER_ENABLED=false` 时只提供图片向量，文字搜画面不可用，图片搜图不受影响。详见 [SigLIP2 硬件方案](/guide/docker)。
+Text-to-frame search also requires the SigLIP2 container to load the text tower (loaded by default); if the container sets `TEXT_TOWER_ENABLED=false`, only image vectors are provided, text-to-frame search is unavailable, and image search is unaffected. See [SigLIP2 hardware options](/guide/docker) for details.
 
-`index_upsert_batch_size` 控制索引任务每轮分别读取的待索引缩略图和剧情图数量。任务会持续处理，直到两类待索引队列为空；该参数只控制单轮读取量，不限制单次任务的总处理量。
+`index_upsert_batch_size` controls how many pending thumbnails and scene images the indexing task reads per round. The task keeps processing until both pending queues are empty; the parameter only limits the amount read per round and does not cap the total work of a single run.
 
 ## `[qdrant]`
 
@@ -233,6 +233,6 @@ url = "http://qdrant:6333"
 api_key = ""
 ```
 
-`url` 是 Qdrant HTTP API 地址；compose 部署时使用容器内服务名 `qdrant`。启用 Qdrant 鉴权时填写 `api_key`。
+`url` is the Qdrant HTTP API address; with the compose deployment, use the in-container service name `qdrant`. Fill in `api_key` when Qdrant authentication is enabled.
 
-`enabled` 控制相似影片与向量服务。关闭时不连接 Qdrant，推荐跳过影片相似度信号；关闭图搜不影响仅依赖 Qdrant 的相似影片。关闭 Qdrant 时应同时关闭图搜，桌面端会提示并一起保存。开关不会停止或删除 Docker 容器，释放资源需在部署端停容器。
+`enabled` controls similar movies and the vector service. When it is off, Qdrant is not contacted and recommendations skip the movie similarity signal; disabling image search does not affect similar movies, which depend on Qdrant alone. When disabling Qdrant you should disable image search as well; desktop prompts you and saves both together. The switch does not stop or remove Docker containers — to free resources, stop the containers on the deployment side.

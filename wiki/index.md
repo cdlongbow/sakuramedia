@@ -6,42 +6,42 @@ hero:
     src: /brand/sakuramedia-logo.png
     alt: SakuraMedia logo
   name: SakuraMedia
-  text: 面向 NAS 用户的 NSFW 观影平台
-  tagline: 记住喜欢的影片，收藏心动的时刻，留下值得回看的片段。
+  text: An NSFW viewing platform for NAS users
+  tagline: Remember the movies you like, save the moments that caught your eye, and keep the clips worth watching again.
   actions:
     - theme: brand
-      text: 快速开始
+      text: Quick start
       link: /guide/quick-start
     - theme: alt
-      text: 使用手册
+      text: User manual
       link: /manual/
     - theme: alt
       text: GitHub
       link: https://github.com/tinypinglite/sakuramedia
     - theme: alt
-      text: 下载离线 Wiki
+      text: Download offline wiki
       link: https://tinypinglite.github.io/sakuramedia/downloads/sakuramedia-wiki.zip
 
 features:
-  - title: 影片发现与观影
-    details: 以影片为中心，整合搜索、订阅、下载、播放功能。
-  - title: 导入已有资源与刮削
-    details: 直接导入 NAS 或网盘里已有的影片，识别番号并刮削元数据与封面，识别失败的条目支持手动匹配。
-  - title: 缩略图辅助观影
-    details: 播放界面侧边栏可选展示影片缩略图，用于快速预览不同画面，高效定位精彩片段。
-  - title: 播放与进度
-    details: 通过签名播放地址打开媒体，客户端负责解码并保存播放进度。
-  - title: 以图搜图
-    details: 当影片库达到一定数量级后，通过以图搜图功能，可以快速找到相似场景的影片片段。
-  - title: 女优订阅与最新作品追踪
-    details: 支持订阅女优持续追踪新作动态。
-  - title: 多客户端支持
-    details: 提供 Win/Mac/iOS/Android 平台 APP。
-  - title: 排行榜
-    details: 由已启用的排行榜插件提供来源和定时同步能力，可以快速找到最近热门的影片。
-  - title: 插件化扩展
-    details: 通过插件接入媒体存储与下载平台、排行榜来源、字幕抓取和影片自动化处理，按需扩展 SakuraMedia 能力。
-  - title: 跨存储媒体迁移
-    details: 将已入库媒体批量迁往支持的目标库，保留同一条媒体记录及观影关联；目标确认可用后再清理源文件链接。
+  - title: Movie discovery and viewing
+    details: Built around movies, with search, subscription, download and playback in one place.
+  - title: Import existing files and scrape metadata
+    details: Import movies already sitting on your NAS or cloud drive, detect their movie numbers, and scrape metadata and covers. Entries that fail detection support manual matching.
+  - title: Thumbnails to help you watch
+    details: The player's sidebar can show movie thumbnails, so you can preview different scenes and locate the good parts efficiently.
+  - title: Playback and progress
+    details: Media opens through a signed play URL, and the client handles decoding and keeps your playback progress.
+  - title: Search by image
+    details: Once your library reaches a certain size, search by image lets you quickly find movie scenes that look similar.
+  - title: Actor subscriptions and new release tracking
+    details: Subscribe to actors and keep following their new releases.
+  - title: Multiple clients
+    details: Apps for Windows, macOS, iOS and Android.
+  - title: Rankings
+    details: Enabled ranking plugins supply sources and scheduled sync, so recently popular movies are easy to find.
+  - title: Plugin-based extension
+    details: Plugins connect media storage and download platforms, ranking sources, subtitle fetching and automated movie processing, letting you extend SakuraMedia as needed.
+  - title: Cross-storage media migration
+    details: Move imported media in bulk to a supported target library while keeping the same media record and its viewing links; source file links are cleaned up only once the target is confirmed usable.
     link: /guide/media-storage-transfer
 ---

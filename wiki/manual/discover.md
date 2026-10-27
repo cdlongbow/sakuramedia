@@ -1,54 +1,54 @@
-# 发现影片，关注喜欢的女优
+# Discover movies and follow actors
 
-你可以从一个番号开始，也可以从演员、标签或榜单慢慢挑选。发现阶段的目标，是选出真正想订阅的影片。
+You can start from a single movie number, or browse slowly through actors, tags or rankings. The goal of discovery is to pick the movies you genuinely want to subscribe to.
 
-<Screenshot src="/images/readme/desktop-discover.png" alt="SakuraMedia 发现页" caption="发现页按女优上新、热门新片和今日推荐等分区展示。" />
+<Screenshot src="/images/readme/desktop-discover.png" alt="SakuraMedia Discover page" caption="Discover arranges new from actors, popular new movies and today's picks into sections." />
 
-## 本地搜索与联网搜索
+## Local search and online search
 
-搜索页有「影片」和「女优」两类结果。
+The search page has two kinds of results, "Movies" and "Actors".
 
-- 默认在本地资料库中搜索：片名、番号、演员名和标签都可以作为关键词，影片与女优会同时检索，哪边有结果就自动展示哪边。
-- 打开搜索框右侧的「联网搜索」后：输入番号会到外部数据源查影片，输入名字会到外部数据源查女优。
-- 本地没有结果时，也可以点结果区的「从外部数据源获取」直接切换联网搜索。
-- 成功获取的外部资料会保存到系统中。
+- By default the search runs against the local library: titles, movie numbers, actor names and tags all work as keywords, movies and actors are searched at the same time, and whichever side has results is shown automatically.
+- With "Online search" to the right of the search box turned on: a movie number queries external sources for movies, and a name queries external sources for actors.
+- When the local library has no results, you can also click "Fetch from external source" in the results area to switch straight to online search.
+- Records fetched successfully from external sources are saved to the system.
 
-本地有影片资料，仍不代表已经有媒体。是否能播放，要看详情中的媒体列表。
+Having a movie record locally still does not mean media exists. Whether it can play depends on the media list in the details.
 
-外部查询失败时，到「概览」检查元数据来源连接。
+If an external query fails, check the metadata source connection on the "Overview" page.
 
-## 订阅一位女优
+## Subscribe to an actor
 
-1. 从搜索结果或「女优」列表打开她的详情。
-2. 核对姓名、头像和作品，确认目标。
-3. 点击订阅操作。
-4. 等待「订阅女优影片抓取」后台任务同步作品资料。
-5. 到「发现」里的「女优上新」查看更新，也可以回到她的详情浏览作品。
+1. Open her details from search results or the "Actors" list.
+2. Check the name, avatar and releases to confirm the target.
+3. Click the subscribe action.
+4. Wait for the "Fetch subscribed actor releases" background task to sync her release records.
+5. Check updates under "New from actors" in "Discover", or go back to her details to browse releases.
 
-首次同步会抓取作品列表，可能需要较长时间。后续同步增量检查新作品，运行情况可以在任务中心查看。任务频率以服务器配置为准。
+The first sync fetches the release list and may take a while. Later syncs check incrementally for new releases, and you can follow the runs in the task center. Task schedules follow the server configuration.
 
-::: tip 关注之后仍由你挑选
-女优订阅只负责持续获取作品资料。看到想看的作品后，还需要对那部影片执行「订阅影片」，它才会进入符合条件的自动下载流程。
+::: tip You still do the picking after following
+An actor subscription only keeps fetching release records. When you see a release you want, you still need to "Subscribe to movie" for that movie before it enters the eligible auto-download flow.
 :::
 
-取消女优订阅会停止将她作为订阅女优继续同步，不会连带取消已经订阅的影片。影片订阅需要单独管理。
+Cancelling an actor subscription stops syncing her as a subscribed actor; it does not cancel the movies you already subscribed to. Movie subscriptions are managed separately.
 
-## 用其他入口发现影片
+## Discover movies through other entry points
 
-| 入口 | 适合的情况 |
+| Entry point | When it fits |
 | --- | --- |
-| 影片列表 | 按现有筛选和排序浏览已保存的资料 |
-| 女优详情 | 想集中看看某位女优的作品 |
-| 标签 | 按题材或特点组合筛选 |
-| 排行榜 | 浏览已启用榜单来源提供的热门影片 |
-| 发现 | 浏览推荐影片、推荐时刻和女优上新 |
+| Movie list | Browse saved records with the existing filters and sorting |
+| Actor details | Focus on one actor's releases |
+| Tags | Filter by combinations of genre or traits |
+| Rankings | Browse popular movies from enabled ranking sources |
+| Discover | Browse recommended movies, recommended moments and new from actors |
 
-排行榜来源由插件提供；没有启用对应插件或尚未同步时，不会凭空产生榜单内容。请按需要配置[推荐插件](/guide/plugins)。
+Ranking sources come from plugins; without the matching plugin enabled or before a sync has run, no ranking content appears out of nowhere. Configure [Recommended plugins](/guide/plugins) as needed.
 
-无论从哪个入口找到影片，都可以先打开详情，再决定是否订阅。浏览、搜索和查看详情本身，不表达下载意愿。
+Whichever entry point you find a movie through, you can open the details first and then decide whether to subscribe. Browsing, searching and viewing details express no intent to download.
 
-## 女优上新为空时
+## When new from actors is empty
 
-依次确认是否已经订阅女优、同步任务是否成功，以及是否有符合展示条件的作品。刚订阅后尚未同步，或者近期没有新作，都可能出现空列表。
+Check in order whether you have subscribed to actors, whether the sync tasks succeeded, and whether any release meets the display conditions. An empty list can simply mean a subscription was just added and has not synced yet, or that there are no recent releases.
 
-接下来：[订阅与下载进度](./subscriptions)。
+Next: [Subscriptions and download progress](./subscriptions).

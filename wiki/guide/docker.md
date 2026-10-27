@@ -2,21 +2,21 @@
 outline: [2, 4]
 ---
 
-# 可选向量服务与 SigLIP2 硬件方案
+# Optional Vector Services and SigLIP2 Hardware Options
 
-本文示例中的 CPU 镜像适用于 AMD、Intel 和 ARM64 主机。SigLIP2 镜像已包含模型和运行时，**不需要**下载模型、挂载模型目录或预先缩放图片。服务启动时会按镜像内安装的运行时自动选择推理后端，不需要配置。
+The CPU images used in the examples on this page work on AMD, Intel and ARM64 hosts. The SigLIP2 image already bundles the model and runtime — you do **not** need to download models, mount a model directory, or pre-scale images. On startup the service automatically picks an inference backend based on the runtimes installed in the image; no configuration is required.
 
-后端和嵌入服务在同一个 Compose 项目中时，不需要映射端口；后端默认通过 `http://siglip2-embed:8080` 访问服务。
+When the backend and the embedding service are in the same Compose project, no port mapping is needed; the backend reaches the service at `http://siglip2-embed:8080` by default.
 
-## 按需启用
+## Enabling on demand
 
-基础部署不需要这两个服务。仅需相似影片时启动 Qdrant 并在桌面高级设置中开启「相似影片与向量服务」；需要图搜时再部署 SigLIP2，开启「图片与文字搜图」。完整 Compose 见下方[完整 Compose 示例](#完整-compose-示例)。保存后需重启后端容器。
+A basic deployment does not need either service. If you only want similar movies, start Qdrant and turn on "Similar Movies & Vector Service" in desktop advanced settings; if you want image search, deploy SigLIP2 as well and turn on "Image & Text Search". See the [Full Compose example](#full-compose-example) below. Restart the backend container after saving.
 
-缩略图与时刻收藏独立保留。每日推荐和时刻推荐在关闭向量能力后仍使用其他候选信号。重新启用时保留原索引；关闭期间发生删除或更新的，应在「系统设置 → 系统维护」重建图搜索引，并在任务中心运行「影片相似度重算」。
+Thumbnails and moment favorites are kept independently. Daily recommendations and moment recommendations still use other candidate signals after vector capabilities are turned off. Re-enabling keeps the existing index; if deletions or updates happened while it was off, rebuild the image search index in "System Settings → System Maintenance" and run "Movie Similarity Recalculation" in the Task Center.
 
-## 完整 Compose 示例
+## Full Compose example
 
-在快速开始的基础 compose 中追加以下两个服务。基础部署不需要它们；只有启用相似影片或图搜时才需要。ARM 平台不建议启用以图搜图。
+Append these two services to the basic compose file from Quick Start. A basic deployment does not need them; they are only required when you enable similar movies or image search. Enabling image search on ARM platforms is not recommended.
 
 ```yaml
   qdrant:
@@ -40,13 +40,13 @@ outline: [2, 4]
     environment:
       CPU_CONCURRENCY: "1"
       MALLOC_TRIM_THRESHOLD_: "131072"
-      # 内存不够可尝试设为 false，降低文字搜图的内存占用。
+      # If memory is tight, try setting this to false to lower the memory used by text search.
       TEXT_TOWER_ENABLED: "true"
 ```
 
-## Intel 核显
+## Intel integrated graphics
 
-适用于 Linux amd64 的 Intel 核显主机。将上面的 `siglip2-embed` 服务替换为：
+For Linux amd64 hosts with Intel integrated graphics. Replace the `siglip2-embed` service above with:
 
 ```yaml
   siglip2-embed:
@@ -61,11 +61,11 @@ outline: [2, 4]
       CPU_CONCURRENCY: "1"
 ```
 
-在宿主机执行 `getent group render` 查看 `render` 组的 GID，并在同目录的 `.env` 文件写入 `RENDER_GID=实际GID`。确认 `/dev/dri` 存在后再启动容器。
+Run `getent group render` on the host to look up the GID of the `render` group, then write `RENDER_GID=<actual GID>` into the `.env` file in the same directory. Confirm that `/dev/dri` exists before starting the container.
 
 ## NVIDIA CUDA
 
-宿主机需要已安装 NVIDIA 驱动、`nvidia-container-toolkit`，且 `nvidia-smi` 能正常显示显卡。将上面的服务替换为：
+The host needs the NVIDIA driver and `nvidia-container-toolkit` installed, and `nvidia-smi` must display the GPU correctly. Replace the service above with:
 
 ```yaml
   siglip2-embed:
@@ -77,25 +77,25 @@ outline: [2, 4]
       CPU_CONCURRENCY: "1"
 ```
 
-若容器启动后没有使用 GPU，先检查 `docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi` 是否成功，再检查 NVIDIA Container Toolkit 配置。
+If the container does not use the GPU after starting, first check whether `docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi` succeeds, then check the NVIDIA Container Toolkit configuration.
 
-## 只做图片搜图：关闭文本塔
+## Image search only: disable the text tower
 
-SigLIP2 默认同时加载图片塔与文本塔。只检索相似图片、不需要文字搜画面时，可以在 `siglip2-embed` 的 `environment` 中加上：
+By default SigLIP2 loads both the image tower and the text tower. If you only search for similar images and do not need text-to-frame search, add this to the `environment` of `siglip2-embed`:
 
 ```yaml
       TEXT_TOWER_ENABLED: "false"
 ```
 
-服务启动时会跳过文本编码器与 tokenizer，只保留图片塔，内存占用更低。文字搜画面会失败（文本接口返回 503），图片搜图、相似图片和图片索引都不受影响。改回 `"true"` 或删掉这一行并重启容器即可恢复。
+On startup the service skips the text encoder and tokenizer and keeps only the image tower, which lowers memory usage. Text-to-frame search then fails (the text endpoint returns 503), while image search, similar images and image indexing are unaffected. Set it back to `"true"` or delete the line and restart the container to restore it.
 
-## 将嵌入服务部署到其他主机
+## Deploying the embedding service on another host
 
-仅在后端与 SigLIP2 不在同一个 Compose 网络时才需要映射端口，例如添加：
+Port mapping is only needed when the backend and SigLIP2 are not on the same Compose network, for example by adding:
 
 ```yaml
     ports:
       - "8080:8080"
 ```
 
-然后在桌面高级设置中将 SigLIP2 地址改为该服务的可访问 HTTP 地址，按需填写 API Key，保存后重启后端。Qdrant 同样支持远程地址；使用远程服务时不必启动对应的本地容器。
+Then, in desktop advanced settings, change the SigLIP2 address to a reachable HTTP address for that service, fill in the API key if needed, and restart the backend after saving. Qdrant likewise supports a remote address; when you use a remote service, you do not need to start the corresponding local container.

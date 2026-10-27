@@ -1,89 +1,88 @@
-# 介绍
+# Introduction
 
-SakuraMedia 是面向 NAS 用户的媒体管理与观影平台，将影片发现、订阅、下载、导入、播放和收藏放在一起。你可以先选出感兴趣的影片，让系统在资源可用时继续处理下载和入库，也可以直接导入自己已有的文件。
+SakuraMedia is a media management and viewing platform built for NAS users. It brings movie discovery, subscriptions, downloads, importing, playback and favorites together in one place. You can pick out the movies you are interested in first and let the system handle downloading and importing them once resources become available, or you can import the files you already have.
 
-[先看 45 秒演示 →](/#demo)
+[Watch the 45-second demo →](/#demo)
 
-## 功能特性
+## Features
 
-**发现想看的 → 订阅与获取 → 浏览画面、开始观看 → 留下喜欢的内容。**
+**Discover what you want → subscribe and acquire → browse frames and start watching → keep what you like.**
 
-### 想看的先记下，资源可用后再入库
+### Note it down first, import it once resources are available
 
-订阅影片后，系统会定期寻找合适资源，提交下载，并在下载完成后自动导入媒体库。暂时没有资源的影片，可以先留在订阅清单里，之后从订阅管理查看进展。
+After you subscribe to a movie, the system regularly looks for suitable resources, submits a download, and automatically imports it into the media library when the download finishes. For movies without resources yet, you can leave them on the subscription list and check their progress later in subscription management.
 
-订阅女优则用于持续获取作品资料更新，由你从中挑选想看的影片。两种订阅分别管理，关注一位女优不会自动下载她的所有作品。
+Actor subscriptions are for continuously receiving updates to a performer's works, from which you pick the movies you want to watch. The two kinds of subscriptions are managed separately; following an actor will not automatically download all of her works.
 
-[了解订阅与下载流程](/manual/subscriptions)
+[Learn about subscriptions and downloads](/manual/subscriptions)
 
-### 从喜欢的画面开始看
+### Start watching from a frame you like
 
-缩略图将影片中的画面按时间展开，点击就能跳到对应位置。你可以先浏览场景，再决定从哪里开始观看。
+Thumbnails spread the frames of a movie out along a timeline; click one to jump to that point. You can browse the scenes first and then decide where to start watching.
 
-<Screenshot src="/images/readme/desktop-player.png" alt="SakuraMedia 播放器与缩略图面板" caption="缩略图把影片画面按时间铺开，点一下就能跳过去。" />
+<Screenshot src="/images/readme/desktop-player.png" alt="SakuraMedia player with the thumbnail panel" caption="Thumbnails lay the movie's frames out along a timeline — click one to jump there." />
 
-遇到喜欢的画面，还可以用「相似图片」寻找库中的相关内容；也支持输入文字描述搜索画面。搜索范围是已经建立索引的图片，需要先配置配套服务并完成索引。
+When you find a frame you like, you can also use "Similar Images" to find related content in your library, or type a description to search frames. The search covers images that have already been indexed, so you need to set up the companion services and finish indexing first.
 
-[了解画面搜索](/manual/image-search)
+[Learn about image search](/manual/image-search)
 
-### 整部、一个时刻、一段切片，各有收藏方式
+### A whole movie, a single moment, or a clip — each has its own way to be kept
 
-用播放列表组织影片，用时刻标记想回看的画面和位置，用切片将喜欢的区间保存成独立视频。时刻和切片都可以加入各自的合集，切片合集支持连续播放。
+Organize movies with playlists, mark the frames and positions you want to revisit with moments, and save the ranges you like as standalone videos with clips. Moments and clips can each be added to their own collections, and clip collections support continuous playback.
 
-已生成的切片在删除来源媒体后仍会保留；时刻依赖来源媒体，删除媒体会同时删除关联时刻。可以根据自己想保留的内容选择方式。
+Generated clips remain after you delete the source media; moments depend on the source media, so deleting the media also deletes the associated moments. Choose the approach based on what you want to keep.
 
-<Screenshot src="/images/readme/clips-page.png" alt="SakuraMedia 切片页" caption="切片是独立视频文件，可以按合集连续回看。" />
+<Screenshot src="/images/readme/clips-page.png" alt="SakuraMedia clips page" caption="Clips are standalone video files that you can watch back to back as a collection." />
 
-[了解收藏与整理](/manual/collections)
+[Learn about favorites and organization](/manual/collections)
 
-### 按自己的存储方式使用
+### Work with your own storage setup
 
-通过插件接入本地或 NAS 挂载目录、qBittorrent、115 网盘及离线下载。已有文件可以直接导入；媒体库需要换存储时，可在支持的源和目标之间迁移，并保留原媒体记录及播放进度等关联。
+Connect local or NAS-mounted directories, qBittorrent, the 115 cloud drive and offline downloads through plugins. Existing files can be imported directly; when a media library needs to move to different storage, you can migrate between supported sources and targets while keeping the original media records, playback progress and other associations.
 
-排行榜、字幕获取和女优资料补全也可通过插件按需扩展。存储、下载和迁移能力取决于所安装插件的支持范围。
+Rankings, subtitle fetching and actor metadata completion can also be extended through plugins as needed. Storage, download and migration capabilities depend on what the installed plugins support.
 
-[查看插件](/guide/plugins) · [了解媒体存储迁移](/guide/media-storage-transfer)
+[View plugins](/guide/plugins) · [Learn about media storage migration](/guide/media-storage-transfer)
 
-### 更多日常功能
+### More everyday features
 
-| 功能 | 可以做什么 |
+| Feature | What you can do |
 | --- | --- |
-| 搜索与发现 | 按番号搜索影片、按姓名寻找女优，通过标签、排行榜和推荐浏览内容 |
-| 播放与续看 | 选择媒体版本，使用字幕、倍速和续播；支持的平台可调用外部播放器 |
-| 媒体整理 | 查看重复文件、多版本和失效媒体，按需清理与迁移 |
-| 任务与反馈 | 集中查看下载、导入和后台任务的进度、结果及错误，通过通知接收提醒 |
-| PornBox 普通视频 | 导入没有番号的视频，用视频合集组织内容并连续播放 |
-| 桌面与移动端 | 桌面端完成配置和集中管理，移动端浏览、观看；具体入口与功能因平台而异 |
+| Search and discovery | Search movies by movie number, find actors by name, and browse content through tags, rankings and recommendations |
+| Playback and resume | Choose the media version, use subtitles, playback speed and resume; supported platforms can hand off to an external player |
+| Media organization | Review duplicate files, multiple versions and broken media, then clean up or migrate as needed |
+| Tasks and feedback | See progress, results and errors for downloads, imports and background tasks in one place, and get reminders through notifications |
+| PornBox regular videos | Import videos without a movie number, organize them into video collections and play them continuously |
+| Desktop and mobile | Configure and centrally manage on desktop, browse and watch on mobile; specific entry points and capabilities vary by platform |
 
+Detailed instructions start with the [User Manual](/manual/).
 
-具体操作从[使用手册](/manual/)开始。
+## First, understand what a subscription means
 
-## 先理解订阅的含义
+Subscribing to a movie means "I want this movie downloaded into my library so I can watch it later." The automated flow needs available resources and correct download and storage configuration.
 
-订阅影片表达的是「我想下载入库，之后观看这部影片」。自动流程需要可用的资源、正确的下载与存储配置。
+Subscribing to an actor means "I want to keep hearing about her works." The system syncs work metadata and **does not subscribe to her movies for you**; you keep picking which works to download.
 
-订阅女优表达的是「我希望持续知道她的作品」。系统会同步作品资料，**不会主动订阅她的影片**；具体下载哪些作品，由你继续挑选。
+Movie metadata and video files are also different things: finding a cover, cast list and description does not mean you already have playable media. See [Understanding the system](/manual/concepts) for details.
 
-影片资料和视频文件也需要区分：搜索到封面、演员和介绍，并不代表已经拥有可播放媒体。详细说明见[认识系统](/manual/concepts)。
+## How the system fits together
 
-## 系统怎样组成
-
-| 部分 | 用途 |
+| Part | Purpose |
 | --- | --- |
-| 后端服务 | 保存资料和状态，运行下载、导入等后台任务 |
-| 前端客户端 | 浏览影片、发起操作、观看和管理媒体 |
-| 存储与下载插件 | 连接实际存储和下载工具，为媒体库提供能力 |
-| 按需扩展 | 提供排行榜、字幕等功能；以图搜图还需要配套服务和索引 |
+| Backend service | Stores metadata and state, and runs background tasks such as downloads and imports |
+| Client app | Browses movies, starts actions, plays and manages media |
+| Storage and download plugins | Connect actual storage and download tools, and provide capabilities to the media library |
+| On-demand extensions | Provide rankings, subtitles and more; image search also needs companion services and an index |
 
-使用时通常先部署后端，再连接客户端并配置媒体库。教程以桌面端的完整管理流程为主，移动端入口和可用功能有所不同。
+In normal use you deploy the backend first, then connect a client and configure a media library. This guide focuses on the complete desktop management flow; mobile entry points and available features differ.
 
-## 从哪里开始
+## Where to start
 
-1. **还没有部署**：阅读[快速开始](/guide/quick-start)，完成部署和首次配置。
-2. **选择存储方式**：官方镜像已预装「本地存储与 qBittorrent」，首次部署直接创建媒体库即可；需要 115 网盘或光鸭云盘时，再从[推荐插件](/guide/plugins)安装对应插件。
-3. **已经部署完成**：进入[使用手册](/manual/)，推荐先按「导入已有资源」导入已有影片；需要自动下载时再看「获得第一部想看的影片」。
-4. **想了解产品的使用思路**：阅读[为什么做 SakuraMedia](/guide/collection-strategy)及「设计理念」中的文章。
+1. **Not deployed yet**: read [Quick Start](/guide/quick-start) to deploy and do the initial configuration.
+2. **Choosing a storage approach**: the official image ships with "Local Storage & qBittorrent" preinstalled, so on a first deployment you can create a media library right away; if you need the 115 cloud drive or Guangyapan cloud drive, install the corresponding plugin from [Recommended Plugins](/guide/plugins).
+3. **Already deployed**: go to the [User Manual](/manual/) and start with "Import existing assets" to bring in movies you already have; look at "Get your first movie" when you want automatic downloads.
+4. **Want to understand the product's design thinking**: read [Why SakuraMedia](/guide/collection-strategy) and the articles under "Design philosophy".
 
-字段配置、后台任务、维护命令和常见问题也集中在「开始使用」分组，遇到具体问题时再按需查阅。
+Field configuration, background tasks, maintenance commands and FAQs also live in the "Getting Started" group — look them up as needed when you hit a specific question.
 
-下一篇：[快速开始](/guide/quick-start)。
+Next: [Quick Start](/guide/quick-start).

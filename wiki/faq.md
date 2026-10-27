@@ -2,146 +2,146 @@
 outline: [2, 3]
 ---
 
-# 常见问题
+# FAQ
 
-这页整理当前版本里最常见的行为说明。后台任务频率以你自己的 `config.toml` 为准。
+This page collects the explanations of behavior that come up most often in the current version. Background task frequency follows your own `config.toml`.
 
-## 代理配置
+## Proxy configuration
 
-外部站点请求使用容器环境变量 `HTTP_PROXY`、`HTTPS_PROXY` 和 `NO_PROXY`。索引器、下载 provider 和媒体 provider 的连接参数在各自配置中填写。
+Requests to external sites use the container environment variables `HTTP_PROXY`, `HTTPS_PROXY` and `NO_PROXY`. Connection settings for indexers, download providers and media providers are entered in their own configuration.
 
-## 账号与登录
+## Accounts and sign-in
 
-### 忘记用户名或密码了怎么办？
+### What if I forget my username or password?
 
-在后端容器运行 `reset-account`，用新的用户名和密码重建账号：
+Run `reset-account` in the backend container to rebuild the account with a new username and password:
 
 ```bash
 docker exec -it --user app -w /app sakuramedia python -m src.start.commands reset-account
 ```
 
-也可以使用 `--username` 和 `--password` 直接传参。命令会清空 refresh token，已登录客户端需要重新登录。详见[常用命令](/guide/commands#重置账号)。
+You can also pass `--username` and `--password` directly. The command clears refresh tokens, so clients that were signed in need to sign in again. See [Common commands](/guide/commands#reset-the-account).
 
-## 搜索与数据
+## Search and data
 
-### 在线搜索入库影片或女优失败
+### Online search for movies or actors fails
 
-先在「概览」页运行「组件诊断」，确认 JavDB 连通；再检查容器网络、代理规则和 DNS。如果图片域名无法访问，也需要检查相同的网络设置。
+First run "Component diagnostics" on the "Overview" page to confirm JavDB is reachable, then check container networking, proxy rules and DNS. If image domains are unreachable, check the same network settings.
 
-封面、剧照和头像由后端从 JavDB 图片 CDN（`tp.spfcas.com`）下载。如果软路由开启了透明代理，检查该域名是否被分流到不可用的出口；访问失败时影片图片会缺失。
+Covers, stills and avatars are downloaded by the backend from the JavDB image CDN (`tp.spfcas.com`). If your router runs a transparent proxy, check whether that domain is routed to an unusable gateway; when it cannot be reached, movie images will be missing.
 
-### 为什么刚启动后看不到影片或女优？
+### Why don't I see any movies or actors right after starting?
 
-本地搜索只查询已入库数据。首次部署后，打开搜索页的「联网」开关执行一次在线搜索，成功结果会写入本地库。
+Local search only queries data that has already been imported. After a first deployment, turn on the "Online" switch on the search page and run an online search once; successful results are written to the local library.
 
-### 为什么“女优上新”是空的？
+### Why is "New from actors" empty?
 
-该页面只展示已订阅女优的影片更新。没有订阅、同步任务尚未完成或没有符合条件的新作时，空列表是正常结果。女优订阅不会主动订阅她的影片，看到想看的作品后需要单独订阅影片。详见[发现与女优订阅](/manual/discover)。
+That page only shows release updates for actors you have subscribed to. An empty list is a normal result when you have no subscriptions, the sync task has not finished, or no new release matches the conditions. Subscribing to an actor does not subscribe to her movies; once you see a movie you want, subscribe to that movie separately. See [Discover movies and follow actors](/manual/discover).
 
-### 以图搜图需要什么条件？
+### What does search by image require?
 
-图库来自可播放媒体生成的缩略图，特征提取由 SigLIP2 嵌入服务完成，向量存放在 Qdrant。三者都准备好后，后台任务会逐步生成和索引图片。
+The image library comes from thumbnails generated for playable media, feature extraction is done by the SigLIP2 embedding service, and vectors are stored in Qdrant. Once all three are ready, background tasks generate and index images gradually.
 
-如果结果为空，先在「概览」页检查嵌入服务，再在任务中心运行「媒体缩略图生成」「以图搜图缩略图向量索引」和「以图搜图剧情图向量索引」。
+If results are empty, check the embedding service on the "Overview" page first, then run "Media thumbnail generation", "Search-by-image thumbnail vector index" and "Search-by-image plot image vector index" in the task center.
 
-## 媒体库与导入
+## Media library and import
 
-### 导入普通视频时如何选择来源？
+### How do I choose a source when importing ordinary videos?
 
-进入「管理 → 资源导入」，切换到「视频」，新建导入并选择目标媒体库，再使用来源浏览器选择文件或目录。导入前确认是否保留源文件。
+Go to "Manage → Resource import", switch to "Videos", create a new import and choose the target media library, then use the source browser to pick files or directories. Before importing, decide whether to keep the source files.
 
-普通视频可以归入视频合集；导入任务完成后，在合集页调整成员顺序即可。详情见[普通视频与视频合集](/guide/videos)。
+Ordinary videos can go into video collections; after the import task finishes, adjust the member order on the collection page. See [PornBox and ordinary videos](/guide/videos) for details.
 
-### 导入时提示“文件太小”怎么办？
+### What if the import says the file is too small?
 
-影片导入会使用 `[media].allowed_min_video_file_size` 过滤过小的视频，默认值为 256 MB。需要导入更小的视频时，在系统设置或 `config.toml` 中调低该值。
+Movie import uses `[media].allowed_min_video_file_size` to filter out videos that are too small; the default is 256 MB. To import smaller videos, lower that value in the system settings or in `config.toml`.
 
-### 为什么影片已经订阅了，但没有自动下载？
+### Why doesn't a subscribed movie download automatically?
 
-自动下载需要同时满足：影片还没有可播放媒体、索引器能返回候选、索引器已绑定下载器，且下载器 provider 配置可用。可以先运行组件诊断，再在任务中心手动触发「已订阅缺失影片自动下载」。
+Automatic download requires all of the following at once: the movie has no playable media yet, the indexer returns candidates, the indexer is bound to a download client, and that download client's provider configuration is usable. Run component diagnostics first, then trigger "Auto download missing subscribed movies" manually in the task center.
 
-### 自动下载如何选择候选？
+### How does auto download choose candidates?
 
-候选必须有可用来源、体积在 `1 GiB` 到 `40 GiB` 之间且做种数大于 `0`。系统按体积从大到小排序，并使用索引器名称和标题稳定排序；提交时使用该索引器绑定顺序中的第一个下载器。
+A candidate must have an available source, a size between `1 GiB` and `40 GiB`, and more than `0` seeders. The system sorts by size from largest to smallest and uses the indexer name and title for a stable order; when submitting, it uses the first download client in that indexer's binding order.
 
-### 下载完成后如何进入媒体库？
+### How does a completed download reach the media library?
 
-下载 provider 返回 `completed` 和 `completed_source_ref` 后，后台任务会将该来源交给目标媒体库 provider 导入。检查时依次确认：下载器状态已同步、任务含完成来源引用、媒体库 provider 配置可用，以及「已完成下载自动导入」任务没有失败。
+Once the download provider returns `completed` and `completed_source_ref`, a background task hands that source to the target media library provider for import. When checking, confirm in order: the download client's state has been synced, the task carries the completed source reference, the media library provider configuration is usable, and the "Auto import completed downloads" task has not failed.
 
-## 路径与硬链接
+## Paths and hard links
 
-### 导入时来源浏览器看不到已有影片
+### The source browser shows no existing movies during import
 
-已有影片目录没有挂进容器，或者「手动导入根目录」填的不是容器内路径。先确认 compose 里的 `/media` 挂载，再对照[容器路径与硬链接](/guide/container-paths)填写。配置里填的是容器内路径，不是宿主机路径。
+Either the directory holding your existing movies is not mounted into the container, or the "Manual import root directory" is not a path inside the container. Confirm the `/media` mount in your compose file first, then follow [Container paths and hard links](/guide/container-paths). Configuration takes container paths, not host paths.
 
-### 下载器「测试配置」提示两个路径没有映射到同一目录
+### The download client's "Test configuration" says the two paths are not mapped to the same directory
 
-qBittorrent 的「保存根目录」和 SakuraMedia 的「后端下载根目录」必须指向同一个宿主机目录。先确认两个容器各自的挂载，再对照[容器路径与硬链接](/guide/container-paths)的映射表。路径字符串可以不同，但物理目录必须相同。
+qBittorrent's "Save root directory" and SakuraMedia's "Backend download root directory" must point to the same host directory. Confirm each container's mounts first, then compare with the mapping table in [Container paths and hard links](/guide/container-paths). The path strings may differ, but the physical directory must be the same.
 
-### 硬链接不可用，导入很慢或占双倍空间
+### Hard links are unavailable, so imports are slow or use double the space
 
-硬链接要求来源目录和媒体库在同一个挂载点下，并且宿主机文件系统支持硬链接。常见原因是把来源目录和媒体库分别挂载（例如 `av` 和 `library`），或使用了 exFAT、部分 SMB/NFS。处理方式见[容器路径与硬链接](/guide/container-paths#为什么不要分别挂子目录)。
+Hard links require the source directory and the media library to be under the same mount point, and the host file system to support hard links. A common cause is mounting the source directory and the media library separately (for example `av` and `library`), or using exFAT or some SMB/NFS setups. See [Container paths and hard links](/guide/container-paths#why-not-mount-the-subdirectories-separately) for how to handle it.
 
-### 原地导入后媒体失效
+### Media breaks after an in-place import
 
-原地导入的媒体直接引用源文件。源文件被移动、重命名或内容变化后，媒体会失效；删除 SakuraMedia 中的媒体记录不会删除源文件。需要固定文件位置，或改用「保留源文件」导入。
+In-place media references the source file directly. If the source file is moved, renamed or its content changes, the media breaks; deleting the media record in SakuraMedia does not delete the source file. Keep the file location fixed, or switch to the "Keep source files" import mode.
 
-### 下载完成但没有自动导入
+### A download completed but was not imported automatically
 
-先看下载器「测试配置」是否通过，再确认任务状态包含完成来源、媒体库 provider 可用，以及「已完成下载自动导入」任务没有失败。路径映射错误是常见原因之一。配置步骤见[自动下载与索引器](/guide/auto-download)。
+Check whether the download client's "Test configuration" passes, then confirm the task state includes the completed source, the media library provider is usable, and the "Auto import completed downloads" task has not failed. Wrong path mappings are a common cause. See [Auto download and indexers](/guide/auto-download) for configuration steps.
 
-## 播放与解码
+## Playback and decoding
 
-### 播放地址从哪里来？
+### Where does the play URL come from?
 
-后端为每个媒体生成带签名的 `play_url`，客户端使用该地址播放。签名地址有有效期，客户端会在需要时重新获取。
+The backend generates a signed `play_url` for every media item, and clients play through that URL. Signed URLs expire, and clients fetch a new one when needed.
 
-### 播放时是否需要服务端转码？
+### Does playback need server-side transcoding?
 
-播放解码由客户端完成。播放器能否硬件解码取决于当前设备、系统和媒体编码；服务端负责提供媒体和签名播放地址。
+Decoding happens on the client. Whether the player can use hardware decoding depends on the current device, the operating system and the media codec; the server is responsible for serving the media and the signed play URL.
 
-### 播放卡顿时先检查什么？
+### What should I check first when playback stutters?
 
-先确认媒体库 provider 连通、`play_url` 能在客户端打开，再检查客户端设备的解码能力和网络带宽。可以在「概览」页运行组件诊断。
+First confirm the media library provider is reachable and the `play_url` opens in the client, then check the client device's decoding capability and network bandwidth. You can run component diagnostics on the "Overview" page.
 
-## 任务中心
+## Task center
 
-### 通知中心和任务中心分别看什么？
+### What do the notification center and task center show?
 
-通知中心展示提醒；任务中心展示后台作业的状态、进度、结果和错误信息。下载同步、自动导入、缩略图、图片索引、插件任务等都在任务中心查看。
+The notification center shows reminders; the task center shows the status, progress, results and errors of background jobs. Download sync, automatic import, thumbnails, image indexing and plugin tasks are all viewed in the task center.
 
-### 下载任务可以删除吗？
+### Can download jobs be deleted?
 
-可以。在下载任务列表删除时选择是否让 provider 同步删除远端任务及文件。删除只移除选中的任务记录，不会删除已经导入媒体库的影片。
+Yes. When deleting from the download job list, choose whether the provider should also delete the remote task and files. Deletion only removes the selected task records; it does not delete movies already imported into a media library.
 
-## 切片与视频合集
+## Clips and video collections
 
-### 删除媒体后，时刻还在吗？
+### After deleting media, do moments remain?
 
-当前版本会随媒体删除关联时刻及其合集成员关系。时刻不支持脱离媒体后自动接回。已生成的独立切片会保留，清理前请先验证切片可播放。详见[媒体库管理](/manual/media-management)。
+The current version deletes the associated moments and their collection memberships together with the media. Moments cannot be reattached automatically once detached from media. Standalone clips that were already generated are kept; verify they can play before cleaning up. See [Media library management](/manual/media-management).
 
-### 切片存在哪里？
+### Where are clips stored?
 
-切片是独立的 mp4 文件，存放在 `[media].media_clip_root_path`（默认 `/data/media-clips`）。该目录需要持久化，删除来源影片不会删除切片文件。
+Clips are standalone mp4 files stored in `[media].media_clip_root_path` (default `/data/media-clips`). That directory needs to be persisted, and deleting the source movie does not delete clip files.
 
-### 为什么切片过长或生成失败？
+### Why is a clip too long or failing to generate?
 
-单个切片时长受 `media_clip_max_duration_seconds` 限制，ffmpeg 执行时间受 `media_clip_ffmpeg_timeout_seconds` 限制。调整方式见[配置说明](/guide/config#media)。
+A single clip's duration is limited by `media_clip_max_duration_seconds`, and ffmpeg execution time is limited by `media_clip_ffmpeg_timeout_seconds`. See [Configuration](/guide/config#media) for how to adjust them.
 
-### 视频合集可以连续播放吗？
+### Can a video collection play continuously?
 
-可以。合集保存视频成员及顺序，播放时客户端按顺序播放；同一个视频可以加入多个合集。
+Yes. A collection stores its video members and their order, and the client plays them in order; the same video can belong to several collections.
 
-## 使用教程
+## Tutorials
 
-- [使用手册阅读导航](/manual/)
-- [订阅状态与处理方法](/manual/subscriptions)
-- [导入已有资源](/manual/import)
+- [User manual reading guide](/manual/)
+- [Subscription statuses and what to do](/manual/subscriptions)
+- [Import existing files](/manual/import)
 
-## 相关页面
+## Related pages
 
-- [快速开始](/guide/quick-start)
-- [配置说明](/guide/config)
-- [后台任务](/guide/tasks)
-- [常用命令](/guide/commands)
-- [普通视频与视频合集](/guide/videos)
+- [Quick start](/guide/quick-start)
+- [Configuration](/guide/config)
+- [Background tasks](/guide/tasks)
+- [Common commands](/guide/commands)
+- [PornBox and ordinary videos](/guide/videos)

@@ -1,54 +1,54 @@
-# 订阅与下载进度
+# Subscriptions and download progress
 
-「订阅管理」集中回答一个问题：我想要的影片，现在准备到哪一步了？它是桌面端的管理入口。
+"Subscriptions" answers one question in one place: how far along is the movie I want right now? It is the management entry point on the desktop client.
 
-## 看懂订阅状态
+## Read subscription status
 
-打开「订阅管理」，用顶部状态筛选定位问题；需要寻找某部影片时，可以切到「全部」并搜索番号或标题。
+Open "Subscriptions" and use the status filter at the top to locate the problem; to find a particular movie, switch to "All" and search by movie number or title.
 
-| <span style="white-space: nowrap">订阅状态</span> | 表示什么 | 接下来做什么 |
+| <span style="white-space: nowrap">Subscription status</span> | What it means | What to do next |
 | --- | --- | --- |
-| 待查 | 订阅后还没有查询过资源 | 等下一轮自动查询，或在任务中心手动触发 |
-| 缺资源 | 已查过，但没有找到可用资源 | 等待后续查询，或手动检查资源 |
-| 查询出错 | 查询过程遇到错误 | 查看错误，检查索引器等配置；下一轮会重试 |
-| 已放弃 | 较老影片的本轮无资源查询次数已用尽 | 确认还想获取后，重置查询，开始新一轮 |
-| 下载中 | 有相关活跃下载，或下载完成后仍在等待、执行导入 | 查看下载记录和导入进度 |
-| 导入失败 | 有下载任务，但这轮导入结束后没有产出媒体 | 检查任务详情，可能是导入报错，也可能是文件全部被跳过 |
-| 已入库 | 已有关联媒体记录 | 到影片详情选择媒体播放；实际文件失效时另到媒体管理处理 |
+| Pending lookup | No resource lookup has run since subscribing | Wait for the next automatic lookup, or trigger one manually in the task center |
+| Missing resource | A lookup ran but found no usable resource | Wait for later lookups, or check resources manually |
+| Lookup error | The lookup hit an error | Read the error and check settings such as the indexer; the next round retries |
+| Abandoned | This round of lookups for an older movie has run out of attempts | If you still want it, reset the lookup to start a new round |
+| Downloading | There is an active related download, or the download finished and import is still pending or running | Check the download record and import progress |
+| Import failed | There is a download job, but this import run produced no media | Check the task details; the import may have errored, or every file may have been skipped |
+| Imported | A linked media record exists | Choose a media item in the movie details to play; if the actual file is broken, handle it in media management instead |
 
-「已放弃」描述的是本轮资源查询，影片仍保留订阅。「查询出错」和「导入失败」发生在不同阶段，处理位置也不同。
+"Abandoned" describes this round of resource lookups; the movie stays subscribed. "Lookup error" and "Import failed" happen at different stages, and are handled in different places.
 
-## 系统如何自动查找资源
+## How the system finds resources automatically
 
-自动任务挑选已订阅、没有媒体且没有相关活跃下载任务的影片，并检查查询状态是否允许继续尝试。
+Automated tasks pick subscribed movies that have no media and no active related download jobs, and check whether the lookup state still allows another attempt.
 
-当前自动候选需要有可用来源、大小在 1 GiB 到 40 GiB 之间，且做种数大于 0。合格候选优先按体积从大到小尝试，提交给索引器绑定的下载器。搜索结果里有资源，并不意味着它一定符合自动选择条件。
+Current automatic candidates need an available source, a size between 1 GiB and 40 GiB, and more than 0 seeders. Eligible candidates are tried from largest to smallest and submitted to the download client bound to the indexer. A resource appearing in search results does not mean it meets the automatic selection conditions.
 
-当前界面说明的默认规则为：发行 90 天内的新片持续查询；较老影片默认最多累计 3 次未找到可用资源，之后标为「已放弃」。查询错误不消耗这个次数。实际边界和上限以服务器[配置](/guide/config#downloads)为准。
+The default rules described by the current interface are: new movies released within 90 days are looked up continuously; older movies accumulate at most 3 lookups that find no usable resource, then are marked "Abandoned". Lookup errors do not consume that count. The actual boundaries and limits follow the server [configuration](/guide/config#downloads).
 
-在订阅管理中重置查询后，影片重新排队；重置不会清除已经判定失败的种子记录，也不会保证立刻下载。
+After resetting a lookup in Subscriptions, the movie is queued again; resetting does not clear torrent records already judged as failed, and does not guarantee an immediate download.
 
-## 想自己挑选资源时
+## When you want to pick resources yourself
 
-打开影片详情的「磁力搜索」，查看候选的名称、大小、来源及下载器，再选择要提交的资源。手动挑选适合你已经知道要哪个版本的情况。
+Open "Torrent search" in the movie details, review the candidates' names, sizes, sources and download clients, then choose which resource to submit. Manual picking suits cases where you already know which version you want.
 
-提交后仍要到任务中心跟进下载与导入。不要因为暂时没有媒体，就反复提交同一份资源。
+After submitting, still follow the download and import in the task center. Do not submit the same resource over and over just because media has not appeared yet.
 
-## 下载完成后为什么还不能播放
+## Why a finished download still cannot play
 
-系统需要先同步下载器状态，再将完成的文件交给媒体库导入。两者是不同步骤。
+The system first has to sync the download client's state, then hand the completed file to the media library for import. These are two different steps.
 
-按顺序检查：
+Check in order:
 
-1. 下载任务是否已经完成，最新状态是否已同步。
-2. 自动导入是否开始。
-3. 导入结果是成功、跳过，还是失败。
-4. 影片详情是否已有媒体。
+1. Whether the download job is finished and its latest state has been synced.
+2. Whether the automatic import has started.
+3. Whether the import result is succeeded, skipped or failed.
+4. Whether the movie details now show media.
 
-显示「导入失败」时，重置资源查询通常不能解决问题。先看导入错误；文件全部因大小等条件被跳过，也可能造成下载完成却没有媒体。
+When "Import failed" appears, resetting the resource lookup usually does not help. Read the import error first; all files being skipped for reasons such as size can also cause a finished download with no media.
 
-## 不再想要这部影片时
+## When you no longer want the movie
 
-没有媒体的影片可取消订阅。有媒体时，系统会阻止普通取消操作，并可能提供删除媒体后强制取消的流程。操作前阅读[媒体库管理](./media-management)，避免把取消订阅当作单纯隐藏条目。
+A movie without media can be unsubscribed. When media exists, the system blocks ordinary cancellation and may offer a flow that deletes the media and then force-unsubscribes. Read [Media library management](./media-management) before acting, so that cancelling a subscription is not used as a way to merely hide an entry.
 
-任务中心用于查具体进度和错误，通知用于看提醒。遇到问题不必同时翻遍所有页面，先根据上面的状态找到当前阶段。
+The task center is for specific progress and errors; notifications are for reminders. You do not need to search every page at once — use the status above to find the current stage first.

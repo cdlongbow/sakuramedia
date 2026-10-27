@@ -1,56 +1,56 @@
-# 导入已有资源
+# Import existing files
 
-NAS 或网盘里已经有影片时，可以直接导入，不必先等待系统下载。这篇介绍 JAV 影片；没有番号的内容请使用[普通视频导入](/guide/videos)。
+When movies already live on your NAS or cloud drive, you can import them directly instead of waiting for a download. This page covers JAV movies; for content without a movie number, use [Ordinary video import](/guide/videos).
 
-## 开始前
+## Before you start
 
-在「系统设置 → 媒体库」创建目标媒体库，并确认对应存储插件已启用。来源浏览范围由该媒体库的存储配置提供，例如本地存储的手动导入根目录。
+Create the target media library under "System settings → Media library" and confirm the matching storage plugin is enabled. The browsable sources come from that media library's storage configuration, such as the manual import root directory of local storage.
 
-<Screenshot src="/images/guide/media-library-form.png" alt="新增媒体库表单" caption="界面示意：在系统设置中新增媒体库；字段由所选存储插件提供。" />
+<Screenshot src="/images/guide/media-library-form.png" alt="Add media library form" caption="Interface sketch: add a media library in system settings; the fields come from the selected storage plugin." />
 
-请先选一个小目录验证流程。JAV 导入需要识别番号并刮削元数据与封面，清晰的番号有助于识别；网络或元数据来源故障也会影响导入。
+Start with a small directory to verify the flow. JAV import needs to detect the movie number and scrape metadata and covers, so a clear movie number helps detection; network or metadata source failures can also affect the import.
 
-## 提交一次导入
+## Submit an import
 
-1. 进入「管理 → 资源导入」，选择「JAV 影片」。
-2. 点击「新建导入」，选择目标媒体库。
-3. 在来源浏览器中找到要导入的文件或目录。要选择当前浏览的目录时，点击「选择当前目录」。
-4. 检查「导入方式」，首次使用建议保留默认的「保留源文件」。
-5. 点击「开始导入」。收到任务已提交提示后，到「任务中心」查看进度，也可以从导入页点击「查看导入任务」。
+1. Go to "Manage → Resource import" and choose "JAV movies".
+2. Click "New import" and select the target media library.
+3. Find the file or directory to import in the source browser. To pick the directory you are currently browsing, click "Select current directory".
+4. Check "Import mode"; for a first run, keep the default "Keep source files".
+5. Click "Start import". Once the task-submitted notice appears, check progress in the "Task center", or click "View import task" on the import page.
 
-三种导入方式：
+Three import modes:
 
-| 方式 | 实际行为 | 源文件 |
+| Mode | What actually happens | Source file |
 |---|---|---|
-| 保留源文件 | 优先硬链接；不能硬链接时复制 | 保留 |
-| 导入成功后删除源文件 | 复制到媒体库，成功后删除源文件（效果等同移动） | 删除 |
-| 原地导入 | 不复制也不硬链接，媒体直接引用源文件 | 不动 |
+| Keep source files | Hard link first; copy when hard linking is not possible | Kept |
+| Delete source files after a successful import | Copy to the media library, then delete the source file on success (effectively a move) | Deleted |
+| In-place import | Neither copy nor hard link; the media references the source file directly | Untouched |
 
-同一挂载点下，「保留源文件」才能使用硬链接；跨挂载点或跨文件系统时会复制。原地导入的媒体依赖源文件位置，源文件移动、重命名或内容变化后会失效。详见[容器路径与硬链接](/guide/container-paths#三种导入方式)。
+On the same mount point, "Keep source files" can use hard links; across mount points or file systems it copies instead. In-place media depends on the source file's location and becomes invalid if the file is moved, renamed or changed. See [Container paths and hard links](/guide/container-paths#the-three-import-modes).
 
-来源浏览器展示的是存储插件可访问的内容。找不到目录时，检查媒体库的来源配置和服务器挂载，不能用自己电脑上的任意路径代替服务器能够访问的目录。路径规则见[容器路径与硬链接](/guide/container-paths)。
+The source browser shows what the storage plugin can reach. If a directory is missing, check the media library's source configuration and the server mounts; an arbitrary path on your own computer cannot replace a directory the server can reach. See [Container paths and hard links](/guide/container-paths) for the path rules.
 
-::: warning 源文件处理
-选择「导入成功后删除源文件」会在媒体成功入库后删除源文件。提交前确认选中的来源和导入方式，尤其是仍在做种或被其他程序使用的文件。
+::: warning Handling of source files
+Choosing "Delete source files after a successful import" deletes the source files once the media is imported successfully. Confirm the selected source and import mode before submitting, especially for files still seeding or in use by other programs.
 :::
 
-## 判断是否成功
+## Judge whether it worked
 
-任务完成后，查看成功、跳过和失败统计，再打开影片详情确认媒体是否出现。一个目录中可能部分成功、部分失败，任务结束不代表每个文件都已入库。
+After the task finishes, check the succeeded, skipped and failed counts, then open the movie details to confirm the media appeared. A directory can partly succeed and partly fail; a finished task does not mean every file was imported.
 
-JAV 文件导入会将关联影片纳入订阅，因此之后可以在订阅管理中看到它们。无需再为这些已入库文件重复创建下载。
+JAV file imports add the linked movies to your subscriptions, so they show up under Subscriptions afterwards. There is no need to create downloads again for files that are already imported.
 
-## 处理失败或跳过的文件
+## Deal with failed or skipped files
 
-| 结果或原因 | 检查方向 |
+| Result or cause | Where to look |
 | --- | --- |
-| 未识别番号 | 核对文件名与影片番号；在提供「手动匹配」的失败条目中选择正确影片 |
-| 刮削失败（元数据获取、封面下载） | 检查数据源、网络和代理，再处理失败条目 |
-| 文件导入失败 | 查看具体错误，检查来源可访问性及媒体库配置 |
-| 文件太小而跳过 | 确认它是不是样本；需要保留时再调整最小视频大小配置 |
+| Movie number not detected | Check the file name against the movie number; choose the correct movie in the failed entry that offers "Manual match" |
+| Scrape failed (metadata fetch, cover download) | Check the data source, network and proxy, then handle the failed entry |
+| File import failed | Read the specific error and check source reachability and the media library configuration |
+| Skipped because the file is too small | Confirm whether it is a sample; adjust the minimum video size setting if you need to keep it |
 
-当前任务详情和媒体管理提供的失败条目入口可以查看原因；出现「手动匹配」时，搜索并核对正确的影片资料后再确认。不要为了让任务通过，把文件随意匹配到另一部影片。
+The current task details and the failed-entry entry points in media management show the reason; when "Manual match" appears, search for and verify the correct movie record before confirming. Do not match a file to an unrelated movie just to make the task pass.
 
-最小视频大小等配置见[配置说明](/guide/config#media)。
+See [Configuration](/guide/config#media) for settings such as the minimum video size.
 
-接下来：[开始观看](./playback)。
+Next: [Start watching](./playback).

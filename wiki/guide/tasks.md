@@ -2,58 +2,58 @@
 outline: [2, 3]
 ---
 
-# 后台任务
+# Background Tasks
 
-SakuraMedia 宿主内置定时任务，插件也可以注册自己的任务。任务中心展示运行状态、进度、结果和错误信息。
+The SakuraMedia host includes built-in scheduled tasks, and plugins can register their own. The Task Center shows run status, progress, results and error messages.
 
-## 内置任务总览
+## Built-in task overview
 
-| 任务 | 作用 | 默认频率 |
+| Task | Purpose | Default schedule |
 |---|---|---|
-| 订阅女优影片同步 | 抓取已订阅女优的最新影片 | 每天 02:00 |
-| 已订阅缺失影片自动下载 | 搜索并提交符合条件的资源 | 每天 02:30 |
-| 影片热度重算 | 更新影片热度 | 每天 00:15 |
-| 影片互动数同步 | 同步评分、想看和评论等统计 | 每天 05:00 |
-| 下载任务状态同步 | 同步各 provider 下载器的任务状态 | 每分钟 |
-| 已完成下载自动导入 | 使用 `completed_source_ref` 将完成任务交给导入流程 | 每分钟 |
-| 媒体文件哈希补齐 | 为缺少哈希的媒体文件计算哈希值 | 每天 03:00 |
-| 媒体缩略图生成 | 为可播放媒体生成缩略图 | 每 30 分钟 |
-| 以图搜图索引 | 为媒体缩略图和剧情图生成向量 | 每 5 分钟 |
-| 影片相似度重算 | 计算影片相似结果 | 每天 03:30 |
-| 推荐时刻生成 | 生成推荐时刻候选 | 每天 04:00 |
-| 每日推荐生成 | 生成每日推荐快照 | 每天 05:00 |
-| GFriends 头像缓存刷新 | 刷新 GFriends 文件树缓存 | 每周一 04:00 |
-| 活动记录清理 | 清理任务运行记录和已读通知 | 每天 05:30 |
+| Actor subscription movie sync | Fetches the latest movies of subscribed actors | Daily at 02:00 |
+| Auto-download missing subscribed movies | Searches for and submits matching resources | Daily at 02:30 |
+| Movie heat recalculation | Updates movie heat | Daily at 00:15 |
+| Movie interaction sync | Syncs statistics such as ratings, wants and comments | Daily at 05:00 |
+| Download task status sync | Syncs task status from each provider's download client | Every minute |
+| Auto-import completed downloads | Hands completed tasks to the import flow using `completed_source_ref` | Every minute |
+| Media file hash backfill | Computes hashes for media files that lack them | Daily at 03:00 |
+| Media thumbnail generation | Generates thumbnails for playable media | Every 30 minutes |
+| Image search indexing | Generates vectors for media thumbnails and scene images | Every 5 minutes |
+| Movie similarity recalculation | Computes similar movie results | Daily at 03:30 |
+| Recommended moment generation | Generates candidate recommended moments | Daily at 04:00 |
+| Daily recommendation generation | Generates daily recommendation snapshots | Daily at 05:00 |
+| GFriends avatar cache refresh | Refreshes the GFriends file-tree cache | Mondays at 04:00 |
+| Activity record cleanup | Cleans up task run records and read notifications | Daily at 05:30 |
 
-插件注册的任务会在同一任务中心显示，并使用插件自己的配置和 cron。
+Tasks registered by plugins appear in the same Task Center and use the plugin's own settings and cron.
 
-关闭「图片与文字搜图」后，图像搜索索引任务不调度；关闭「相似影片与向量服务」后，相似度重算和启动时索引构建不执行。任务中心显示「未启用」，不能手动执行；重启前已排队的相关任务会跳过执行。缩略图生成和推荐任务仍保留，推荐跳过关闭的信号。
+When "Image & Text Search" is off, the image search indexing task is not scheduled; when "Similar Movies & Vector Service" is off, similarity recalculation and the index build at startup do not run. The Task Center shows them as "Not enabled" and they cannot be run manually; related tasks already queued before the restart are skipped. Thumbnail generation and recommendation tasks remain, and recommendations skip the disabled signal.
 
-## 下载链路任务
+## Download pipeline tasks
 
-### 已订阅缺失影片自动下载
+### Auto-download missing subscribed movies
 
-系统为已订阅且还没有可播放媒体的影片查询索引器。候选按后端筛选规则选择后，交给该索引器绑定的第一个下载器；下载器由 provider 提供，具体能力由插件决定。
+The system queries indexers for movies that are subscribed but do not have playable media yet. Candidates are selected by the backend's filtering rules and then handed to the first download client bound to that indexer; the download client is provided by a provider, and its exact capabilities are decided by the plugin.
 
-### 下载任务状态同步
+### Download task status sync
 
-按下载器 provider 的任务接口同步状态。任务记录保存宿主需要的状态和 provider 返回的来源引用。
+Status is synced through the task interface of the download client provider. Task records keep the state the host needs and the source reference returned by the provider.
 
-### 已完成下载自动导入
+### Auto-import completed downloads
 
-下载器返回 `completed` 且包含 `completed_source_ref` 后，任务会进入导入队列。导入请求把 `source_ref` 原样交给目标媒体库 provider，由 provider 扫描来源并写入媒体库。
+Once a download client returns `completed` with a `completed_source_ref`, the task enters the import queue. The import request passes `source_ref` unchanged to the provider of the target media library, which scans the source and writes it into the media library.
 
-## 媒体与发现任务
+## Media and discovery tasks
 
-- **媒体缩略图生成**：为可播放媒体准备时刻预览和以图搜图所需的缩略图。
-- **媒体文件哈希补齐**：为缺少哈希的媒体文件计算哈希值。
-- **以图搜图索引**：将待处理的媒体缩略图和剧情图交给 SigLIP2 嵌入服务，再写入 Qdrant。
-- **影片相似度重算**：离线计算详情页的相似影片结果。
-- **推荐时刻生成 / 每日推荐生成**：准备发现页和推荐页数据。
-- **影片热度重算、互动数同步**：更新影片的发现和排序数据。
-- **GFriends 头像缓存刷新**：下载文件树索引并写入本地缓存。
+- **Media thumbnail generation**: prepares the thumbnails needed for moment previews and image search on playable media.
+- **Media file hash backfill**: computes hashes for media files that lack them.
+- **Image search indexing**: hands pending media thumbnails and scene images to the SigLIP2 embedding service, then writes them into Qdrant.
+- **Movie similarity recalculation**: computes the similar movies shown on detail pages offline.
+- **Recommended moment generation / daily recommendation generation**: prepares data for the discover and recommendation pages.
+- **Movie heat recalculation and interaction sync**: updates the discovery and sorting data for movies.
+- **GFriends avatar cache refresh**: downloads the file-tree index and writes it to the local cache.
 
-## 默认 cron 配置
+## Default cron configuration
 
 ```toml
 [scheduler]
@@ -79,12 +79,12 @@ activity_task_run_retention_per_key = 200
 activity_notification_read_retention_days = 3
 ```
 
-## 任务运行规则
+## Task execution rules
 
-- 通过 `aps <job>` 或任务中心触发的任务会进入任务中心。
-- 同一任务的手动执行和定时执行互斥，运行中不会重复入队。
-- 服务重启会回收已中断的任务状态。
-- 下载任务中心可以删除任务；删除时可以让 provider 同步删除远端任务及其文件，具体行为由 provider 决定。
-- 任务记录删除只影响本地列表，不会替代媒体库或 provider 的存储管理。
+- Tasks triggered by `aps <job>` or from the Task Center appear in the Task Center.
+- Manual and scheduled runs of the same task are mutually exclusive; a running task is not queued again.
+- A service restart reclaims the state of interrupted tasks.
+- Download tasks can be deleted from the download task center; when deleting, you can let the provider delete the remote task and its files as well, depending on what the provider supports.
+- Deleting a task record only affects the local list; it is not a substitute for storage management in the media library or the provider.
 
-任务 cron 和保留期见[配置说明](/guide/config#scheduler)，插件任务以插件设置为准。
+See the [Configuration Reference](/guide/config#scheduler) for task cron expressions and retention periods; plugin tasks follow the plugin settings.

@@ -13,9 +13,9 @@
 <p align="center">
   <a href="https://github.com/tinypinglite/sakuramedia/releases/latest"><strong>下载客户端</strong></a>
   ·
-  <a href="https://tinypinglite.github.io/sakuramedia/guide/quick-start"><strong>部署后端</strong></a>
+  <a href="https://tinypinglite.github.io/sakuramedia/zh-CN/guide/quick-start"><strong>部署后端</strong></a>
   ·
-  <a href="https://tinypinglite.github.io/sakuramedia/"><strong>查看 Wiki</strong></a>
+  <a href="https://tinypinglite.github.io/sakuramedia/zh-CN/"><strong>查看 Wiki</strong></a>
   ·
   <a href="https://tinypinglite.github.io/sakuramedia/videos/sakuramedia-demo.mp4"><strong>看演示</strong></a>
 </p>
@@ -39,7 +39,7 @@
 
 <p align="center">
   收藏久了，我开始在意：这部影片里，我究竟想留下什么？<br />
-  <a href="https://tinypinglite.github.io/sakuramedia/guide/collection-strategy"><strong>为什么做 SakuraMedia →</strong></a>
+  <a href="https://tinypinglite.github.io/sakuramedia/zh-CN/guide/collection-strategy"><strong>为什么做 SakuraMedia →</strong></a>
 </p>
 
 ## 核心功能
@@ -184,11 +184,11 @@ NAS 不是必须的：后端可以跑在任何能长期运行 Docker 的机器�
 
 ## 快速开始
 
-1. **部署后端**：按 [快速开始](https://tinypinglite.github.io/sakuramedia/guide/quick-start) 用 Docker Compose 启动后端，默认端口 `38000`。后端建议 4 核 CPU、2GB 以上内存，运行数据放在 SSD；影片存 115 时不需要大容量本地盘。
+1. **部署后端**：按 [快速开始](https://tinypinglite.github.io/sakuramedia/zh-CN/guide/quick-start) 用 Docker Compose 启动后端，默认端口 `38000`。后端建议 4 核 CPU、2GB 以上内存，运行数据放在 SSD；影片存 115 时不需要大容量本地盘。
 2. **下载并登录客户端**：首次登录填写后端地址，例如 `http://你的IP:38000`；默认账号 `account / account`，登录后请立即修改密码。
-3. **创建媒体库并导入影片**：后端镜像已预装「本地存储与 qBittorrent」，创建媒体库后即可导入宿主机上已有的影片；需要自动下载时，再按 [自动下载与索引器](https://tinypinglite.github.io/sakuramedia/guide/auto-download) 配置 qBittorrent 和索引器（Jackett / Prowlarr）。
+3. **创建媒体库并导入影片**：后端镜像已预装「本地存储与 qBittorrent」，创建媒体库后即可导入宿主机上已有的影片；需要自动下载时，再按 [自动下载与索引器](https://tinypinglite.github.io/sakuramedia/zh-CN/guide/auto-download) 配置 qBittorrent 和索引器（Jackett / Prowlarr）。
 
-完整步骤、路径映射、自动下载和插件选择见 [快速开始](https://tinypinglite.github.io/sakuramedia/guide/quick-start)、[容器路径与硬链接](https://tinypinglite.github.io/sakuramedia/guide/container-paths)、[自动下载与索引器](https://tinypinglite.github.io/sakuramedia/guide/auto-download) 与 [推荐插件](https://tinypinglite.github.io/sakuramedia/guide/plugins)。
+完整步骤、路径映射、自动下载和插件选择见 [快速开始](https://tinypinglite.github.io/sakuramedia/zh-CN/guide/quick-start)、[容器路径与硬链接](https://tinypinglite.github.io/sakuramedia/zh-CN/guide/container-paths)、[自动下载与索引器](https://tinypinglite.github.io/sakuramedia/zh-CN/guide/auto-download) 与 [推荐插件](https://tinypinglite.github.io/sakuramedia/zh-CN/guide/plugins)。
 
 ## 适合谁
 
@@ -207,8 +207,8 @@ NAS 不是必须的：后端可以跑在任何能长期运行 Docker 的机器�
 ## 参与贡献
 
 - 点一个 Star，让更多人看到这个项目。
-- 帮助改进 [Wiki](https://tinypinglite.github.io/sakuramedia/) 和文档。
-- 开发插件：查看 [插件开发文档](https://tinypinglite.github.io/sakuramedia/guide/plugin-development)；上架插件市场请向 [sakuramedia-plugin-market](https://github.com/tinypinglite/sakuramedia-plugin-market) 提交 PR。
+- 帮助改进 [Wiki](https://tinypinglite.github.io/sakuramedia/zh-CN/) 和文档。
+- 开发插件：查看 [插件开发文档](https://tinypinglite.github.io/sakuramedia/zh-CN/guide/plugin-development)；上架插件市场请向 [sakuramedia-plugin-market](https://github.com/tinypinglite/sakuramedia-plugin-market) 提交 PR。
 - 提交 Bug 修复或新功能 PR。客户端使用 Flutter 开发，当前基线为 3.47.2；`flutter pub get` 后可用 `./scripts/test.sh -j 4` 运行测试。
 
 本项目不需要捐赠；Star、文档、插件和 PR 都是帮助。

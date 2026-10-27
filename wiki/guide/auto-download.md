@@ -2,77 +2,77 @@
 outline: [2, 3]
 ---
 
-# 自动下载与索引器
+# Auto-Download and Indexers
 
-[快速开始](/guide/quick-start)以「导入已有影片」为主。配置好下载器和索引器后，SakuraMedia 才能为订阅的影片自动寻找资源、提交下载并导入媒体库。
+[Quick Start](/guide/quick-start) focuses on importing existing movies. Only after a download client and an indexer are configured can SakuraMedia automatically find resources for movies you subscribe to, submit downloads and import them into the media library.
 
-这页默认已经完成快速开始中的部署和媒体库创建。
+This page assumes you have already finished the deployment and media library creation from Quick Start.
 
-## 开始前
+## Before you begin
 
-- 一个可访问的 qBittorrent，和 SakuraMedia 在同一台机器上（本机 Docker 或 NAS 套件）。
-- 一个 Jackett 或 Prowlarr 索引器。
-- 想使用硬链接时，下载目录和媒体库需要在同一个挂载点下（通常也意味着同一个文件系统）。
+- A reachable qBittorrent on the same machine as SakuraMedia (Docker on the same host or a NAS package).
+- A Jackett or Prowlarr indexer.
+- If you want to use hard links, the download directory and the media library must be on the same mount point (which usually also means the same filesystem).
 
-## 1. 让 qBittorrent 和 SakuraMedia 看到同一个下载目录
+## 1. Make qBittorrent and SakuraMedia see the same download directory
 
-路径规则和导入已有影片一样：**同一个宿主机目录，挂到两个容器里的同一个路径。**
+The path rules are the same as for importing existing movies: **the same host directory, mounted at the same path in both containers.**
 
-推荐 qBittorrent 容器挂载：
+Recommended qBittorrent container mount:
 
 ```yaml
 volumes:
   - ${STORAGE_ROOT}/downloads:/media/downloads
 ```
 
-如果宿主机上还没有下载目录，先创建它（按快速开始的示例路径，实际路径以你的 `STORAGE_ROOT` 为准）：
+If the download directory does not exist on the host yet, create it first (using the example path from Quick Start; the real path follows your `STORAGE_ROOT`):
 
 ```bash
 mkdir -p /mnt/volume1/media/downloads
 ```
 
-SakuraMedia 已经挂载了 `${STORAGE_ROOT}:/media`，所以它看到的是 `/media/downloads`。在 qBittorrent「设置 → 下载 → 默认保存路径」中填 `/media/downloads`。
+SakuraMedia already mounts `${STORAGE_ROOT}:/media`, so it sees `/media/downloads`. In qBittorrent, go to "Settings → Downloads → Default Save Path" and enter `/media/downloads`.
 
-qBittorrent 不是 Docker 或路径改不了时，见[容器路径与硬链接](/guide/container-paths#自动下载时的-qbittorrent-路径)。
+If qBittorrent is not running in Docker or its paths cannot be changed, see [qBittorrent paths for automatic downloading](/guide/container-paths#qbittorrent-paths-for-automatic-downloading).
 
-## 2. 添加下载器
+## 2. Add a download client
 
-「系统设置 → 下载器 → 新增」，选择目标媒体库：
+Go to "System Settings → Download Clients → Add" and select the target media library:
 
-| 字段 | 填写 |
+| Field | Value |
 |---|---|
-| qBittorrent 地址 | qB 在宿主机：`http://宿主机IP:8080`（按你的 qB WebUI 端口）；qB 和 SakuraMedia 在同一 compose：`http://qbittorrent:8080` |
-| 用户名 / 密码 | qBittorrent WebUI 的登录信息 |
-| qBittorrent 保存根目录 | `/media/downloads` |
-| 后端下载根目录 | `/media/downloads` |
+| qBittorrent address | qB on the host: `http://<host-ip>:8080` (use your qB WebUI port); qB and SakuraMedia in the same compose: `http://qbittorrent:8080` |
+| Username / password | The qBittorrent WebUI credentials |
+| qBittorrent save root | `/media/downloads` |
+| Backend download root | `/media/downloads` |
 
-保存前点「测试配置」，确认目录映射和硬链接通过。目录映射失败通常是两个根目录没有指向同一个物理目录；处理方式见[容器路径与硬链接](/guide/container-paths#自动下载时的-qbittorrent-路径)。
+Click "Test Configuration" before saving to confirm that the directory mapping and hard links pass. A directory mapping failure usually means the two root directories do not point at the same physical directory; see [qBittorrent paths for automatic downloading](/guide/container-paths#qbittorrent-paths-for-automatic-downloading) for how to fix it.
 
-<Screenshot src="/images/guide/download-client-form.png" alt="添加下载器表单" caption="界面示意：添加下载器时选择目标媒体库，并填写插件提供的配置字段。" />
+<Screenshot src="/images/guide/download-client-form.png" alt="Add download client form" caption="Interface illustration: when adding a download client, select the target media library and fill in the configuration fields provided by the plugin." />
 
-## 3. 配置索引器并绑定下载器
+## 3. Configure an indexer and bind a download client
 
-「系统设置 → 索引器 → 新增」。「资源地址」要填完整的 Torznab 地址，不要填网站或聚合器的首页：
+Go to "System Settings → Indexers → Add". The "Feed URL" must be the full Torznab URL, not the home page of a site or aggregator:
 
-| 来源 | 资源地址 | API Key |
+| Source | Feed URL | API Key |
 |---|---|---|
-| Jackett | 站点对应的「Copy Torznab Feed」 | 面板右上角复制 |
-| Prowlarr | 索引器列表的 RSS 图标地址，形如 `http://<主机>:9696/<索引器ID>/api?apikey=...` | 地址已包含 `apikey`，可留空 |
+| Jackett | The site's "Copy Torznab Feed" link | Copy it from the top-right corner of the dashboard |
+| Prowlarr | The RSS icon URL in the indexer list, shaped like `http://<host>:9696/<indexer-ID>/api?apikey=...` | The URL already contains `apikey`, so you can leave this empty |
 
-保存后绑定一个或多个下载器（第一个作为默认下载目标），再点「测试 Torznab 连通性」。
+After saving, bind one or more download clients (the first one becomes the default download target), then click "Test Torznab Connectivity".
 
-## 4. 验证
+## 4. Verify
 
-1. 在「概览」页运行「组件诊断」，确认媒体库、索引器、JavDB 的连通性；下载器用下载器页的「测试配置」单独检查。
-2. 订阅一部影片，等待后台任务查询资源。
-3. 想主动验证自动流程时，在任务中心手动触发「已订阅缺失影片自动下载」，然后查看运行结果。没有合适资源时，任务运行完成也不代表成功下载。
+1. On the "Overview" page, run "Component Diagnostics" to confirm connectivity to the media library, indexers and JavDB; check the download client separately with "Test Configuration" on the download clients page.
+2. Subscribe to a movie and wait for the background task to look for resources.
+3. To actively verify the automatic flow, manually trigger "Auto-download missing subscribed movies" in the Task Center and check the run result. When no suitable resource exists, a completed run does not mean a successful download.
 
-完整流程见[获得第一部想看的影片](/manual/first-movie)。导入已有影片不需要这一步，见[导入已有资源](/manual/import)。
+See [Get your first movie](/manual/first-movie) for the full flow. Importing existing movies does not need this step; see [Import existing assets](/manual/import).
 
-## 路径规则
+## Path rules
 
-- qBittorrent 和 SakuraMedia 把同一个宿主机目录挂到同一个容器路径。
-- SakuraMedia 只挂一次父目录，让媒体库和下载目录在同一个挂载点下，硬链接才能工作。
-- 不要分别挂载 `downloads` 和 `library`，否则导入会退化为复制。
+- qBittorrent and SakuraMedia mount the same host directory at the same container path.
+- SakuraMedia mounts the parent directory only once so that the media library and the download directory are on the same mount point, which is what makes hard links work.
+- Do not mount `downloads` and `library` separately, otherwise imports fall back to copying.
 
-完整的路径映射和三种导入方式见[容器路径与硬链接](/guide/container-paths)。
+See [Container Paths and Hard Links](/guide/container-paths) for the full path mapping and the three import modes.

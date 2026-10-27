@@ -16,6 +16,8 @@ import 'test_api_bundle.dart';
 /// - [theme]：默认 Material 主题；需要设计 token 的测试传
 ///   `sakuraDesktopThemeData` / `sakuraMobileThemeData`。
 /// - [wrapInOkToast]：默认 true（toast 文案断言依赖 OKToast 树）。
+/// - [withAppLocalizations]：默认 false；页面已迁移到 ARB 时置 true，注入
+///   `AppLocalizations` 委托并固定 `zh` 语言（中文断言需要）。
 /// - [wrap]：自定义外壳（如 `Scaffold(body: ...)`、navigatorObservers）。
 /// - [locale]：传值时给 `MaterialApp` 装上 ARB 本地化（`AppLocalizations`），
 ///   供已经迁到 `AppLocalizations.of(context)` 的组件使用；不传则保持
@@ -33,6 +35,7 @@ Future<void> pumpWithProviders(
   Size? physicalSize,
   ThemeData? theme,
   bool wrapInOkToast = true,
+  bool withAppLocalizations = true,
   Widget Function(Widget)? wrap,
   Locale? locale,
   Iterable<LocalizationsDelegate<dynamic>>? localizationsDelegates,
@@ -50,14 +53,18 @@ Future<void> pumpWithProviders(
     child: MaterialApp(
       home: child,
       theme: theme,
-      locale: locale ?? const Locale('zh'),
+      locale: locale ?? (withAppLocalizations ? const Locale('zh') : null),
       localizationsDelegates: localizationsDelegates ??
-          <LocalizationsDelegate<dynamic>>[
-            AppLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-      supportedLocales:
-          supportedLocales ?? const <Locale>[Locale('zh'), Locale('en')],
+          (withAppLocalizations
+              ? <LocalizationsDelegate<dynamic>>[
+                  AppLocalizations.delegate,
+                  ...GlobalMaterialLocalizations.delegates,
+                ]
+              : null),
+      supportedLocales: supportedLocales ??
+          (withAppLocalizations
+              ? const <Locale>[Locale('zh'), Locale('en')]
+              : const <Locale>[Locale('en', 'US')]),
     ),
   );
   if (wrapInOkToast) {

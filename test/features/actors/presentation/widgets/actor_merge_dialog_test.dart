@@ -49,6 +49,7 @@ void main() {
       bundle: bundle,
       theme: sakuraThemeData,
       physicalSize: const Size(900, 760),
+      withAppLocalizations: true,
       home: Builder(
         builder: (context) => Scaffold(
           body: Center(
@@ -56,9 +57,7 @@ void main() {
               onPressed: () async {
                 result = await showActorMergeDialog(
                   context,
-                  actor: ActorDetailDto.fromJson(
-                    _actorJson(id: 1, name: '新名'),
-                  ),
+                  actor: ActorDetailDto.fromJson(_actorJson(id: 1, name: '新名')),
                   api: bundle.actorsApi,
                 );
               },

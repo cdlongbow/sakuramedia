@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
 import 'package:sakuramedia/features/shared/data/sort_direction.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 void main() {
   group('ActorSortField', () {
@@ -9,7 +10,10 @@ void main() {
         ActorSortField.playableMovieCount.apiValue,
         'playable_movie_count',
       );
-      expect(ActorSortField.playableMovieCount.label, '可播放影片数');
+      expect(
+        ActorSortField.playableMovieCount.label(AppLocalizationsZh()),
+        '可播放影片数',
+      );
     });
   });
 

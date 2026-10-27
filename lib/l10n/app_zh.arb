@@ -4259,5 +4259,416 @@
   "movieWidgetSeriesAlreadyExists": "已存在",
   "movieWidgetSeriesFailed": "失败",
   "movieWidgetSeriesImportDoneWithRefresh": "完成（刷新列表）",
-  "movieWidgetClose": "关闭"
+  "movieWidgetClose": "关闭",
+  "subscriptionStatusImported": "已入库",
+  "subscriptionStatusDownloading": "下载中",
+  "subscriptionStatusImportFailed": "导入失败",
+  "subscriptionStatusExhausted": "已放弃",
+  "subscriptionStatusFailed": "查询出错",
+  "subscriptionStatusMissing": "缺资源",
+  "subscriptionStatusPending": "待查",
+  "subscriptionStatusUnknown": "未知状态",
+  "subscriptionStatusMediaRemoved": "媒体已删除",
+  "subscriptionStatusNotImported": "未入库",
+  "subscriptionStatusAll": "全部",
+  "subscriptionSortFieldSubscribedAt": "订阅时间",
+  "subscriptionSortFieldReleaseDate": "发行日期",
+  "subscriptionSortFieldLastSearchedAt": "最近查询",
+  "subscriptionSortFieldAttemptCount": "没找到次数",
+  "subscriptionFilterTriggerSearch": "搜索「{query}」",
+  "@subscriptionFilterTriggerSearch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionFilterTriggerAll": "全部",
+  "subscriptionFilterSearchLabel": "搜索",
+  "subscriptionFilterSearchHint": "番号 / 标题，回车生效",
+  "subscriptionFilterSearchClearTooltip": "清除搜索",
+  "subscriptionFeedbackMovieSubscribed": "已订阅影片",
+  "subscriptionFeedbackMovieUnsubscribed": "已取消订阅影片",
+  "subscriptionFeedbackMovieBlockedByMedia": "请删除媒体后再取消订阅",
+  "subscriptionFeedbackActorSubscribed": "已订阅女优",
+  "subscriptionFeedbackActorUnsubscribed": "已取消订阅女优",
+  "subscriptionBatchSubscribeFailed": "批量订阅影片失败",
+  "subscriptionBatchSubscribedCount": "已订阅 {count} 部影片",
+  "@subscriptionBatchSubscribedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchUnsubscribedCount": "已取消订阅 {count} 部影片",
+  "@subscriptionBatchUnsubscribedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchSubscribedPartial": "已订阅 {count} 部，{skipped} 部未处理",
+  "@subscriptionBatchSubscribedPartial": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchUnsubscribedPartial": "已取消订阅 {count} 部，{skipped} 部未处理",
+  "@subscriptionBatchUnsubscribedPartial": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchSkippedCount": "{count} 部影片未处理",
+  "@subscriptionBatchSkippedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionForceUnsubscribeTitle": "强制取消订阅",
+  "subscriptionForceUnsubscribeMessage": "将删除这 {count} 部影片的所有媒体文件及记录，再取消订阅。失败时停止，已删除的媒体无法回滚。",
+  "@subscriptionForceUnsubscribeMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionForceUnsubscribeConfirmLabel": "删除并取消订阅",
+  "subscriptionBatchSkippedTitle": "部分影片未处理",
+  "subscriptionBatchSubscribedSkippedSummary": "已订阅 {count} 部，剩余 {skipped} 部因下列原因未处理",
+  "@subscriptionBatchSubscribedSkippedSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchUnsubscribedSkippedSummary": "已取消订阅 {count} 部，剩余 {skipped} 部因下列原因未处理",
+  "@subscriptionBatchUnsubscribedSkippedSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchAllSkippedSummary": "{count} 部影片因下列原因未处理",
+  "@subscriptionBatchAllSkippedSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchSkippedHasMediaHeader": "已存在媒体，无法取消订阅",
+  "subscriptionBatchSkippedNotFoundHeader": "库中无此番号",
+  "subscriptionBatchForceDeleteLabel": "删除媒体并强制取消订阅",
+  "subscriptionSkippedNumbersCount": "{count} 部",
+  "@subscriptionSkippedNumbersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionActionViewDownloads": "查看下载任务",
+  "subscriptionActionViewDownloadsSubtitle": "查看该影片的下载进度",
+  "subscriptionActionViewFiles": "查看文件",
+  "subscriptionActionViewFilesSubtitle": "查看下载任务里的文件",
+  "subscriptionActionRetriggerImport": "重新导入",
+  "subscriptionActionRetriggerImportSubtitle": "重提最新失败或跳过的导入任务",
+  "subscriptionActionSearchMagnet": "磁力搜索",
+  "subscriptionActionSearchMagnetSubtitle": "手动搜索资源并提交下载",
+  "subscriptionActionDeleteDownloads": "删除下载任务",
+  "subscriptionActionDeleteDownloadsSubtitle": "可选同时删除下载器里的文件",
+  "subscriptionActionUnsubscribe": "取消订阅",
+  "subscriptionActionUnsubscribeSubtitle": "不再自动查找资源，不影响已有文件",
+  "subscriptionImportMediaRemovedHint": "提示：该影片曾成功导入，媒体已从库中删除",
+  "subscriptionImportStatusHint": "提示：{status}",
+  "@subscriptionImportStatusHint": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionRowNoReleaseInfo": "暂无发行与订阅信息",
+  "subscriptionRowMoreActions": "更多操作",
+  "subscriptionListTotalCount": "共 {count} 部",
+  "@subscriptionListTotalCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionListRefreshing": "刷新中",
+  "subscriptionSelectionSelectAll": "全选（{count}）",
+  "@subscriptionSelectionSelectAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionSelectionClearAll": "取消全选",
+  "subscriptionSelectionCount": "已选 {count} 部",
+  "@subscriptionSelectionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchDeleteTasksLabel": "删除任务",
+  "subscriptionBatchUnsubscribeWithCount": "取消订阅（{count}）",
+  "@subscriptionBatchUnsubscribeWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchQueryingDownloadTasks": "正在查询下载任务",
+  "subscriptionBatchNoDownloadTasks": "所选影片没有下载任务",
+  "subscriptionDownloadTasksLoadFailed": "下载任务加载失败",
+  "subscriptionBatchNoRetriggerTasks": "所选影片没有可重新导入的任务",
+  "subscriptionBatchRetriggerSubmitted": "已提交 {count} 个重新导入",
+  "@subscriptionBatchRetriggerSubmitted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchRetriggerSubmittedSkipped": "已提交 {count} 个重新导入，{skipped} 个已跳过",
+  "@subscriptionBatchRetriggerSubmittedSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchRetriggerSubmitFailed": "提交重新导入失败，请稍后重试",
+  "subscriptionBatchUnsubscribeConfirmTitle": "取消订阅 {count} 部影片？",
+  "@subscriptionBatchUnsubscribeConfirmTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchUnsubscribeConfirmMessage": "取消后它们不再自动找资源。已有本地媒体的影片会被跳过，不会删除任何文件。",
+  "subscriptionQueryExplanation": "订阅影片后，系统通过定时任务在索引器中搜索可下载资源，找到后自动提交下载。新片（发行 90 天内）每轮查询、不限次数；老片默认至多查 3 次，用尽则标记「已放弃」，需手动重置后重新排队。查询出错不消耗次数，下一轮自动重试。重置不会清除种子黑名单——已判死的种子不再重试，系统会去寻找新的种子。",
+  "subscriptionListEmptyFiltered": "当前筛选下没有订阅影片。",
+  "subscriptionEmptyNoSearchMatch": "没有匹配「{query}」的订阅影片。换个番号或标题片段再试。",
+  "@subscriptionEmptyNoSearchMatch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionEmptyMissingTitle": "没有缺资源的订阅",
+  "subscriptionEmptyMissingMessage": "所有订阅影片要么已经拿到资源，要么还在正常查询中。",
+  "subscriptionEmptyExhaustedTitle": "没有被放弃的订阅",
+  "subscriptionEmptyExhaustedMessage": "没有影片因多次没找到资源而放弃，不需要手动重置。",
+  "subscriptionEmptyImportFailedTitle": "没有卡在导入的影片",
+  "subscriptionEmptyImportFailedMessage": "下载完成的影片都顺利入库了。",
+  "subscriptionEmptyFailedTitle": "索引器一切正常",
+  "subscriptionEmptyFailedMessage": "最近一轮资源查询没有出错。",
+  "subscriptionEmptyPendingTitle": "没有待查的订阅",
+  "subscriptionEmptyPendingMessage": "新订阅的影片会先落在这里，等下一轮定时任务查过就转到别的状态。",
+  "subscriptionEmptyDownloadingTitle": "没有正在下载的订阅",
+  "subscriptionEmptyDownloadingMessage": "找到种子的影片会出现在这里，进度可以去任务中心看。",
+  "subscriptionEmptyImportedTitle": "还没有入库的订阅影片",
+  "subscriptionEmptyImportedMessage": "资源下载并导入媒体库后，影片会归到这里。",
+  "subscriptionEmptyNoneTitle": "还没有订阅任何影片",
+  "subscriptionEmptyNoneMessage": "在影片列表或详情页点订阅，之后就能在这里跟进求片进度。",
+  "subscriptionEmptySeeAll": "查看全部订阅",
+  "subscriptionImportTaskSubmitted": "已提交导入任务",
+  "subscriptionImportSubmitFailed": "提交导入失败，请稍后重试",
+  "subscriptionDownloadTaskMissing": "下载任务已不存在",
+  "subscriptionFollowEmpty": "暂无关注影片",
+  "subscriptionFollowLoadFailed": "女优上新加载失败，请稍后重试",
+  "subscriptionFollowEmptyDescription": "暂无女优上新，先订阅感兴趣的女优，等定时任务同步后展示",
+  "subscriptionRefreshFailed": "刷新失败",
+  "actorSubscriptionStatusAll": "全部",
+  "actorSubscriptionStatusSubscribed": "已订阅",
+  "actorSubscriptionStatusUnsubscribed": "未订阅",
+  "actorGenderAll": "全部",
+  "actorGenderFemale": "女优",
+  "actorGenderMale": "男优",
+  "actorSortFieldSubscribedAt": "最近订阅",
+  "actorSortFieldName": "名称",
+  "actorSortFieldMovieCount": "影片数",
+  "actorSortFieldPlayableMovieCount": "可播放影片数",
+  "actorSortFieldAge": "年龄",
+  "actorSortFieldHeight": "身高",
+  "actorSortFieldBust": "胸围",
+  "actorSortFieldWaist": "腰围",
+  "actorSortFieldHips": "臀围",
+  "actorSortFieldWaistHipRatio": "腰臀比",
+  "actorSortFieldCup": "罩杯",
+  "actorDetailNotFound": "未找到该女优",
+  "actorDetailLoadFailed": "女优详情暂时无法加载，请稍后重试",
+  "actorSubscribeFailed": "订阅女优失败",
+  "actorUnsubscribeFailed": "取消订阅女优失败",
+  "actorSearchCollapseTooltip": "收起搜索",
+  "actorSearchTooltip": "搜索女优",
+  "actorListEmpty": "暂无女优，去搜索看看吧",
+  "actorListEmptyFiltered": "当前筛选条件下暂无匹配女优",
+  "actorListTotalCount": "{count} 位",
+  "@actorListTotalCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "actorFilterTooltip": "筛选",
+  "actorLocalSubscriptionHint": "本地女优不会同步新作品，订阅仅作为收藏。",
+  "actorMergeTooltip": "合并女优",
+  "actorEditProfileTooltip": "编辑女优资料",
+  "actorMovieYearsLoadFailed": "年份加载失败",
+  "actorMergeCompleted": "已合并 {count} 位女优",
+  "@actorMergeCompleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "actorTagFilterLabel": "标签 · {count}",
+  "@actorTagFilterLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "actorMovieCountLabel": "作品 · {count} 部",
+  "@actorMovieCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "actorMoviesEmpty": "暂无影片数据",
+  "actorBirthdayLabel": "生日",
+  "actorBirthdayValue": "{year}年{month}月{day}日",
+  "@actorBirthdayValue": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      },
+      "month": {
+        "type": "int"
+      },
+      "day": {
+        "type": "int"
+      }
+    }
+  },
+  "actorAgeLabel": "年龄",
+  "actorAgeValue": "{age}岁",
+  "@actorAgeValue": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "actorBirthplaceLabel": "出生地",
+  "actorBloodTypeLabel": "血型",
+  "actorHeightLabel": "身高",
+  "actorCupLabel": "罩杯",
+  "actorBustLabel": "胸围",
+  "actorWaistLabel": "腰围",
+  "actorHipsLabel": "臀围",
+  "actorProfileCollapseTooltip": "收起资料",
+  "actorProfileExpandTooltip": "展开资料",
+  "actorProfileEditorTitle": "编辑女优资料",
+  "actorProfileAliasLabel": "别名",
+  "actorProfileAliasHint": "填写一个别名，会优先展示别名。",
+  "actorProfileBasicSectionTitle": "基础资料",
+  "actorProfileGenderLabel": "性别",
+  "actorGenderFemaleOption": "女性",
+  "actorGenderMaleOption": "男性",
+  "actorProfileHeightLabel": "身高（cm）",
+  "actorProfileBustLabel": "胸围（cm）",
+  "actorProfileWaistLabel": "腰围（cm）",
+  "actorProfileHipsLabel": "臀围（cm）",
+  "actorProfileCupHint": "例如 C、F",
+  "actorProfileBloodTypeHint": "A、B、O 或 AB",
+  "actorProfileCurrentAvatar": "当前头像",
+  "actorProfileImageFormatHint": "支持 JPEG、PNG、WebP，保存时上传",
+  "actorProfilePickImage": "选择图片",
+  "actorProfileChangeImage": "更换图片",
+  "actorProfileImageUnreadable": "无法读取所选图片，请换一张再试",
+  "actorProfileImagePickerUnavailable": "图片选择器尚未加载，请完整重启应用后再试",
+  "actorProfileImageOpenFailed": "打开图片选择器失败，请稍后再试",
+  "actorProfileSaveFailed": "保存女优资料失败，请稍后重试",
+  "actorProfileAliasTooLong": "别名不能超过 255 个字符",
+  "actorProfileBirthdayFormatInvalid": "请输入 YYYY-MM-DD 格式的日期",
+  "actorProfileBirthdayInFuture": "生日不能晚于今天",
+  "actorProfilePositiveIntegerRequired": "请输入正整数",
+  "actorProfileCupFormatInvalid": "请输入 1 个大写英文字母",
+  "actorProfileTextTooLong": "内容不能超过 255 个字符",
+  "actorProfileBloodTypeFormatInvalid": "请输入 A、B、O 或 AB",
+  "actorMergeSearchFailed": "搜索女优失败，请稍后重试",
+  "actorMergeFailed": "合并女优失败，请稍后重试",
+  "actorMergeTitle": "合并女优",
+  "actorMergeSubtitle": "当前女优作为保留方；所选女优的影片、订阅与别名将并入当前女优，且不可撤销。",
+  "actorMergeSubmitLabel": "合并",
+  "actorMergeSubmitLabelWithCount": "合并 {count} 位女优",
+  "@actorMergeSubmitLabelWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "actorMergeSearchLabel": "搜索要合并进来的女优",
+  "actorMergeSearchHint": "输入名字，从下方结果中勾选",
+  "actorMergeSelectedSummary": "已选 {count} 位：{names}",
+  "@actorMergeSelectedSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "actorMergeEmptyResult": "未找到匹配的女优",
+  "actorTasteSubscribedTitle": "已订阅",
+  "actorTasteRecommendedTitle": "你可能想关注",
+  "actorTastePanelTitle": "常看女优",
+  "actorRefreshFailed": "刷新失败"
 }

@@ -5,6 +5,7 @@ import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_s
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status_counts_dto.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_subscription_manager_provider.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_subscription_status_counts_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
 
@@ -35,11 +36,11 @@ bool _needsAttention(MovieSubscriptionStatus? status) =>
     status == MovieSubscriptionStatus.importFailed ||
     status == MovieSubscriptionStatus.failed;
 
-String _labelOf(MovieSubscriptionStatus? status) {
+String _labelOf(AppLocalizations l10n, MovieSubscriptionStatus? status) {
   if (status == MovieSubscriptionStatus.importFailed) {
-    return '未入库';
+    return l10n.subscriptionStatusNotImported;
   }
-  return status?.label ?? '全部';
+  return status?.label(l10n) ?? l10n.subscriptionStatusAll;
 }
 
 /// 订阅管理页顶部的状态分段签，标签自带计数角标。
@@ -108,7 +109,8 @@ class _StatusTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = _labelOf(status);
+    final l10n = AppLocalizations.of(context);
+    final label = _labelOf(l10n, status);
     final highlight = count > 0 && _needsAttention(status);
     return Tab(
       key: Key('movie-subscriptions-status-tab-${status?.apiValue ?? 'all'}'),

@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/shared/data/sort_direction.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/movie_subscription_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 void main() {
   group('MovieSubscriptionFilterState 排序与筛选分离', () {
@@ -11,7 +12,7 @@ void main() {
       expect(state.sortDirection, SortDirection.desc);
       expect(state.hasActiveFilters, isFalse);
       expect(state.isPanelDefault, isTrue);
-      expect(state.triggerLabel, '全部');
+      expect(state.triggerLabel(AppLocalizationsZh()), '全部');
     });
 
     test('只改排序不会让搜索筛选变成「已筛选」', () {
@@ -20,7 +21,7 @@ void main() {
       );
       expect(state.hasActiveFilters, isFalse);
       expect(state.isPanelDefault, isTrue);
-      expect(state.triggerLabel, '全部');
+      expect(state.triggerLabel(AppLocalizationsZh()), '全部');
       expect(state.sortDirection, SortDirection.asc);
     });
 
@@ -29,7 +30,7 @@ void main() {
         search: '  ABP-123 ',
       );
       expect(state.hasActiveFilters, isTrue);
-      expect(state.triggerLabel, '搜索「ABP-123」');
+      expect(state.triggerLabel(AppLocalizationsZh()), '搜索「ABP-123」');
     });
 
     test('resetPanel 保留搜索之外的排序', () {

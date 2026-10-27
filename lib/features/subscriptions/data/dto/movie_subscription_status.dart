@@ -7,6 +7,7 @@
 library;
 
 import 'package:sakuramedia/features/shared/data/sort_direction.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 /// 七个互斥状态；[unknown] 只用于兜底后端将来新增的取值。
 ///
@@ -66,15 +67,16 @@ extension MovieSubscriptionStatusX on MovieSubscriptionStatus {
     MovieSubscriptionStatus.unknown => null,
   };
 
-  String get label => switch (this) {
-    MovieSubscriptionStatus.imported => '已入库',
-    MovieSubscriptionStatus.downloading => '下载中',
-    MovieSubscriptionStatus.importFailed => '导入失败',
-    MovieSubscriptionStatus.exhausted => '已放弃',
-    MovieSubscriptionStatus.failed => '查询出错',
-    MovieSubscriptionStatus.missing => '缺资源',
-    MovieSubscriptionStatus.pending => '待查',
-    MovieSubscriptionStatus.unknown => '未知状态',
+  /// 状态标签。调用方负责传入当前语言的 [AppLocalizations]。
+  String label(AppLocalizations l10n) => switch (this) {
+    MovieSubscriptionStatus.imported => l10n.subscriptionStatusImported,
+    MovieSubscriptionStatus.downloading => l10n.subscriptionStatusDownloading,
+    MovieSubscriptionStatus.importFailed => l10n.subscriptionStatusImportFailed,
+    MovieSubscriptionStatus.exhausted => l10n.subscriptionStatusExhausted,
+    MovieSubscriptionStatus.failed => l10n.subscriptionStatusFailed,
+    MovieSubscriptionStatus.missing => l10n.subscriptionStatusMissing,
+    MovieSubscriptionStatus.pending => l10n.subscriptionStatusPending,
+    MovieSubscriptionStatus.unknown => l10n.subscriptionStatusUnknown,
   };
 
   static MovieSubscriptionStatus fromWire(dynamic value) => switch (value) {
@@ -110,11 +112,16 @@ enum MovieSubscriptionSortField {
 }
 
 extension MovieSubscriptionSortFieldX on MovieSubscriptionSortField {
-  String get label => switch (this) {
-    MovieSubscriptionSortField.subscribedAt => '订阅时间',
-    MovieSubscriptionSortField.releaseDate => '发行日期',
-    MovieSubscriptionSortField.lastSearchedAt => '最近查询',
-    MovieSubscriptionSortField.attemptCount => '没找到次数',
+  /// 排序字段标签。调用方负责传入当前语言的 [AppLocalizations]。
+  String label(AppLocalizations l10n) => switch (this) {
+    MovieSubscriptionSortField.subscribedAt =>
+      l10n.subscriptionSortFieldSubscribedAt,
+    MovieSubscriptionSortField.releaseDate =>
+      l10n.subscriptionSortFieldReleaseDate,
+    MovieSubscriptionSortField.lastSearchedAt =>
+      l10n.subscriptionSortFieldLastSearchedAt,
+    MovieSubscriptionSortField.attemptCount =>
+      l10n.subscriptionSortFieldAttemptCount,
   };
 
   /// 没找到次数只有「多到少」，不提供升序。

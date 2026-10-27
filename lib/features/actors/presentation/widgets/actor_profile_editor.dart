@@ -3,6 +3,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_detail_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/file_picker_with_bytes.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
@@ -99,7 +100,7 @@ class _ActorProfileEditorState extends State<ActorProfileEditor> {
     return AppBottomFormSheet(
       key: const Key('actor-profile-editor-form'),
       formKey: _formKey,
-      title: '编辑女优资料',
+      title: AppLocalizations.of(context).actorProfileEditorTitle,
       body: _buildBody(context),
       submitKey: const Key('actor-profile-editor-submit'),
       isSubmitting: _isSubmitting,
@@ -109,6 +110,7 @@ class _ActorProfileEditorState extends State<ActorProfileEditor> {
 
   Widget _buildBody(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -132,28 +134,34 @@ class _ActorProfileEditorState extends State<ActorProfileEditor> {
             AppTextField(
               fieldKey: const Key('actor-display-name-field'),
               controller: _displayNameController,
-              label: '别名',
-              hintText: '填写一个别名，会优先展示别名。',
+              label: l10n.actorProfileAliasLabel,
+              hintText: l10n.actorProfileAliasHint,
               enabled: !_isSubmitting,
               maxLines: 1,
-              validator: _validateDisplayName,
+              validator: (value) => _validateDisplayName(value, l10n),
             ),
           ],
         ),
         SizedBox(height: spacing.xl),
         _buildSection(
           context,
-          title: '基础资料',
+          title: l10n.actorProfileBasicSectionTitle,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               AppSelectField<int>(
-                label: '性别',
+                label: l10n.actorProfileGenderLabel,
                 value: _gender,
-                items: const [
-                  DropdownMenuItem(value: 0, child: Text('未知')),
-                  DropdownMenuItem(value: 1, child: Text('女性')),
-                  DropdownMenuItem(value: 2, child: Text('男性')),
+                items: [
+                  DropdownMenuItem(value: 0, child: Text(l10n.commonUnknown)),
+                  DropdownMenuItem(
+                    value: 1,
+                    child: Text(l10n.actorGenderFemaleOption),
+                  ),
+                  DropdownMenuItem(
+                    value: 2,
+                    child: Text(l10n.actorGenderMaleOption),
+                  ),
                 ],
                 onChanged: _isSubmitting
                     ? null
@@ -163,74 +171,74 @@ class _ActorProfileEditorState extends State<ActorProfileEditor> {
               AppTextField(
                 fieldKey: const Key('actor-birthday-field'),
                 controller: _birthdayController,
-                label: '生日',
+                label: l10n.actorBirthdayLabel,
                 hintText: 'YYYY-MM-DD',
                 enabled: !_isSubmitting,
                 keyboardType: TextInputType.datetime,
-                validator: _validateBirthday,
+                validator: (value) => _validateBirthday(value, l10n),
               ),
               SizedBox(height: spacing.md),
               AppTextField(
                 fieldKey: const Key('actor-height-field'),
                 controller: _heightController,
-                label: '身高（cm）',
+                label: l10n.actorProfileHeightLabel,
                 enabled: !_isSubmitting,
                 keyboardType: TextInputType.number,
-                validator: _validatePositiveNumber,
+                validator: (value) => _validatePositiveNumber(value, l10n),
               ),
               SizedBox(height: spacing.md),
               AppTextField(
                 fieldKey: const Key('actor-bust-field'),
                 controller: _bustController,
-                label: '胸围（cm）',
+                label: l10n.actorProfileBustLabel,
                 enabled: !_isSubmitting,
                 keyboardType: TextInputType.number,
-                validator: _validatePositiveNumber,
+                validator: (value) => _validatePositiveNumber(value, l10n),
               ),
               SizedBox(height: spacing.md),
               AppTextField(
                 fieldKey: const Key('actor-waist-field'),
                 controller: _waistController,
-                label: '腰围（cm）',
+                label: l10n.actorProfileWaistLabel,
                 enabled: !_isSubmitting,
                 keyboardType: TextInputType.number,
-                validator: _validatePositiveNumber,
+                validator: (value) => _validatePositiveNumber(value, l10n),
               ),
               SizedBox(height: spacing.md),
               AppTextField(
                 fieldKey: const Key('actor-hips-field'),
                 controller: _hipsController,
-                label: '臀围（cm）',
+                label: l10n.actorProfileHipsLabel,
                 enabled: !_isSubmitting,
                 keyboardType: TextInputType.number,
-                validator: _validatePositiveNumber,
+                validator: (value) => _validatePositiveNumber(value, l10n),
               ),
               SizedBox(height: spacing.md),
               AppTextField(
                 fieldKey: const Key('actor-cup-field'),
                 controller: _cupController,
-                label: '罩杯',
-                hintText: '例如 C、F',
+                label: l10n.actorCupLabel,
+                hintText: l10n.actorProfileCupHint,
                 enabled: !_isSubmitting,
                 textInputAction: TextInputAction.next,
-                validator: _validateCup,
+                validator: (value) => _validateCup(value, l10n),
               ),
               SizedBox(height: spacing.md),
               AppTextField(
                 fieldKey: const Key('actor-birthplace-field'),
                 controller: _birthplaceController,
-                label: '出生地',
+                label: l10n.actorBirthplaceLabel,
                 enabled: !_isSubmitting,
-                validator: _validateShortText,
+                validator: (value) => _validateShortText(value, l10n),
               ),
               SizedBox(height: spacing.md),
               AppTextField(
                 fieldKey: const Key('actor-blood-type-field'),
                 controller: _bloodTypeController,
-                label: '血型',
-                hintText: 'A、B、O 或 AB',
+                label: l10n.actorBloodTypeLabel,
+                hintText: l10n.actorProfileBloodTypeHint,
                 enabled: !_isSubmitting,
-                validator: _validateBloodType,
+                validator: (value) => _validateBloodType(value, l10n),
               ),
             ],
           ),
@@ -265,6 +273,7 @@ class _ActorProfileEditorState extends State<ActorProfileEditor> {
 
   Widget _buildImageEditor(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final image = _selectedImage == null
         ? ActorAvatar(
             imageUrl: _currentActor.summary.profileImage?.origin,
@@ -292,7 +301,7 @@ class _ActorProfileEditorState extends State<ActorProfileEditor> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '当前头像',
+                    l10n.actorProfileCurrentAvatar,
                     style: resolveAppTextStyle(
                       context,
                       size: AppTextSize.s14,
@@ -301,7 +310,7 @@ class _ActorProfileEditorState extends State<ActorProfileEditor> {
                   ),
                   SizedBox(height: spacing.xs),
                   Text(
-                    '支持 JPEG、PNG、WebP，保存时上传',
+                    l10n.actorProfileImageFormatHint,
                     style: resolveAppTextStyle(
                       context,
                       size: AppTextSize.s12,
@@ -319,7 +328,9 @@ class _ActorProfileEditorState extends State<ActorProfileEditor> {
           children: [
             AppButton(
               key: const Key('actor-profile-image-pick'),
-              label: _selectedImage == null ? '选择图片' : '更换图片',
+              label: _selectedImage == null
+                  ? l10n.actorProfilePickImage
+                  : l10n.actorProfileChangeImage,
               icon: const Icon(Icons.image_outlined),
               size: AppButtonSize.small,
               onPressed: _isSubmitting ? null : _pickImage,
@@ -331,12 +342,13 @@ class _ActorProfileEditorState extends State<ActorProfileEditor> {
   }
 
   Future<void> _pickImage() async {
+    final l10n = AppLocalizations.of(context);
     try {
       final picked = await pickFileWithBytes(
         allowedExtensions: const <String>['jpg', 'jpeg', 'png', 'webp'],
-        unreadableMessage: '无法读取所选图片，请换一张再试',
-        pickerUnavailableMessage: '图片选择器尚未加载，请完整重启应用后再试',
-        openFailureMessage: '打开图片选择器失败，请稍后再试',
+        unreadableMessage: l10n.actorProfileImageUnreadable,
+        pickerUnavailableMessage: l10n.actorProfileImagePickerUnavailable,
+        openFailureMessage: l10n.actorProfileImageOpenFailed,
       );
       if (picked == null || !mounted) {
         return;
@@ -391,9 +403,14 @@ class _ActorProfileEditorState extends State<ActorProfileEditor> {
       }
     } catch (error) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         setState(() {
           _isSubmitting = false;
-          _errorMessage = apiErrorMessage(error, fallback: '保存女优资料失败，请稍后重试');
+          _errorMessage = apiErrorMessage(
+            error,
+            fallback: l10n.actorProfileSaveFailed,
+            l10n: l10n,
+          );
         });
       }
     }
@@ -474,55 +491,61 @@ class _ActorProfileEditorState extends State<ActorProfileEditor> {
     }
   }
 
-  String? _validateDisplayName(String? value) {
+  String? _validateDisplayName(String? value, AppLocalizations l10n) {
     final normalized = value?.trim() ?? '';
-    return normalized.length > 255 ? '别名不能超过 255 个字符' : null;
+    return normalized.length > 255 ? l10n.actorProfileAliasTooLong : null;
   }
 
-  String? _validateBirthday(String? value) {
+  String? _validateBirthday(String? value, AppLocalizations l10n) {
     final normalized = value?.trim() ?? '';
     if (normalized.isEmpty) {
       return null;
     }
     final date = DateTime.tryParse(normalized);
     if (date == null || normalized != _formatDate(date)) {
-      return '请输入 YYYY-MM-DD 格式的日期';
+      return l10n.actorProfileBirthdayFormatInvalid;
     }
     if (date.isAfter(DateTime.now())) {
-      return '生日不能晚于今天';
+      return l10n.actorProfileBirthdayInFuture;
     }
     return null;
   }
 
-  String? _validatePositiveNumber(String? value) {
+  String? _validatePositiveNumber(String? value, AppLocalizations l10n) {
     final normalized = value?.trim() ?? '';
     if (normalized.isEmpty) {
       return null;
     }
     final parsed = int.tryParse(normalized);
-    return parsed == null || parsed <= 0 ? '请输入正整数' : null;
+    return parsed == null || parsed <= 0
+        ? l10n.actorProfilePositiveIntegerRequired
+        : null;
   }
 
-  String? _validateCup(String? value) {
+  String? _validateCup(String? value, AppLocalizations l10n) {
     final normalized = value?.trim() ?? '';
     if (normalized.isEmpty) {
       return null;
     }
-    return RegExp(r'^[A-Z]$').hasMatch(normalized) ? null : '请输入 1 个大写英文字母';
+    return RegExp(r'^[A-Z]$').hasMatch(normalized)
+        ? null
+        : l10n.actorProfileCupFormatInvalid;
   }
 
-  String? _validateShortText(String? value) {
-    return (value?.trim().length ?? 0) > 255 ? '内容不能超过 255 个字符' : null;
+  String? _validateShortText(String? value, AppLocalizations l10n) {
+    return (value?.trim().length ?? 0) > 255
+        ? l10n.actorProfileTextTooLong
+        : null;
   }
 
-  String? _validateBloodType(String? value) {
+  String? _validateBloodType(String? value, AppLocalizations l10n) {
     final normalized = value?.trim().toUpperCase() ?? '';
     if (normalized.isEmpty) {
       return null;
     }
     return const {'A', 'B', 'O', 'AB'}.contains(normalized)
         ? null
-        : '请输入 A、B、O 或 AB';
+        : l10n.actorProfileBloodTypeFormatInvalid;
   }
 
   static String? _nullableText(String value) {

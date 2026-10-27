@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_sort_menu_button.dart';
 
 /// 女优列表的排序入口适配器。
@@ -33,7 +34,7 @@ class ActorSortMenuButton extends StatelessWidget {
     return AppSortMenuButton<ActorSortField>(
       fields: ActorSortField.values,
       selectedField: filterState.sortField,
-      fieldLabelBuilder: (value) => value.label,
+      fieldLabelBuilder: (value) => value.label(AppLocalizations.of(context)),
       onFieldChanged: (value) =>
           onChanged(filterState.copyWith(sortField: value!)),
       selectedDirection: filterState.sortDirection,

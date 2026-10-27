@@ -53,6 +53,7 @@ class MovieSubscriptionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     final tokens = context.appComponentTokens;
+    final l10n = AppLocalizations.of(context);
     return AppLeftCoverCard(
       key: Key('movie-subscription-row-${item.movieNumber}'),
       coverWidth: tokens.listRowCoverWidth,
@@ -81,8 +82,8 @@ class MovieSubscriptionRow extends StatelessWidget {
             _LastErrorLine(
               item: item,
               message: item.isImportedMediaRemoved
-                  ? '提示：该影片曾成功导入，媒体已从库中删除'
-                  : '提示：${item.importStatusLabel}',
+                  ? l10n.subscriptionImportMediaRemovedHint
+                  : l10n.subscriptionImportStatusHint(item.importStatusLabel!),
               keySuffix: 'import-hint',
             ),
           ],
@@ -138,7 +139,9 @@ class _CoverSlot extends StatelessWidget {
             fit: fit,
           )
         : Container(
-            key: Key('movie-subscription-cover-placeholder-${item.movieNumber}'),
+            key: Key(
+              'movie-subscription-cover-placeholder-${item.movieNumber}',
+            ),
             color: context.appColors.surfaceMuted,
             alignment: Alignment.center,
             child: Icon(
@@ -207,7 +210,7 @@ class _HeadingLine extends StatelessWidget {
         SizedBox(width: spacing.sm),
         AppBadge(
           key: Key('movie-subscription-row-status-${item.movieNumber}'),
-          label: item.displayStatusLabel,
+          label: item.displayStatusLabel(AppLocalizations.of(context)),
           tone: _statusBadgeTone(item),
           size: AppBadgeSize.compact,
         ),
@@ -266,7 +269,8 @@ class _SearchProgressLine extends StatelessWidget {
               l10n.subscriptionSearchedTimes(item.attemptCount),
               style: style,
             )
-          else if (item.attemptCount > 0 && item.attemptCount < item.attemptLimit)
+          else if (item.attemptCount > 0 &&
+              item.attemptCount < item.attemptLimit)
             Text(
               l10n.subscriptionRetryBeforeGivingUp(
                 item.attemptLimit - item.attemptCount,
@@ -277,10 +281,7 @@ class _SearchProgressLine extends StatelessWidget {
             item.lastSearchedAt == null
                 ? l10n.subscriptionNotSearched
                 : l10n.subscriptionLastSearchedAt(
-                    formatRelativeTimeLabel(
-                      item.lastSearchedAt!,
-                      l10n: l10n,
-                    ),
+                    formatRelativeTimeLabel(item.lastSearchedAt!, l10n: l10n),
                   ),
             style: style,
           ),
@@ -398,7 +399,9 @@ class _FooterLine extends StatelessWidget {
         SizedBox(width: context.appSpacing.xs),
         Expanded(
           child: Text(
-            facts.isEmpty ? '暂无发行与订阅信息' : facts.join(' · '),
+            facts.isEmpty
+                ? l10n.subscriptionRowNoReleaseInfo
+                : facts.join(' · '),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: mutedStyle,
@@ -427,8 +430,8 @@ class _FooterLine extends StatelessWidget {
                   key: const Key('movie-subscription-row-more'),
                   icon: const Icon(Icons.more_horiz_rounded),
                   size: AppIconButtonSize.compact,
-                  tooltip: '更多操作',
-                  semanticLabel: '更多操作',
+                  tooltip: l10n.subscriptionRowMoreActions,
+                  semanticLabel: l10n.subscriptionRowMoreActions,
                   onPressed: onOpenActions,
                 ),
               ),
@@ -480,6 +483,7 @@ class _RowActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -488,8 +492,8 @@ class _RowActions extends StatelessWidget {
             key: const Key('movie-subscription-row-downloads'),
             icon: const Icon(Icons.download_outlined),
             size: AppIconButtonSize.compact,
-            tooltip: '查看下载任务',
-            semanticLabel: '查看下载任务',
+            tooltip: l10n.subscriptionActionViewDownloads,
+            semanticLabel: l10n.subscriptionActionViewDownloads,
             onPressed: onOpenDownloads,
           ),
         if (onViewFiles != null)
@@ -497,8 +501,8 @@ class _RowActions extends StatelessWidget {
             key: const Key('movie-subscription-row-files'),
             icon: const Icon(Icons.folder_open_rounded),
             size: AppIconButtonSize.compact,
-            tooltip: '查看文件',
-            semanticLabel: '查看文件',
+            tooltip: l10n.subscriptionActionViewFiles,
+            semanticLabel: l10n.subscriptionActionViewFiles,
             onPressed: onViewFiles,
           ),
         if (onRetriggerImport != null)
@@ -506,16 +510,16 @@ class _RowActions extends StatelessWidget {
             key: const Key('movie-subscription-row-retrigger-import'),
             icon: const Icon(Icons.refresh_rounded),
             size: AppIconButtonSize.compact,
-            tooltip: '重新导入',
-            semanticLabel: '重新导入',
+            tooltip: l10n.subscriptionActionRetriggerImport,
+            semanticLabel: l10n.subscriptionActionRetriggerImport,
             onPressed: isRetriggering ? null : onRetriggerImport,
           ),
         AppIconButton(
           key: const Key('movie-subscription-row-magnet-search'),
           icon: const Icon(Icons.search_rounded),
           size: AppIconButtonSize.compact,
-          tooltip: '磁力搜索',
-          semanticLabel: '磁力搜索',
+          tooltip: l10n.subscriptionActionSearchMagnet,
+          semanticLabel: l10n.subscriptionActionSearchMagnet,
           onPressed: onSearchMagnet,
         ),
         if (onDeleteDownloads != null)
@@ -523,16 +527,16 @@ class _RowActions extends StatelessWidget {
             key: const Key('movie-subscription-row-delete-downloads'),
             icon: const Icon(Icons.delete_outline_rounded),
             size: AppIconButtonSize.compact,
-            tooltip: '删除下载任务',
-            semanticLabel: '删除下载任务',
+            tooltip: l10n.subscriptionActionDeleteDownloads,
+            semanticLabel: l10n.subscriptionActionDeleteDownloads,
             onPressed: onDeleteDownloads,
           ),
         AppIconButton(
           key: const Key('movie-subscription-row-unsubscribe'),
           icon: const Icon(Icons.bookmark_remove_outlined),
           size: AppIconButtonSize.compact,
-          tooltip: '取消订阅',
-          semanticLabel: '取消订阅',
+          tooltip: l10n.subscriptionActionUnsubscribe,
+          semanticLabel: l10n.subscriptionActionUnsubscribe,
           onPressed: onUnsubscribe,
         ),
       ],

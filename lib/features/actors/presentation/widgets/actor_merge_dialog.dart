@@ -6,6 +6,7 @@ import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_detail_dto.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
@@ -109,7 +110,8 @@ class _ActorMergeDialogState extends State<ActorMergeDialog> {
         _isSearching = false;
         _searchErrorMessage = apiErrorMessage(
           error,
-          fallback: '搜索女优失败，请稍后重试',
+          fallback: AppLocalizations.of(context).actorMergeSearchFailed,
+          l10n: AppLocalizations.of(context),
         );
       });
     }
@@ -138,16 +140,17 @@ class _ActorMergeDialogState extends State<ActorMergeDialog> {
         sourceActorIds: sourceActorIds,
       );
       if (!mounted) return;
-      Navigator.of(context).pop(
-        ActorMergeResult(actor: merged, sourceActorIds: sourceActorIds),
-      );
+      Navigator.of(
+        context,
+      ).pop(ActorMergeResult(actor: merged, sourceActorIds: sourceActorIds));
     } catch (error) {
       if (!mounted) return;
       setState(() {
         _isSubmitting = false;
         _submitErrorMessage = apiErrorMessage(
           error,
-          fallback: '合并女优失败，请稍后重试',
+          fallback: AppLocalizations.of(context).actorMergeFailed,
+          l10n: AppLocalizations.of(context),
         );
       });
     }
@@ -155,13 +158,16 @@ class _ActorMergeDialogState extends State<ActorMergeDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppBottomFormSheet(
       key: const Key('actor-merge-form'),
       formKey: _formKey,
-      title: '合并女优',
-      subtitle: '当前女优作为保留方；所选女优的影片、订阅与别名将并入当前女优，且不可撤销。',
+      title: l10n.actorMergeTitle,
+      subtitle: l10n.actorMergeSubtitle,
       submitKey: const Key('actor-merge-confirm-button'),
-      submitLabel: _selected.isEmpty ? '合并' : '合并 ${_selected.length} 位女优',
+      submitLabel: _selected.isEmpty
+          ? l10n.actorMergeSubmitLabel
+          : l10n.actorMergeSubmitLabelWithCount(_selected.length),
       isSubmitting: _isSubmitting,
       submitDisabled: _selected.isEmpty,
       onSubmit: () => unawaited(_submit()),
@@ -171,14 +177,15 @@ class _ActorMergeDialogState extends State<ActorMergeDialog> {
 
   Widget _buildBody(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AppTextField(
           fieldKey: const Key('actor-merge-search-field'),
           controller: _searchController,
-          label: '搜索要合并进来的女优',
-          hintText: '输入名字，从下方结果中勾选',
+          label: l10n.actorMergeSearchLabel,
+          hintText: l10n.actorMergeSearchHint,
           textInputAction: TextInputAction.search,
           onChanged: _onQueryChanged,
           onFieldSubmitted: (value) {
@@ -194,7 +201,12 @@ class _ActorMergeDialogState extends State<ActorMergeDialog> {
         if (_selected.isNotEmpty) ...[
           SizedBox(height: spacing.sm),
           Text(
-            '已选 ${_selected.length} 位：${_selected.values.map((item) => item.displayName).join('、')}',
+            l10n.actorMergeSelectedSummary(
+              _selected.length,
+              _selected.values
+                  .map((item) => item.displayName)
+                  .join(l10n.listSeparator),
+            ),
             key: const Key('actor-merge-selection-summary'),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -244,7 +256,7 @@ class _ActorMergeDialogState extends State<ActorMergeDialog> {
     }
     if (_candidates.isEmpty) {
       return Text(
-        '未找到匹配的女优',
+        AppLocalizations.of(context).actorMergeEmptyResult,
         key: const Key('actor-merge-empty'),
         style: resolveAppTextStyle(
           context,

@@ -11,6 +11,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/pages/desktop/follow_page.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/desktop_navigation_route_state.dart';
 import 'package:sakuramedia/theme.dart';
@@ -359,6 +360,12 @@ Future<void> _pumpFollowPage(
       overrides: bundle.riverpodOverrides(),
       child: MaterialApp(
         theme: sakuraThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: const OKToast(child: Scaffold(body: DesktopFollowPage())),
       ),
     ),
@@ -380,7 +387,16 @@ Future<void> _pumpFollowRouter(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
       child: OKToast(
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          theme: sakuraThemeData,
+          routerConfig: router,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        ),
       ),
     ),
   );

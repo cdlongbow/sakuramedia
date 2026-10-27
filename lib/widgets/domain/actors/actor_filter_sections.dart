@@ -4,6 +4,7 @@ import 'package:sakuramedia/features/actors/data/dto/actor_filter_options_dto.da
 import 'package:sakuramedia/features/actors/presentation/actor_placeholders.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_filter_options_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
@@ -38,7 +39,7 @@ class ActorFilterSectionGroup extends ConsumerWidget {
           title: '订阅筛选',
           options: ActorSubscriptionStatus.values,
           selectedValue: filterState.subscriptionStatus,
-          labelBuilder: (value) => value.label,
+          labelBuilder: (value) => value.label(AppLocalizations.of(context)),
           onSelected: (value) =>
               onChanged(filterState.copyWith(subscriptionStatus: value)),
         ),
@@ -47,7 +48,7 @@ class ActorFilterSectionGroup extends ConsumerWidget {
           title: '性别筛选',
           options: ActorGender.values,
           selectedValue: filterState.gender,
-          labelBuilder: (value) => value.label,
+          labelBuilder: (value) => value.label(AppLocalizations.of(context)),
           onSelected: (value) => onChanged(filterState.copyWith(gender: value)),
         ),
         SizedBox(height: context.appSpacing.lg),

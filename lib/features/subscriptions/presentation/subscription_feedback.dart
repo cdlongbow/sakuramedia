@@ -5,20 +5,32 @@ import 'package:sakuramedia/features/actors/presentation/actor_subscription_togg
 import 'package:sakuramedia/features/actors/presentation/providers/actor_subscription_toggle_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_subscription_toggle_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 
-String? movieSubscriptionFeedbackMessage(MovieSubscriptionToggleResult result) {
+/// 未传 [l10n] 时回退中文，供尚未迁移的调用方渐进替换。
+final AppLocalizations _zhFallback = AppLocalizationsZh();
+
+AppLocalizations _fallbackLocalizations(AppLocalizations? l10n) =>
+    l10n ?? _zhFallback;
+
+String? movieSubscriptionFeedbackMessage(
+  MovieSubscriptionToggleResult result, {
+  AppLocalizations? l10n,
+}) {
+  final messages = _fallbackLocalizations(l10n);
   switch (result.status) {
     case MovieSubscriptionToggleStatus.subscribed:
-      return '已订阅影片';
+      return messages.subscriptionFeedbackMovieSubscribed;
     case MovieSubscriptionToggleStatus.unsubscribed:
-      return '已取消订阅影片';
+      return messages.subscriptionFeedbackMovieUnsubscribed;
     case MovieSubscriptionToggleStatus.blockedByMedia:
-      return '请删除媒体后再取消订阅';
+      return messages.subscriptionFeedbackMovieBlockedByMedia;
     case MovieSubscriptionToggleStatus.failed:
       return result.message;
     case MovieSubscriptionToggleStatus.ignored:
@@ -26,12 +38,16 @@ String? movieSubscriptionFeedbackMessage(MovieSubscriptionToggleResult result) {
   }
 }
 
-String? actorSubscriptionFeedbackMessage(ActorSubscriptionToggleResult result) {
+String? actorSubscriptionFeedbackMessage(
+  ActorSubscriptionToggleResult result, {
+  AppLocalizations? l10n,
+}) {
+  final messages = _fallbackLocalizations(l10n);
   switch (result.status) {
     case ActorSubscriptionToggleStatus.subscribed:
-      return '已订阅女优';
+      return messages.subscriptionFeedbackActorSubscribed;
     case ActorSubscriptionToggleStatus.unsubscribed:
-      return '已取消订阅女优';
+      return messages.subscriptionFeedbackActorUnsubscribed;
     case ActorSubscriptionToggleStatus.failed:
       return result.message;
     case ActorSubscriptionToggleStatus.ignored:
@@ -39,12 +55,22 @@ String? actorSubscriptionFeedbackMessage(ActorSubscriptionToggleResult result) {
   }
 }
 
-void showMovieSubscriptionFeedback(MovieSubscriptionToggleResult result) {
-  _showSubscriptionFeedback(movieSubscriptionFeedbackMessage(result));
+void showMovieSubscriptionFeedback(
+  MovieSubscriptionToggleResult result, {
+  AppLocalizations? l10n,
+}) {
+  _showSubscriptionFeedback(
+    movieSubscriptionFeedbackMessage(result, l10n: l10n),
+  );
 }
 
-void showActorSubscriptionFeedback(ActorSubscriptionToggleResult result) {
-  _showSubscriptionFeedback(actorSubscriptionFeedbackMessage(result));
+void showActorSubscriptionFeedback(
+  ActorSubscriptionToggleResult result, {
+  AppLocalizations? l10n,
+}) {
+  _showSubscriptionFeedback(
+    actorSubscriptionFeedbackMessage(result, l10n: l10n),
+  );
 }
 
 /// 女优订阅切换 + 统一 toast 反馈，供各女优卡片入口复用。
@@ -58,7 +84,7 @@ Future<void> toggleActorSubscriptionWithFeedback(
       .read(actorSubscriptionToggleProvider.notifier)
       .toggle(actorId: actorId, isSubscribed: isSubscribed);
   if (context.mounted) {
-    showActorSubscriptionFeedback(result);
+    showActorSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
   }
 }
 
@@ -83,10 +109,15 @@ Future<MovieSubscriptionBatchToggleResult> showMovieSubscriptionBatchFeedback(
   MovieSubscriptionBatchToggleResult result, {
   required bool subscribe,
 }) async {
-  final actionVerb = subscribe ? '订阅' : '取消订阅';
+  final l10n = AppLocalizations.of(context);
 
   if (result.hasError) {
-    showToast(result.errorMessage ?? (subscribe ? '批量订阅影片失败' : '批量取消订阅影片失败'));
+    showToast(
+      result.errorMessage ??
+          (subscribe
+              ? l10n.subscriptionBatchSubscribeFailed
+              : l10n.errorBatchUnsubscribeMoviesFailed),
+    );
     return result;
   }
 
@@ -95,16 +126,28 @@ Future<MovieSubscriptionBatchToggleResult> showMovieSubscriptionBatchFeedback(
       // 请求成功但无有效变更（例如全部已是目标态），静默不打扰。
       return result;
     }
-    showToast('已$actionVerb ${result.updatedCount} 部影片');
+    showToast(
+      subscribe
+          ? l10n.subscriptionBatchSubscribedCount(result.updatedCount)
+          : l10n.subscriptionBatchUnsubscribedCount(result.updatedCount),
+    );
     return result;
   }
 
   if (result.updatedCount > 0) {
     showToast(
-      '已$actionVerb ${result.updatedCount} 部，${result.skippedCount} 部未处理',
+      subscribe
+          ? l10n.subscriptionBatchSubscribedPartial(
+              result.updatedCount,
+              result.skippedCount,
+            )
+          : l10n.subscriptionBatchUnsubscribedPartial(
+              result.updatedCount,
+              result.skippedCount,
+            ),
     );
   } else {
-    showToast('${result.skippedCount} 部影片未处理');
+    showToast(l10n.subscriptionBatchSkippedCount(result.skippedCount));
   }
 
   if (!context.mounted) {
@@ -117,11 +160,10 @@ Future<MovieSubscriptionBatchToggleResult> showMovieSubscriptionBatchFeedback(
     // 桌面：番号药丸窄内容，小号对话框宽度足够；抽屉走默认 heightFactor（0.9）。
     desktopWidth: context.appLayoutTokens.dialogWidthSm,
     mobileMaxHeightFactor: 0.85,
-    builder:
-        (_) => _MovieSubscriptionBatchSkippedContent(
-          result: result,
-          subscribe: subscribe,
-        ),
+    builder: (_) => _MovieSubscriptionBatchSkippedContent(
+      result: result,
+      subscribe: subscribe,
+    ),
   );
   if (force != true || !context.mounted) return result;
 
@@ -136,10 +178,11 @@ Future<MovieSubscriptionBatchToggleResult> showMovieSubscriptionBatchFeedback(
   try {
     confirmed = await showAppConfirmDialog(
       context,
-      title: '强制取消订阅',
-      message:
-          '将删除这 ${result.skippedHasMediaNumbers.length} 部影片的所有媒体文件及记录，再取消订阅。失败时停止，已删除的媒体无法回滚。',
-      confirmLabel: '删除并取消订阅',
+      title: l10n.subscriptionForceUnsubscribeTitle,
+      message: l10n.subscriptionForceUnsubscribeMessage(
+        result.skippedHasMediaNumbers.length,
+      ),
+      confirmLabel: l10n.subscriptionForceUnsubscribeConfirmLabel,
       danger: true,
       dialogKey: const Key('movie-batch-force-unsubscribe-dialog'),
       confirmKey: const Key('movie-batch-force-unsubscribe-confirm'),
@@ -222,12 +265,19 @@ class _MovieSubscriptionBatchSkippedContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
-    final actionVerb = subscribe ? '订阅' : '取消订阅';
+    final l10n = AppLocalizations.of(context);
 
-    final subtitle =
-        result.updatedCount > 0
-            ? '已$actionVerb ${result.updatedCount} 部，剩余 ${result.skippedCount} 部因下列原因未处理'
-            : '${result.skippedCount} 部影片因下列原因未处理';
+    final subtitle = result.updatedCount > 0
+        ? (subscribe
+              ? l10n.subscriptionBatchSubscribedSkippedSummary(
+                  result.updatedCount,
+                  result.skippedCount,
+                )
+              : l10n.subscriptionBatchUnsubscribedSkippedSummary(
+                  result.updatedCount,
+                  result.skippedCount,
+                ))
+        : l10n.subscriptionBatchAllSkippedSummary(result.skippedCount);
 
     // 番号列表用 Flexible + SingleChildScrollView：桌面 dialog 没有固定高度，
     // 内容自然撑到最大；移动 drawer 由 AppBottomDrawerSurface.maxHeightFactor
@@ -237,7 +287,7 @@ class _MovieSubscriptionBatchSkippedContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          '部分影片未处理',
+          l10n.subscriptionBatchSkippedTitle,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s18,
@@ -263,7 +313,7 @@ class _MovieSubscriptionBatchSkippedContent extends StatelessWidget {
               children: [
                 if (result.skippedHasMediaNumbers.isNotEmpty)
                   _SkippedNumbersGroup(
-                    header: '已存在媒体，无法取消订阅',
+                    header: l10n.subscriptionBatchSkippedHasMediaHeader,
                     numbers: result.skippedHasMediaNumbers,
                   ),
                 if (result.skippedHasMediaNumbers.isNotEmpty &&
@@ -271,7 +321,7 @@ class _MovieSubscriptionBatchSkippedContent extends StatelessWidget {
                   SizedBox(height: spacing.lg),
                 if (result.skippedMovieNotFoundNumbers.isNotEmpty)
                   _SkippedNumbersGroup(
-                    header: '库中无此番号',
+                    header: l10n.subscriptionBatchSkippedNotFoundHeader,
                     numbers: result.skippedMovieNotFoundNumbers,
                   ),
               ],
@@ -282,7 +332,7 @@ class _MovieSubscriptionBatchSkippedContent extends StatelessWidget {
           SizedBox(height: spacing.lg),
           AppButton(
             key: const Key('movie-batch-force-unsubscribe-button'),
-            label: '删除媒体并强制取消订阅',
+            label: l10n.subscriptionBatchForceDeleteLabel,
             variant: AppButtonVariant.danger,
             onPressed: () => Navigator.of(context).pop(true),
           ),
@@ -309,7 +359,7 @@ class _SkippedNumbersGroup extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '$header · ${numbers.length} 部',
+          '$header · ${AppLocalizations.of(context).subscriptionSkippedNumbersCount(numbers.length)}',
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,

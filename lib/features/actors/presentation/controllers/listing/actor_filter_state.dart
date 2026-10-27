@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/features/shared/data/sort_direction.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 enum ActorSubscriptionStatus { all, subscribed, unsubscribed }
 
@@ -10,10 +11,13 @@ extension ActorSubscriptionStatusX on ActorSubscriptionStatus {
     ActorSubscriptionStatus.unsubscribed => 'unsubscribed',
   };
 
-  String get label => switch (this) {
-    ActorSubscriptionStatus.all => '全部',
-    ActorSubscriptionStatus.subscribed => '已订阅',
-    ActorSubscriptionStatus.unsubscribed => '未订阅',
+  /// 筛选标签。调用方负责传入当前语言的 [AppLocalizations]。
+  String label(AppLocalizations l10n) => switch (this) {
+    ActorSubscriptionStatus.all => l10n.actorSubscriptionStatusAll,
+    ActorSubscriptionStatus.subscribed =>
+      l10n.actorSubscriptionStatusSubscribed,
+    ActorSubscriptionStatus.unsubscribed =>
+      l10n.actorSubscriptionStatusUnsubscribed,
   };
 }
 
@@ -26,10 +30,11 @@ extension ActorGenderX on ActorGender {
     ActorGender.male => 'male',
   };
 
-  String get label => switch (this) {
-    ActorGender.all => '全部',
-    ActorGender.female => '女优',
-    ActorGender.male => '男优',
+  /// 筛选标签。调用方负责传入当前语言的 [AppLocalizations]。
+  String label(AppLocalizations l10n) => switch (this) {
+    ActorGender.all => l10n.actorGenderAll,
+    ActorGender.female => l10n.actorGenderFemale,
+    ActorGender.male => l10n.actorGenderMale,
   };
 }
 
@@ -62,18 +67,19 @@ extension ActorSortFieldX on ActorSortField {
     ActorSortField.cup => 'cup',
   };
 
-  String get label => switch (this) {
-    ActorSortField.subscribedAt => '最近订阅',
-    ActorSortField.name => '名称',
-    ActorSortField.movieCount => '影片数',
-    ActorSortField.playableMovieCount => '可播放影片数',
-    ActorSortField.age => '年龄',
-    ActorSortField.heightCm => '身高',
-    ActorSortField.bustCm => '胸围',
-    ActorSortField.waistCm => '腰围',
-    ActorSortField.hipsCm => '臀围',
-    ActorSortField.waistHipRatio => '腰臀比',
-    ActorSortField.cup => '罩杯',
+  /// 排序字段标签。调用方负责传入当前语言的 [AppLocalizations]。
+  String label(AppLocalizations l10n) => switch (this) {
+    ActorSortField.subscribedAt => l10n.actorSortFieldSubscribedAt,
+    ActorSortField.name => l10n.actorSortFieldName,
+    ActorSortField.movieCount => l10n.actorSortFieldMovieCount,
+    ActorSortField.playableMovieCount => l10n.actorSortFieldPlayableMovieCount,
+    ActorSortField.age => l10n.actorSortFieldAge,
+    ActorSortField.heightCm => l10n.actorSortFieldHeight,
+    ActorSortField.bustCm => l10n.actorSortFieldBust,
+    ActorSortField.waistCm => l10n.actorSortFieldWaist,
+    ActorSortField.hipsCm => l10n.actorSortFieldHips,
+    ActorSortField.waistHipRatio => l10n.actorSortFieldWaistHipRatio,
+    ActorSortField.cup => l10n.actorSortFieldCup,
   };
 }
 
@@ -143,7 +149,9 @@ class ActorFilterState {
 
   /// 只反映订阅状态这一主维度；性别 / 排序有独立分节，不堆在入口上。
   /// 语义对齐 `MovieFilterState.triggerLabel`。
-  String get triggerLabel => subscriptionStatus.label;
+  ///
+  /// 调用方负责传入当前语言的 [AppLocalizations]。
+  String triggerLabel(AppLocalizations l10n) => subscriptionStatus.label(l10n);
 
   /// 女优搜索入口专用：从无关键词开始搜索时把默认的「已订阅」放宽为「全部」，
   /// 避免在订阅视图下搜不到未订阅女优；搜索过程中继续输入不覆盖用户改过的筛选。

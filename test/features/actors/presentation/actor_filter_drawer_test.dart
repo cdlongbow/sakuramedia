@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/actors/data/dto/actor_filter_options_dto.da
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/mobile/actor_filter_drawer.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_filter_options_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
 
@@ -38,6 +39,12 @@ void main() {
         ],
         child: MaterialApp(
           theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           home: Builder(
             builder: (context) => Scaffold(
               body: TextButton(
@@ -122,6 +129,12 @@ void main() {
         ],
         child: MaterialApp(
           theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           home: Builder(
             builder: (context) => Scaffold(
               body: TextButton(

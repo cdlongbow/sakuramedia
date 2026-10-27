@@ -13,6 +13,7 @@ import 'package:sakuramedia/features/shared/presentation/providers/paged_async_n
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
@@ -61,6 +62,7 @@ class BlacklistedMoviesSection extends HookConsumerWidget {
     ScrollController scrollController,
   ) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final async = ref.watch(movieSummaryProvider(_scope));
     final isLoading = !async.hasError && async.value == null;
     final slivers = <Widget>[];
@@ -69,8 +71,12 @@ class BlacklistedMoviesSection extends HookConsumerWidget {
       slivers.add(
         SliverToBoxAdapter(
           child: AppSectionError(
-            title: '屏蔽影片加载失败',
-            message: apiErrorMessage(async.error!, fallback: '屏蔽影片加载失败，请稍后重试。'),
+            title: l10n.moviePageBlacklistLoadFailedTitle,
+            message: apiErrorMessage(
+              async.error!,
+              fallback: l10n.moviePageBlacklistLoadFailed,
+              l10n: l10n,
+            ),
             onRetry: () =>
                 ref.read(movieSummaryProvider(_scope).notifier).reload(),
           ),
@@ -84,7 +90,7 @@ class BlacklistedMoviesSection extends HookConsumerWidget {
       slivers.addAll(<Widget>[
         SliverToBoxAdapter(
           child: Text(
-            '已屏蔽的影片不会出现在普通列表和推荐中。右键影片可取消屏蔽。',
+            l10n.moviePageBlacklistHint,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -96,7 +102,7 @@ class BlacklistedMoviesSection extends HookConsumerWidget {
         SliverToBoxAdapter(child: SizedBox(height: spacing.lg)),
         MovieSummarySliver(
           items: paged.items,
-          emptyMessage: '还没有屏蔽任何影片',
+          emptyMessage: l10n.moviePageBlacklistEmpty,
           onMovieTap: (movie) => context.pushDesktopMovieDetail(
             movieNumber: movie.movieNumber,
             fallbackPath: desktopMoviesPath,
@@ -153,12 +159,19 @@ class BlacklistedMoviesSection extends HookConsumerWidget {
           .unblacklistMovie(movieNumber: movie.movieNumber);
     } catch (error) {
       if (context.mounted) {
-        showToast(apiErrorMessage(error, fallback: '取消屏蔽影片失败'));
+        final l10n = AppLocalizations.of(context);
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: l10n.moviePageUnblacklistFailed,
+            l10n: l10n,
+          ),
+        );
       }
       return;
     }
     if (context.mounted) {
-      showToast('已取消屏蔽影片');
+      showToast(AppLocalizations.of(context).moviePageUnblacklisted);
     }
   }
 
@@ -171,8 +184,11 @@ class BlacklistedMoviesSection extends HookConsumerWidget {
     final action = await showAppActionMenu<_BlacklistedMovieAction>(
       context: context,
       globalPosition: globalPosition,
-      items: const <AppMenuItem<_BlacklistedMovieAction>>[
-        AppMenuItem(value: _BlacklistedMovieAction.unblacklist, label: '取消屏蔽'),
+      items: <AppMenuItem<_BlacklistedMovieAction>>[
+        AppMenuItem(
+          value: _BlacklistedMovieAction.unblacklist,
+          label: AppLocalizations.of(context).moviePageUnblacklistAction,
+        ),
       ],
     );
     if (action == _BlacklistedMovieAction.unblacklist && context.mounted) {

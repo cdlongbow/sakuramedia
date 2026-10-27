@@ -1265,5 +1265,270 @@
       }
     }
   },
-  "pluginMarketInstallablePlugins": "可安装插件"
+  "pluginMarketInstallablePlugins": "可安装插件",
+  "moviePageRefreshFailed": "刷新失败",
+  "moviePageFilterTooltip": "筛选",
+  "moviePageMovieCount": "{count} 部",
+  "@moviePageMovieCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageTagFilterCount": "标签 · {count}",
+  "@moviePageTagFilterCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageEmptyNoMovies": "暂无影片，去搜索看看吧",
+  "moviePageEmptyNoMatches": "当前筛选条件下暂无匹配影片",
+  "moviePageEmptyNotRated": "还没有评分的影片",
+  "moviePageRatedCount": "已评分 {count} 部",
+  "@moviePageRatedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageDimensionManage": "维度管理",
+  "moviePageDimensionTotal": "总分",
+  "moviePageDimensionFallback": "维度",
+  "moviePageTotalScore": "总分 {score}",
+  "@moviePageTotalScore": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "moviePageSeriesFallbackName": "系列 #{id}",
+  "@moviePageSeriesFallbackName": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageSeriesTotalCount": "共 {count} 部",
+  "@moviePageSeriesTotalCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageSeriesSync": "同步系列影片",
+  "moviePageSeriesEmpty": "该系列暂无影片",
+  "moviePagePlaylistAdded": "已加入",
+  "moviePagePlaylistTotalCount": "共 {count} 个",
+  "@moviePagePlaylistTotalCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePagePlaylistAddAction": "加入播放列表",
+  "moviePagePlaylistManageAction": "管理播放列表",
+  "moviePagePlaylistUpdateFailed": "播放列表更新失败",
+  "moviePageWatchLabel": "上次看到 {position}",
+  "@moviePageWatchLabel": {
+    "placeholders": {
+      "position": {
+        "type": "String"
+      }
+    }
+  },
+  "moviePageWatchLabelWithDate": "上次看到 {position} · {date}",
+  "@moviePageWatchLabelWithDate": {
+    "placeholders": {
+      "position": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "moviePageWatchedAtDatePattern": "yyyy年M月d日 HH:mm",
+  "moviePageSectionRankings": "榜单",
+  "moviePageSectionTags": "标签",
+  "moviePageSectionMediaSources": "媒体源",
+  "moviePageSectionSubtitles": "字幕",
+  "moviePageSectionSubtitlesCount": "字幕 · {count}",
+  "@moviePageSectionSubtitlesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageSectionClips": "切片",
+  "moviePageSectionSimilarMovies": "相似影片",
+  "moviePageMetaSeries": "系列",
+  "moviePageMetaMetadata": "元数据",
+  "moviePageMetaNotIndexed": "{source} · 待 JavDB 收录",
+  "@moviePageMetaNotIndexed": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "moviePageMetaWantWatch": "想看 · {count}",
+  "@moviePageMetaWantWatch": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageMetaWatched": "看过 · {count}",
+  "@moviePageMetaWatched": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageMetaReleased": "上映 · {date}",
+  "@moviePageMetaReleased": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "moviePageMetaDuration": "{minutes} 分钟",
+  "@moviePageMetaDuration": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageMetaStudio": "厂商 · {name}",
+  "@moviePageMetaStudio": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "moviePageMetaDirector": "导演 · {name}",
+  "@moviePageMetaDirector": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "moviePageCollectionNotMatched": "未匹配到影片，未更新合集状态",
+  "moviePageMarkedAsCollection": "已标记为合集",
+  "moviePageMarkedAsSingle": "已标记为单体",
+  "moviePageCollectionUpdateFailed": "更新合集状态失败",
+  "moviePageMediaDeleted": "媒体文件已删除",
+  "moviePageMediaDeleteFailed": "删除媒体文件失败",
+  "moviePageMediaSourceLabel": "媒体源 {id}",
+  "@moviePageMediaSourceLabel": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageMediaLabel": "媒体 {id}",
+  "@moviePageMediaLabel": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageMediaDeleteTitle": "删除媒体文件",
+  "moviePageMediaDeleteConfirm": "确认删除媒体“{name}”？",
+  "@moviePageMediaDeleteConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "moviePageMediaDeleteWarning": "该操作会删除媒体文件及 SakuraMedia 记录，且可能无法恢复。",
+  "moviePageSaveToLocal": "保存到本地",
+  "moviePageImageSaved": "图片已保存",
+  "moviePageImageSaveFailed": "保存失败，请稍后重试",
+  "moviePageImageLoadFailed": "读取图片失败，请稍后重试",
+  "moviePageMarkAdded": "已添加标记",
+  "moviePageMarkRemoved": "已删除标记",
+  "moviePageMarkUpdateFailed": "更新标记失败",
+  "moviePageActionSimilarImage": "相似图片",
+  "moviePageActionAddMark": "添加标记",
+  "moviePageActionRemoveMark": "删除标记",
+  "moviePageActionPlay": "播放",
+  "moviePageUnsubscribeFailed": "取消订阅影片失败",
+  "moviePageSubscribeFailed": "订阅影片失败",
+  "moviePageFavoriteListNotReady": "收藏列表尚未初始化",
+  "moviePageFavoriteRemoved": "已取消收藏",
+  "moviePageFavoriteAdded": "已收藏",
+  "moviePageFavoriteRemoveFailed": "取消收藏失败",
+  "moviePageFavoriteAddFailed": "收藏失败",
+  "moviePageBlacklistTitle": "屏蔽影片",
+  "moviePageBlacklistWarning": "已订阅影片无法屏蔽，请先取消订阅。屏蔽后将从正常列表和推荐中隐藏。",
+  "moviePageBlacklistConfirm": "屏蔽",
+  "moviePageBlacklistFailed": "屏蔽影片失败",
+  "moviePageBlacklisted": "已屏蔽影片",
+  "moviePageUnblacklisted": "已取消屏蔽影片",
+  "moviePageUnblacklistFailed": "取消屏蔽影片失败",
+  "moviePageBlacklistLoadFailedTitle": "屏蔽影片加载失败",
+  "moviePageBlacklistLoadFailed": "屏蔽影片加载失败，请稍后重试。",
+  "moviePageBlacklistHint": "已屏蔽的影片不会出现在普通列表和推荐中。右键影片可取消屏蔽。",
+  "moviePageBlacklistEmpty": "还没有屏蔽任何影片",
+  "moviePageUnblacklistAction": "取消屏蔽",
+  "moviePageCastSessionLabel": "投屏中 · {device}",
+  "@moviePageCastSessionLabel": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "moviePageDetailLoadFailed": "影片详情暂时无法加载，请稍后重试",
+  "moviePageMergedPlayback": "合并播放",
+  "moviePageMergedPlaybackSegments": "合并播放 · {count} 段",
+  "@moviePageMergedPlaybackSegments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageMergedNotEnoughSegments": "该媒体库没有足够的可播放分段",
+  "moviePageMergedLoadFailed": "合并播放加载失败，请稍后重试",
+  "moviePageEpisodePickerTitle": "选集 · {count}",
+  "@moviePageEpisodePickerTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePagePlayerLoading": "正在加载影片…",
+  "moviePagePlayerLoadFailedTitle": "播放器加载失败",
+  "moviePagePlayerEmptyTitle": "暂无可播放媒体",
+  "moviePagePlayerEmptyMessage": "当前影片还没有可用的播放地址，请稍后再试。",
+  "moviePageMediaLibraryLabel": "媒体库 {id}",
+  "@moviePageMediaLibraryLabel": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageClipCreated": "切片已生成"
 }

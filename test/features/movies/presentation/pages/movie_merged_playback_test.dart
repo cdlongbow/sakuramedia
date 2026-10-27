@@ -17,6 +17,7 @@ import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_det
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_detail_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_merged_play_content.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_merged_playback_factory_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/desktop_routes.dart' as desktop;
 import 'package:sakuramedia/routes/mobile_routes.dart' as mobile_routes;
 import 'package:sakuramedia/theme.dart';
@@ -143,6 +144,12 @@ void main() {
         ],
         child: MaterialApp(
           theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           home: const MovieMergedPlayContent(
             movieNumber: 'TEST-001',
             libraryId: 7,
@@ -296,6 +303,12 @@ void main() {
                 platform: mobile ? AppPlatform.mobile : AppPlatform.desktop,
                 child: MaterialApp.router(
                   theme: mobile ? sakuraMobileThemeData : sakuraThemeData,
+                  locale: const Locale('zh'),
+                  localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+                    AppLocalizations.delegate,
+                    ...GlobalMaterialLocalizations.delegates,
+                  ],
+                  supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
                   routerConfig: router,
                 ),
               ),

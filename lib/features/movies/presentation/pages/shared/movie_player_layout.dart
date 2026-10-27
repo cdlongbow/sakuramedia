@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:multi_split_view/multi_split_view.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_loading_indicator.dart';
@@ -102,11 +103,15 @@ class MoviePlayerLoadingPanel extends StatelessWidget {
     return ColoredBox(
       key: const Key('movie-player-loading-state'),
       color: context.appColors.movieDetailHeroBackgroundStart,
-      child: const Stack(
+      child: Stack(
         fit: StackFit.expand,
         children: [
-          SizedBox.expand(key: Key('movie-player-left-blackout')),
-          Center(child: VideoLoadingIndicator(label: '正在加载影片…')),
+          const SizedBox.expand(key: Key('movie-player-left-blackout')),
+          Center(
+            child: VideoLoadingIndicator(
+              label: AppLocalizations.of(context).moviePagePlayerLoading,
+            ),
+          ),
         ],
       ),
     );
@@ -126,11 +131,12 @@ class MoviePlayerErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // 同加载态：全屏单面板，避免右侧空白 surfaceCard 卡片露出成白条。
+    final l10n = AppLocalizations.of(context);
     return MoviePlayerPanelMessage(
-      title: '播放器加载失败',
+      title: l10n.moviePagePlayerLoadFailedTitle,
       message: message,
       icon: Icons.play_disabled_outlined,
-      actionLabel: '重试',
+      actionLabel: l10n.commonRetry,
       onAction: onRetry,
     );
   }
@@ -141,9 +147,10 @@ class MoviePlayerEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MoviePlayerPanelMessage(
-      title: '暂无可播放媒体',
-      message: '当前影片还没有可用的播放地址，请稍后再试。',
+    final l10n = AppLocalizations.of(context);
+    return MoviePlayerPanelMessage(
+      title: l10n.moviePagePlayerEmptyTitle,
+      message: l10n.moviePagePlayerEmptyMessage,
       icon: Icons.play_circle_outline_rounded,
       actionLabel: null,
       onAction: null,

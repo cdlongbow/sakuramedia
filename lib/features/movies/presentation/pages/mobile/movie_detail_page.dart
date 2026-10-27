@@ -45,6 +45,7 @@ import 'package:sakuramedia/features/movies/presentation/widgets/rating/movie_ra
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_merge_playback_candidate_list.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_subtitle_viewer.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 class MobileMovieDetailPage extends ConsumerStatefulWidget {
   const MobileMovieDetailPage({super.key, required this.movieNumber});
@@ -134,7 +135,9 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
 
           if (detailState.errorMessage != null || detailState.movie == null) {
             return MovieDetailErrorState(
-              message: detailState.errorMessage ?? '影片详情暂时无法加载，请稍后重试',
+              message:
+                  detailState.errorMessage ??
+                  AppLocalizations.of(context).moviePageDetailLoadFailed,
               onRetry: () => ref
                   .read(movieDetailProvider(widget.movieNumber).notifier)
                   .load(),
@@ -158,11 +161,14 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
             movie,
             useExternalPlayer: canLaunchMergedPlayback,
           );
+          final l10n = AppLocalizations.of(context);
           final mergePlaybackLabel = mergePlaybackCandidates.isEmpty
               ? null
               : mergePlaybackCandidates.length == 1
-              ? '合并播放 · ${mergePlaybackCandidates.single.segmentCount} 段'
-              : '合并播放';
+              ? l10n.moviePageMergedPlaybackSegments(
+                  mergePlaybackCandidates.single.segmentCount,
+                )
+              : l10n.moviePageMergedPlayback;
 
           return MovieDetailPageContent(
             surfaceColor: context.appColors.surfaceCard,
@@ -304,7 +310,9 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
                 subtitlesState.asData?.value.items ??
                 const <MovieSubtitleItemDto>[],
             isSubtitlesLoading: subtitlesState.isLoading,
-            subtitleErrorMessage: subtitlesState.hasError ? '请稍后重试' : null,
+            subtitleErrorMessage: subtitlesState.hasError
+                ? l10n.errorRetryLater
+                : null,
             onRetrySubtitles: () async {
               ref.invalidate(movieSubtitlesProvider(widget.movieNumber));
             },
@@ -318,6 +326,7 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
 
   @override
   Future<bool?> confirmDeleteMedia(MovieMediaItemDto mediaItem) {
+    final l10n = AppLocalizations.of(context);
     return showAppBottomDrawer<bool>(
       context: context,
       drawerKey: const Key('movie-media-delete-confirm-drawer'),
@@ -327,7 +336,7 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '删除媒体文件',
+            l10n.moviePageMediaDeleteTitle,
             style: resolveAppTextStyle(drawerContext, size: AppTextSize.s18),
           ),
           SizedBox(height: drawerContext.appSpacing.lg),
@@ -335,7 +344,7 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
           SizedBox(height: drawerContext.appSpacing.sm),
           Text(
             mediaItem.fileName.trim().isEmpty
-                ? '媒体 ${mediaItem.mediaId}'
+                ? l10n.moviePageMediaLabel(mediaItem.mediaId)
                 : mediaItem.fileName.trim(),
             key: const Key('movie-media-delete-path'),
             style: resolveAppTextStyle(
@@ -348,7 +357,7 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
           AppMobileConfirmActions(
             cancelKey: const Key('movie-media-delete-cancel'),
             confirmKey: const Key('movie-media-delete-confirm'),
-            confirmLabel: '删除',
+            confirmLabel: l10n.commonDelete,
             isDangerous: true,
             onCancel: () => Navigator.of(drawerContext).pop(false),
             onConfirm: () => Navigator.of(drawerContext).pop(true),
@@ -472,7 +481,14 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
       return true;
     } catch (error) {
       if (mounted) {
-        showToast(apiErrorMessage(error, fallback: '读取图片失败，请稍后重试'));
+        final l10n = AppLocalizations.of(context);
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: l10n.moviePageImageLoadFailed,
+            l10n: l10n,
+          ),
+        );
       }
       return false;
     }
@@ -584,7 +600,14 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
       if (!mounted) {
         return;
       }
-      showToast(apiErrorMessage(error, fallback: '读取图片失败，请稍后重试'));
+      final l10n = AppLocalizations.of(context);
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: l10n.moviePageImageLoadFailed,
+          l10n: l10n,
+        ),
+      );
     }
   }
 }

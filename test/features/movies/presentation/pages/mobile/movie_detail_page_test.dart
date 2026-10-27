@@ -8,6 +8,7 @@ import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_detail_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_detail_page_content.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_bottom_safe_area_sliver.dart';
 import 'package:sakuramedia/theme.dart';
 
@@ -61,6 +62,12 @@ void main() {
               theme: platform == null
                   ? sakuraMobileThemeData
                   : sakuraMobileThemeData.copyWith(platform: platform),
+              locale: const Locale('zh'),
+              localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+                AppLocalizations.delegate,
+                ...GlobalMaterialLocalizations.delegates,
+              ],
+              supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
               home: const Scaffold(
                 body: MobileMovieDetailPage(movieNumber: 'ABC-001'),
               ),

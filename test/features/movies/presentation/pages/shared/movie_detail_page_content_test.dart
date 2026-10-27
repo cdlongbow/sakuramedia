@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_de
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_tag_wrap.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_gallery.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('personal info uses latest watch and opens playlist editor', (
@@ -44,6 +45,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: sakuraMobileThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: MovieDetailPageContent(
             movie: movie,
@@ -95,6 +102,12 @@ void main() {
             await tester.pumpWidget(
               MaterialApp(
                 theme: mobile ? sakuraMobileThemeData : sakuraThemeData,
+                locale: const Locale('zh'),
+                localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+                  AppLocalizations.delegate,
+                  ...GlobalMaterialLocalizations.delegates,
+                ],
+                supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
                 home: Scaffold(
                   body: MovieDetailPageContent(
                     movie: _movieDetail(
@@ -184,6 +197,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: sakuraMobileThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: MovieDetailPageContent(
             movie: _movieDetail(javdbId: null, metadataSourceName: '示例来源'),
@@ -218,6 +237,12 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             theme: mobile ? sakuraMobileThemeData : sakuraThemeData,
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             home: Scaffold(
               body: MovieDetailPageContent(
                 movie: _movieDetail(
@@ -300,6 +325,12 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             theme: sakuraMobileThemeData,
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             home: Scaffold(
               body: MovieDetailPageContent(
                 movie: _movieDetail(seriesId: 7, seriesName: seriesName),
@@ -353,6 +384,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: sakuraMobileThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: MovieDetailPageContent(
             movie: _movieDetail(),
@@ -388,9 +425,15 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: sakuraMobileThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           home: Scaffold(
-          body: MovieDetailPageContent(
-            movie: _movieDetail(summary: '这是一段简介全文'),
+            body: MovieDetailPageContent(
+              movie: _movieDetail(summary: '这是一段简介全文'),
             surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
               selectedPreviewKey: 'movie-preview',
               selectedPreviewUrl: null,
@@ -454,6 +497,12 @@ void main() {
 
     Widget buildPage() => MaterialApp(
       theme: sakuraMobileThemeData,
+      locale: const Locale('zh'),
+      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
       home: Scaffold(
         body: MovieDetailPageContent(
           movie: _movieDetail(),
@@ -496,6 +545,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: sakuraMobileThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: MovieDetailPageContent(
             movie: _movieDetail(),
@@ -560,6 +615,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: sakuraMobileThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: MovieDetailPageContent(
             movie: movie,
@@ -606,6 +667,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: sakuraMobileThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: MovieDetailPageContent(
             movie: movie,
@@ -637,6 +704,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: sakuraMobileThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: MovieDetailPageContent(
             movie: _movieDetail(),
@@ -686,6 +759,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: sakuraMobileThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: MovieDetailPageContent(
             movie: _movieDetail(releaseDate: DateTime(2024, 1, 2)),

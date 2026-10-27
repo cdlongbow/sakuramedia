@@ -31,6 +31,7 @@ import 'package:sakuramedia/features/playlists/presentation/providers/playlist_d
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/system_playlist_provider.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
@@ -124,7 +125,16 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
       ref.read(movieDetailProvider(movieNumber).notifier).applyMovie(movie);
       return true;
     } catch (error) {
-      if (mounted) showToast(apiErrorMessage(error, fallback: '播放列表更新失败'));
+      if (mounted) {
+        final l10n = AppLocalizations.of(context);
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: l10n.moviePagePlaylistUpdateFailed,
+            l10n: l10n,
+          ),
+        );
+      }
       return false;
     }
   }
@@ -171,7 +181,7 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
         return;
       }
       if (result.updatedCount <= 0) {
-        showToast('未匹配到影片，未更新合集状态');
+        showToast(AppLocalizations.of(context).moviePageCollectionNotMatched);
         return;
       }
       setState(() {
@@ -180,12 +190,22 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
       ref
           .read(movieCollectionTypeEventsProvider.notifier)
           .reportChange(movieNumber: movieNumber, targetType: targetType);
+      final l10n = AppLocalizations.of(context);
       showToast(
-        targetType == MovieCollectionType.collection ? '已标记为合集' : '已标记为单体',
+        targetType == MovieCollectionType.collection
+            ? l10n.moviePageMarkedAsCollection
+            : l10n.moviePageMarkedAsSingle,
       );
     } catch (error) {
       if (mounted) {
-        showToast(apiErrorMessage(error, fallback: '更新合集状态失败'));
+        final l10n = AppLocalizations.of(context);
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: l10n.moviePageCollectionUpdateFailed,
+            l10n: l10n,
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -221,11 +241,18 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
       await ref.read(mediaApiProvider).deleteMedia(mediaId: mediaItem.mediaId);
       await refreshAfterMediaDelete(deletedMediaId: mediaItem.mediaId);
       if (mounted) {
-        showToast('媒体文件已删除');
+        showToast(AppLocalizations.of(context).moviePageMediaDeleted);
       }
     } catch (error) {
       if (mounted) {
-        showToast(apiErrorMessage(error, fallback: '删除媒体文件失败'));
+        final l10n = AppLocalizations.of(context);
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: l10n.moviePageMediaDeleteFailed,
+            l10n: l10n,
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -297,12 +324,17 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
     if (fileName.isNotEmpty) {
       return fileName;
     }
-    return '媒体源 ${mediaItem.mediaId}';
+    return AppLocalizations.of(
+      context,
+    ).moviePageMediaSourceLabel(mediaItem.mediaId);
   }
 
   String mediaDeleteMessage(MovieMediaItemDto mediaItem) {
-    final prefix = '确认删除媒体“${buildMediaDeleteLabel(mediaItem)}”？';
-    return '$prefix 该操作会删除媒体文件及 SakuraMedia 记录，且可能无法恢复。';
+    final l10n = AppLocalizations.of(context);
+    final prefix = l10n.moviePageMediaDeleteConfirm(
+      buildMediaDeleteLabel(mediaItem),
+    );
+    return '$prefix ${l10n.moviePageMediaDeleteWarning}';
   }
 
   // ==========================================================================
@@ -344,16 +376,17 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
         ).saveImageFromUrl(
           imageUrl: imageUrl,
           fileName: buildPointFileName(point),
-          dialogTitle: '保存到本地',
+          dialogTitle: AppLocalizations.of(context).moviePageSaveToLocal,
         );
     if (!mounted) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     if (result.status == ImageSaveStatus.success) {
-      showToast(result.message ?? '图片已保存');
+      showToast(result.message ?? l10n.moviePageImageSaved);
     }
     if (result.status == ImageSaveStatus.failed) {
-      showToast(result.message ?? '保存失败，请稍后重试');
+      showToast(result.message ?? l10n.moviePageImageSaveFailed);
     }
   }
 
@@ -378,7 +411,7 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
           _movieMediaPointFromMediaPoint(createdPoint, fallback: point),
         ];
         applyPointListOverride(mediaItem.mediaId, nextPoints);
-        showToast('已添加标记');
+        showToast(AppLocalizations.of(context).moviePageMarkAdded);
         return;
       }
 
@@ -392,10 +425,17 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
           .where((candidate) => candidate.pointId != existingPoint.pointId)
           .toList(growable: false);
       applyPointListOverride(mediaItem.mediaId, nextPoints);
-      showToast('已删除标记');
+      showToast(AppLocalizations.of(context).moviePageMarkRemoved);
     } catch (error) {
       if (mounted) {
-        showToast(apiErrorMessage(error, fallback: '更新标记失败'));
+        final l10n = AppLocalizations.of(context);
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: l10n.moviePageMarkUpdateFailed,
+            l10n: l10n,
+          ),
+        );
       }
     }
   }
@@ -515,23 +555,26 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
     MovieMediaPointDto? currentPoint,
     bool hasImage,
   ) {
+    final l10n = AppLocalizations.of(context);
     return <AppImageActionDescriptor>[
       if (ref.read(imageSearchEnabledProvider))
         AppImageActionDescriptor(
           type: AppImageActionType.searchSimilar,
-          label: '相似图片',
+          label: l10n.moviePageActionSimilarImage,
           icon: Icons.image_search_outlined,
           enabled: hasImage,
         ),
       AppImageActionDescriptor(
         type: AppImageActionType.saveToLocal,
-        label: '保存到本地',
+        label: l10n.moviePageSaveToLocal,
         icon: Icons.download_outlined,
         enabled: hasImage,
       ),
       AppImageActionDescriptor(
         type: AppImageActionType.toggleMark,
-        label: currentPoint == null ? '添加标记' : '删除标记',
+        label: currentPoint == null
+            ? l10n.moviePageActionAddMark
+            : l10n.moviePageActionRemoveMark,
         icon: currentPoint == null
             ? Icons.bookmark_add_outlined
             : Icons.bookmark_remove_outlined,
@@ -541,7 +584,7 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
       ),
       AppImageActionDescriptor(
         type: AppImageActionType.play,
-        label: '播放',
+        label: l10n.moviePageActionPlay,
         icon: Icons.play_circle_outline_rounded,
         enabled: mediaItem.mediaId > 0 && mediaItem.hasPlayableUrl,
       ),
@@ -562,6 +605,7 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
     });
 
     MovieSubscriptionToggleResult result;
+    final l10n = AppLocalizations.of(context);
 
     try {
       if (isSubscribed) {
@@ -584,7 +628,10 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
         result = MovieSubscriptionToggleResult.failed(
           message: apiErrorMessage(
             error,
-            fallback: isSubscribed ? '取消订阅影片失败' : '订阅影片失败',
+            fallback: isSubscribed
+                ? l10n.moviePageUnsubscribeFailed
+                : l10n.moviePageSubscribeFailed,
+            l10n: l10n,
           ),
         );
       }
@@ -613,7 +660,7 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
     }
     final playlistId = movie.favoritePlaylistId;
     if (playlistId == null) {
-      showToast('收藏列表尚未初始化');
+      showToast(AppLocalizations.of(context).moviePageFavoriteListNotReady);
       return false;
     }
 
@@ -648,13 +695,25 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
       ref.invalidate(systemPlaylistProvider(PlaylistKind.favorites));
       final refreshed = await reloadPlaylistMembership();
       if (mounted && refreshed) {
-        showToast(isFavorite ? '已取消收藏' : '已收藏');
+        final l10n = AppLocalizations.of(context);
+        showToast(
+          isFavorite
+              ? l10n.moviePageFavoriteRemoved
+              : l10n.moviePageFavoriteAdded,
+        );
       }
       return true;
     } catch (error) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         showToast(
-          apiErrorMessage(error, fallback: isFavorite ? '取消收藏失败' : '收藏失败'),
+          apiErrorMessage(
+            error,
+            fallback: isFavorite
+                ? l10n.moviePageFavoriteRemoveFailed
+                : l10n.moviePageFavoriteAddFailed,
+            l10n: l10n,
+          ),
         );
       }
       return false;
@@ -673,13 +732,14 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
     }
     final targetBlacklisted = !isBlacklisted;
     if (targetBlacklisted) {
+      final l10n = AppLocalizations.of(context);
       final confirmed = await showAppConfirmDialog(
         context,
-        title: '屏蔽影片',
-        message: '已订阅影片无法屏蔽，请先取消订阅。屏蔽后将从正常列表和推荐中隐藏。',
-        confirmLabel: '屏蔽',
+        title: l10n.moviePageBlacklistTitle,
+        message: l10n.moviePageBlacklistWarning,
+        confirmLabel: l10n.moviePageBlacklistConfirm,
         danger: true,
-        failureFallback: '屏蔽影片失败',
+        failureFallback: l10n.moviePageBlacklistFailed,
         onConfirm: () => ref
             .read(moviesApiProvider)
             .setMoviesBlacklisted(
@@ -691,7 +751,7 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
         setState(() {
           isBlacklistedOverride = true;
         });
-        showToast('已屏蔽影片');
+        showToast(AppLocalizations.of(context).moviePageBlacklisted);
       }
       return confirmed;
     }
@@ -712,11 +772,18 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
       setState(() {
         isBlacklistedOverride = false;
       });
-      showToast('已取消屏蔽影片');
+      showToast(AppLocalizations.of(context).moviePageUnblacklisted);
       return true;
     } catch (error) {
       if (mounted) {
-        showToast(apiErrorMessage(error, fallback: '取消屏蔽影片失败'));
+        final l10n = AppLocalizations.of(context);
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: l10n.moviePageUnblacklistFailed,
+            l10n: l10n,
+          ),
+        );
       }
       return false;
     } finally {
@@ -914,7 +981,9 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
     if (session == null || session.movieNumber != movie.movieNumber) {
       return null;
     }
-    return '投屏中 · ${session.device.name}';
+    return AppLocalizations.of(
+      context,
+    ).moviePageCastSessionLabel(session.device.name);
   }
 
   /// 「刷新元数据」覆盖式刷新的共享二次确认（移动底部抽屉 / 桌面居中弹窗）。

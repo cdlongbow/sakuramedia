@@ -15,6 +15,7 @@ import 'package:sakuramedia/features/movies/presentation/actions/movie_merge_pla
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_player_layout.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_merged_playback_factory_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/features/image_search/presentation/actions/image_search_launcher.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
@@ -94,7 +95,9 @@ class _MovieMergedPlayContentState extends ConsumerState<MovieMergedPlayContent>
       if (medias.length < 2) {
         setState(() {
           _isLoading = false;
-          _errorMessage = '该媒体库没有足够的可播放分段';
+          _errorMessage = AppLocalizations.of(
+            context,
+          ).moviePageMergedNotEnoughSegments;
         });
         return;
       }
@@ -145,7 +148,12 @@ class _MovieMergedPlayContentState extends ConsumerState<MovieMergedPlayContent>
       filmstrip = null;
       setState(() {
         _isLoading = false;
-        _errorMessage = apiErrorMessage(error, fallback: '合并播放加载失败，请稍后重试');
+        final l10n = AppLocalizations.of(context);
+        _errorMessage = apiErrorMessage(
+          error,
+          fallback: l10n.moviePageMergedLoadFailed,
+          l10n: l10n,
+        );
       });
     }
   }
@@ -243,7 +251,9 @@ class _MovieMergedPlayContentState extends ConsumerState<MovieMergedPlayContent>
                           isOpen: true,
                           itemCount: _medias.length,
                           currentIndex: player!.state.playlist.index,
-                          title: '选集 · ${_medias.length}',
+                          title: AppLocalizations.of(
+                            context,
+                          ).moviePageEpisodePickerTitle(_medias.length),
                           onClose: () => Navigator.of(panelContext).pop(),
                           itemBuilder: (_, index) => ListTile(
                             key: Key('movie-merged-episode-$index'),

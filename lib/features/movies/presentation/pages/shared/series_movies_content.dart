@@ -13,6 +13,7 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_summary
 import 'package:sakuramedia/features/movies/presentation/widgets/series_import/series_import_dialog.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
@@ -128,7 +129,10 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
     super.dispose();
   }
 
-  String _displaySeriesName(MovieSummaryState? summary) {
+  String _displaySeriesName(
+    MovieSummaryState? summary, {
+    required AppLocalizations l10n,
+  }) {
     final initialSeriesName = _initialSeriesName;
     if (initialSeriesName != null) {
       return initialSeriesName;
@@ -139,7 +143,7 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
         return seriesName;
       }
     }
-    return '系列 #${widget.seriesId}';
+    return l10n.moviePageSeriesFallbackName(widget.seriesId);
   }
 
   Future<void> _toggleMovieSubscription(String movieNumber) async {
@@ -168,7 +172,7 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
       if (onRefreshFailure != null) {
         onRefreshFailure(context);
       } else {
-        showToast('刷新失败');
+        showToast(AppLocalizations.of(context).moviePageRefreshFailed);
       }
     }
   }
@@ -260,7 +264,10 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
   /// 把系列名报给外层返回栏。数据是异步来的，所以用 post-frame 回调写——直接在
   /// build 里改 notifier 会触发 build-during-build。
   void _reportTitleToShell(MovieSummaryState? summary) {
-    final name = _displaySeriesName(summary).trim();
+    final name = _displaySeriesName(
+      summary,
+      l10n: AppLocalizations.of(context),
+    ).trim();
     if (name.isEmpty) {
       return;
     }
@@ -281,23 +288,24 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
   /// 不接筛选入口，左侧留给信息槽。系列名与总数都是只读信息，「同步系列影片」
   /// 与「选择」是操作。
   Widget _buildHeader(BuildContext context, MovieSummaryState? summary) {
+    final l10n = AppLocalizations.of(context);
     return AppListHeader(
       informationSlots: [
         // 系列名报到返回栏时信息槽就不再放它，免得同一个名字出现两次。
         if (!widget.hoistTitleToSubpageShell)
           AppListHeaderInfo(
             key: const Key('series-movies-title'),
-            label: _displaySeriesName(summary),
+            label: _displaySeriesName(summary, l10n: l10n),
           ),
         AppListHeaderInfo(
           key: widget.totalKey,
-          label: '共 ${summary?.paged.total ?? 0} 部',
+          label: l10n.moviePageSeriesTotalCount(summary?.paged.total ?? 0),
         ),
       ],
       actionSlots: [
         AppTextButton(
           key: const Key('series-movies-import-button'),
-          label: '同步系列影片',
+          label: l10n.moviePageSeriesSync,
           size: AppTextButtonSize.small,
           onPressed: _handleImport,
         ),
@@ -323,7 +331,7 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
               child: TextButton(
                 onPressed: () =>
                     ref.read(movieSummaryProvider(_scope).notifier).reload(),
-                child: const Text('重试'),
+                child: Text(AppLocalizations.of(context).commonRetry),
               ),
             ),
           ],
@@ -365,7 +373,7 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
         onMovieBlacklist: _hoverFeatureActions.blacklist,
         isMovieSubscriptionUpdating: (movie) =>
             summary?.isSubscriptionUpdating(movie.movieNumber) ?? false,
-        emptyMessage: '该系列暂无影片',
+        emptyMessage: AppLocalizations.of(context).moviePageSeriesEmpty,
         selectionMode: selectionMode,
         isMovieSelected: (movie) => isSelected(movie.movieNumber),
         onMovieSelectedChanged: (movie, _) => toggleSelect(movie.movieNumber),

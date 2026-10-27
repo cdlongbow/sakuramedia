@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 import '../../../support/test_api_bundle.dart';
 
@@ -148,7 +149,7 @@ void main() {
       );
 
       expect(response.items.single.resultSummary?['imported'], 2);
-      expect(response.items.single.displaySummary, '导入完成');
+      expect(response.items.single.displaySummary(_zh), '导入完成');
       final request = bundle.adapter.requests.single;
       expect(request.uri.queryParameters['state'], 'completed');
       expect(request.uri.queryParameters['task_key'], 'media_import');
@@ -202,7 +203,7 @@ void main() {
       final response = await bundle.activityApi.getTaskRuns();
 
       expect(
-        response.items.single.displaySummary,
+        response.items.single.displaySummary(_zh),
         '已迁移 2 项 · 已跳过 1 项 · 源文件待确认 1 项 · 未执行 1 项',
       );
     },
@@ -237,7 +238,7 @@ void main() {
 
       final response = await bundle.activityApi.getTaskRuns();
 
-      expect(response.items.single.displaySummary, '成功 2 项 · 失败 1 项');
+      expect(response.items.single.displaySummary(_zh), '成功 2 项 · 失败 1 项');
     },
   );
 
@@ -266,7 +267,7 @@ void main() {
 
     final response = await bundle.activityApi.getTaskRuns();
 
-    expect(response.items.single.displaySummary, '成功 2 项');
+    expect(response.items.single.displaySummary(_zh), '成功 2 项');
   });
 
   test('notification mutations use the current response contract', () async {
@@ -310,3 +311,5 @@ Map<String, dynamic> _taskRunJson({
   'created_at': '2026-03-26T09:10:00Z',
   'updated_at': '2026-03-26T09:11:00Z',
 };
+
+final _zh = AppLocalizationsZh();

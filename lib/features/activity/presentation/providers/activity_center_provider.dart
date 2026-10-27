@@ -42,7 +42,9 @@ class ActivityCenter extends _$ActivityCenter
     }
     return initial.copyWith(
       connectionState: ActivityConnectionState.polling,
-      connectionMessage: '每 3 秒同步任务进度',
+      connectionMessage: ref
+          .read(appLocalizationsProvider)
+          .activityConnectionPollingTasks,
     );
   }
 
@@ -106,7 +108,9 @@ class ActivityCenter extends _$ActivityCenter
         taskRefreshErrorMessage: null,
         taskFilterUpdate: const FilterUpdateState.idle(),
         connectionState: ActivityConnectionState.connecting,
-        connectionMessage: '正在同步任务中心',
+        connectionMessage: ref
+            .read(appLocalizationsProvider)
+            .activityConnectionConnectingTasks,
       ),
     );
     try {
@@ -124,7 +128,9 @@ class ActivityCenter extends _$ActivityCenter
           jobs: jobsResult.jobs,
           jobErrorMessage: jobsResult.errorMessage,
           connectionState: ActivityConnectionState.polling,
-          connectionMessage: '每 3 秒同步任务进度',
+          connectionMessage: ref
+              .read(appLocalizationsProvider)
+              .activityConnectionPollingTasks,
         ),
       );
       _startPolling();
@@ -141,7 +147,9 @@ class ActivityCenter extends _$ActivityCenter
                 .errorActivityLoadFailed,
           ),
           connectionState: ActivityConnectionState.polling,
-          connectionMessage: '任务同步失败，可手动刷新',
+          connectionMessage: ref
+              .read(appLocalizationsProvider)
+              .activityConnectionTaskSyncFailed,
         ),
       );
       _startPolling();
@@ -406,7 +414,9 @@ class ActivityCenter extends _$ActivityCenter
             activeTaskRuns: activeTaskRuns,
             taskRuns: _patchLoadedTasks(now.taskRuns, taskResponse.items),
             connectionState: ActivityConnectionState.polling,
-            connectionMessage: '每 3 秒同步任务进度',
+            connectionMessage: ref
+                .read(appLocalizationsProvider)
+                .activityConnectionPollingTasks,
           ),
         );
         return;
@@ -420,7 +430,9 @@ class ActivityCenter extends _$ActivityCenter
           taskLoadMoreErrorMessage: null,
           taskRefreshErrorMessage: null,
           connectionState: ActivityConnectionState.polling,
-          connectionMessage: '每 3 秒同步任务进度',
+          connectionMessage: ref
+              .read(appLocalizationsProvider)
+              .activityConnectionPollingTasks,
         ),
       );
     } catch (_) {
@@ -428,7 +440,9 @@ class ActivityCenter extends _$ActivityCenter
         state = AsyncData(
           current.copyWith(
             connectionState: ActivityConnectionState.polling,
-            connectionMessage: '任务同步失败，可手动刷新',
+            connectionMessage: ref
+                .read(appLocalizationsProvider)
+                .activityConnectionTaskSyncFailed,
           ),
         );
       }

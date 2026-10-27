@@ -1265,5 +1265,378 @@
       }
     }
   },
-  "pluginMarketInstallablePlugins": "Installable plugins"
+  "pluginMarketInstallablePlugins": "Installable plugins",
+  "activityAll": "All",
+  "activityUnread": "Unread",
+  "activityTimeUnknown": "Time unknown",
+  "activityNotificationCategoryInfo": "Info",
+  "activityNotificationCategoryWarning": "Warning",
+  "activityNotificationCategoryError": "Error",
+  "activityNotificationCategoryReminder": "Reminder",
+  "activityMarkAllRead": "Mark all read",
+  "activityEmptyNotificationsFiltered": "No notifications match the current filters",
+  "activityNoUnreadNotifications": "No unread notifications",
+  "activityNoNotifications": "No notifications",
+  "activityRefreshFailed": "Refresh failed. Please try again later.",
+  "activityCenterTitle": "Task center",
+  "activityTaskHistory": "Task history",
+  "activityActiveTasks": "Active tasks",
+  "activityEmptyTasksFiltered": "No task records match the current filters",
+  "activityJobSubmitted": "Task submitted",
+  "activityJobAlreadyRunning": "Task is already running",
+  "activityJobSubmitFailed": "Failed to submit the task. Please try again.",
+  "activityJobsLoading": "Loading",
+  "activityJobsLoadFailed": "Load failed",
+  "activityJobsEmpty": "No tasks",
+  "activityJobsCount": "{count, plural, =1{1 task} other{{count} tasks}}",
+  "@activityJobsCount":   {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activityExecutableJobsTitle": "Executable tasks",
+  "activityViewJobs": "View tasks",
+  "activityExecutableJobsDescription": "Manually trigger registered background tasks; progress updates in the task center.",
+  "activityJobDisabled": "Disabled",
+  "activityJobSubmitting": "Submitting",
+  "activityJobRunNow": "Run now",
+  "activityJobFillParams": "Fill in parameters",
+  "activityJobNotManual": "Manual run unavailable",
+  "activityJobNoSchedule": "No schedule",
+  "activityJobNeedsParams": "Parameters required",
+  "activityJobNoRuns": "No runs yet",
+  "activityJobLastRun": "Last run: {time}",
+  "@activityJobLastRun":   {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "activityFilterAllTasks": "All tasks",
+  "activityFilterSystemTasks": "System tasks",
+  "activityExecutableJobsEmpty": "No executable tasks",
+  "activityJobsRefreshing": "Refreshing task list",
+  "activityJobSourceLabel": "Task source",
+  "activityExecutableJobsDialogDescription": "Pick a task to run manually; its result appears in the background task list.",
+  "activityJobParamsTitle": "Fill in task parameters",
+  "activityJobParamsEmpty": "This task has no parameters to fill in; it runs with the default configuration.",
+  "activityJobParamsSubmit": "Submit task",
+  "activityJobParamFallbackHelp": "Parameter: {name}",
+  "@activityJobParamFallbackHelp":   {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "activityJobParamUnset": "Not set",
+  "activityJobParamYes": "Yes",
+  "activityJobParamNo": "No",
+  "activityJobParamSelectPlaceholder": "Select",
+  "activityJobParamSelectRequired": "Select {label}",
+  "@activityJobParamSelectRequired":   {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "activityJobParamRequired": "Enter {label}",
+  "@activityJobParamRequired":   {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "activityJobParamIntegerRequired": "Enter an integer",
+  "activityJobParamNumberRequired": "Enter a number",
+  "activityJobParamJsonArrayRequired": "Enter a JSON array",
+  "activityJobParamJsonObjectRequired": "Enter a JSON object",
+  "activityJobParamJsonInvalid": "Enter valid JSON",
+  "activityFilterAllStates": "All states",
+  "activityFilterAllTaskTypes": "All task types",
+  "activityFilterAllTriggers": "All triggers",
+  "activityFilterApplied": "Filtered",
+  "activityFilterAction": "Filter",
+  "activityTaskFilterTitle": "Filter task history",
+  "activityTaskStateLabel": "Task status",
+  "activityTaskTypeLabel": "Task type",
+  "activityTaskTriggerLabel": "Trigger source",
+  "activityHandleFailedFiles": "Handle failed files ({count})",
+  "@activityHandleFailedFiles":   {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activityViewSkippedFiles": "View skipped files ({count})",
+  "@activityViewSkippedFiles":   {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activityFinishedAt": "Finished at {time}",
+  "@activityFinishedAt":   {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "activityStartedAt": "Started at {time}",
+  "@activityStartedAt":   {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "activityCreatedAt": "Created at {time}",
+  "@activityCreatedAt":   {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "activityTaskStateRunning": "Running",
+  "activityTaskStateCompleted": "Completed",
+  "activityTaskStateFailed": "Failed",
+  "activityTaskStatePending": "Queued",
+  "activityTriggerScheduled": "Scheduled",
+  "activityTriggerManual": "Manual",
+  "activityTriggerStartup": "Startup",
+  "activityTriggerInternal": "Internal",
+  "activityTriggerPlugin": "Plugin",
+  "activitySortStartedAt": "Start time",
+  "activitySortCreatedAt": "Creation time",
+  "activitySortUpdatedAt": "Update time",
+  "activitySummarySucceeded": "{count} succeeded",
+  "@activitySummarySucceeded":   {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activitySummaryFailed": "{count} failed",
+  "@activitySummaryFailed":   {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activitySummaryTransferred": "{count} transferred",
+  "@activitySummaryTransferred":   {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activitySummarySkipped": "{count} skipped",
+  "@activitySummarySkipped":   {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activitySummaryTransferFailed": "{count} failed to transfer",
+  "@activitySummaryTransferFailed":   {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activitySummaryCleanupIncomplete": "{count} pending source confirmation",
+  "@activitySummaryCleanupIncomplete":   {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activitySummaryUnexecuted": "{count} not executed",
+  "@activitySummaryUnexecuted":   {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activityConnectionPollingTasks": "Syncing task progress every 3 seconds",
+  "activityConnectionConnectingTasks": "Syncing task center",
+  "activityConnectionTaskSyncFailed": "Task sync failed; refresh manually",
+  "activityConnectionConnectingNotifications": "Syncing notifications",
+  "activityConnectionPollingNotifications": "Syncing notifications every 30 seconds",
+  "activityConnectionNotificationSyncFailed": "Notification sync failed; refresh manually",
+  "downloadStateAll": "All",
+  "downloadStateDownloading": "Downloading",
+  "downloadStateQueued": "Queued",
+  "downloadStateCompleted": "Completed",
+  "downloadStateFailed": "Failed",
+  "downloadManualAddTitle": "Add download manually",
+  "downloadManualAddAction": "Add manually",
+  "downloadSelectionCount": "{count} selected",
+  "@downloadSelectionCount":   {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadSelectionClearAll": "Clear selection",
+  "downloadSelectionSelectAll": "Select all ({count})",
+  "@downloadSelectionSelectAll":   {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadSelectionDelete": "Delete selected ({count})",
+  "@downloadSelectionDelete":   {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadEmptyFiltered": "No download tasks match the filters",
+  "downloadEmpty": "No download tasks",
+  "downloadViewAllTasks": "View all tasks",
+  "downloadClientFallbackName": "Client #{id}",
+  "@downloadClientFallbackName":   {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadCreatedAt": "Created {time}",
+  "@downloadCreatedAt":   {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadViewFiles": "View files",
+  "downloadRetriggerImport": "Re-import",
+  "downloadDeleteBlockedImporting": "This task is importing and cannot be deleted",
+  "downloadImportStatusPending": "Pending import",
+  "downloadImportStatusRunning": "Importing",
+  "downloadImportStatusCompleted": "Imported",
+  "downloadImportStatusFailed": "Import failed",
+  "downloadImportStatusSkipped": "Skipped",
+  "downloadImportSubmitted": "Import task submitted",
+  "downloadImportSubmitFailed": "Failed to submit the import task. Please try again later.",
+  "downloadViewMovieDetails": "View movie details: {number}",
+  "@downloadViewMovieDetails":   {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadSearchByMovieNumber": "Search by movie number",
+  "downloadFilterAllClients": "All clients",
+  "downloadFilterApplied": "Filtered",
+  "downloadFilterAction": "Filter",
+  "downloadFilterTitle": "Filter downloads",
+  "downloadMovieNumberLabel": "Movie number",
+  "downloadStateFilterLabel": "Download status",
+  "downloadClientFilterLabel": "Download client",
+  "downloadFilterClientSpecified": "Selected client",
+  "downloadMagnetRequired": "Paste a magnet link",
+  "downloadMagnetSingleOnly": "Submit one magnet link at a time",
+  "downloadMagnetInvalid": "Only magnet: links are supported",
+  "downloadMovieNumberRequired": "Enter a movie number",
+  "downloadMovieNumberResolving": "Looking up the movie number. Please wait.",
+  "downloadMovieNumberQueryFirst": "Click \"Search\" and match a movie first",
+  "downloadMovieNumberParsing": "Recognizing movie number…",
+  "downloadMovieNumberUnrecognized": "Could not recognize the movie number. Enter the full number (e.g. SSNI-888).",
+  "downloadMovieNumberParsed": "Recognized {number}. Searching locally…",
+  "@downloadMovieNumberParsed":   {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadMovieNumberQueryFailed": "Movie number lookup failed. Please try again later.",
+  "downloadMovieNumberLocalNotFound": "Not found locally. Searching online and importing…",
+  "downloadMovieNumberOnlineSearching": "Searching online and importing…",
+  "downloadMovieNumberNotFound": "Not found locally or online: {number}",
+  "@downloadMovieNumberNotFound":   {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadMovieNumberOnlineSearchFailed": "Online search failed. Please try again later.",
+  "downloadMovieNumberOnlineNoResult": "Online search returned no results. Please try again.",
+  "downloadTorrentTooLarge": "Torrent files must not exceed 10 MB",
+  "downloadTorrentUnreadable": "Could not read the selected torrent file. Try another file.",
+  "downloadTorrentPickerUnavailable": "The file picker is not ready yet. Fully restart the app and try again.",
+  "downloadTorrentPickerOpenFailed": "Failed to open the file picker. Please try again later.",
+  "downloadTorrentFileRequired": "Select a .torrent file",
+  "downloadCreateTaskFailed": "Failed to create the download task. Please try again.",
+  "downloadMagnetDialogTitle": "Add magnet download",
+  "downloadMagnetPrefilledDescription": "The magnet link was filled in from the comment. Confirm the download client and submit.",
+  "downloadManualAddDescription": "Paste a magnet link or upload a .torrent file to send it to a download client.",
+  "downloadClose": "Close",
+  "downloadSubmit": "Submit download",
+  "downloadSectionSource": "Source",
+  "downloadMagnetLabel": "Magnet link",
+  "downloadTorrentLabel": "Torrent file",
+  "downloadSectionSettings": "Download settings",
+  "downloadMediaKindJav": "JAV movie",
+  "downloadMovieNumberHint": "e.g. ABC-123 or FC2-PPV-123",
+  "downloadMovieNumberHelper": "Click \"Search\" or press Enter to parse and match; if it is not available locally, it is searched online and imported.",
+  "downloadQuerying": "Searching",
+  "downloadQuery": "Search",
+  "downloadDisplayNameLabel": "Display name (optional)",
+  "downloadDisplayNameHelper": "Shown first in the download task list; when empty, the movie title or resource name is used.",
+  "downloadMagnetCompactHelper": "Detected from the comment; you can edit it before submitting.",
+  "downloadMagnetHelper": "Only magnet: links are accepted; download HTTP torrent links and upload the .torrent file instead.",
+  "downloadLoadingClients": "Loading download clients…",
+  "downloadClientsLoadFailed": "Failed to load download clients",
+  "downloadClientsEmpty": "No download clients available",
+  "downloadClientsEmptyHint": "Configure and enable a download client in system settings before submitting a download.",
+  "downloadConfigureClients": "Configure download clients",
+  "downloadClientLabel": "Download client",
+  "downloadSelectClient": "Select a download client",
+  "downloadTorrentNotSelected": "No torrent file selected",
+  "downloadTorrentSelectHint": "Select a .torrent file, up to 10 MB",
+  "downloadChooseFile": "Choose file",
+  "downloadChooseFileAgain": "Choose another file",
+  "downloadDeleteSourceAfterImport": "Delete source file after import",
+  "downloadDeleteSourceAfterImportHint": "Deletes the source file from the download client after a successful import; this cannot be undone.",
+  "downloadMovieNumberResolvingFallback": "Looking up the movie number…",
+  "downloadMovieNumberQueryFailedTitle": "Movie number lookup failed",
+  "downloadMovieSourceLocal": "Local",
+  "downloadMovieSourceOnline": "Online",
+  "downloadMovieSourceCurrent": "Current movie",
+  "downloadUnknownTitle": "Unknown title",
+  "downloadSubmittedToClient": "Submitted to {client}",
+  "@downloadSubmittedToClient":   {
+    "placeholders": {
+      "client": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadTaskAlreadyExists": "Download task already exists"
 }

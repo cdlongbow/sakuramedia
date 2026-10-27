@@ -9,6 +9,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/activity/data/activity_notification_dto.dart';
 import 'package:sakuramedia/features/activity/presentation/activity_placeholders.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_card.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
@@ -106,7 +107,14 @@ class _MobileNotificationsPageState
           .refreshNotifications();
     } catch (error) {
       if (mounted) {
-        showToast(apiErrorMessage(error, fallback: '刷新失败，请稍后重试'));
+        final l10n = AppLocalizations.of(context);
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: l10n.activityRefreshFailed,
+            l10n: l10n,
+          ),
+        );
       }
     }
     if (mounted) {
@@ -201,6 +209,7 @@ class _MobileNotificationsPageState
     required int unreadCount,
     required bool isMarkingAllRead,
   }) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -210,16 +219,16 @@ class _MobileNotificationsPageState
             variant: AppTabBarVariant.compact,
             controller: _segmentController,
             onTap: _onSegmentTap,
-            tabs: const <Widget>[
-              Tab(text: '全部'),
-              Tab(text: '未读'),
+            tabs: <Widget>[
+              Tab(text: l10n.activityAll),
+              Tab(text: l10n.activityUnread),
             ],
           ),
         ),
         SizedBox(width: context.appSpacing.md),
         AppButton(
           key: const Key('mobile-notifications-mark-all-read'),
-          label: '全部已读',
+          label: l10n.activityMarkAllRead,
           size: AppButtonSize.small,
           variant: AppButtonVariant.secondary,
           isLoading: isMarkingAllRead,
@@ -294,7 +303,9 @@ class _MobileNotificationsBodySliver extends ConsumerWidget {
         hasScrollBody: false,
         child: AppEmptyState(
           key: const Key('mobile-notifications-empty'),
-          message: segment == _NotificationSegment.unread ? '没有未读消息' : '暂无消息',
+          message: segment == _NotificationSegment.unread
+              ? AppLocalizations.of(context).activityNoUnreadNotifications
+              : AppLocalizations.of(context).activityNoNotifications,
         ),
       );
     }
@@ -429,6 +440,7 @@ class MobileNotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.appColors;
     final spacing = context.appSpacing;
 
@@ -474,13 +486,15 @@ class MobileNotificationCard extends StatelessWidget {
                     AppBadge(
                       label: labelForNotificationCategory(
                         notification.category,
+                        l10n,
                       ),
                       tone: notificationCategoryTone(notification.category),
                       size: AppBadgeSize.compact,
                     ),
                     const Spacer(),
                     Text(
-                      formatUpdatedAtLabel(notification.createdAt) ?? '时间未知',
+                      formatUpdatedAtLabel(notification.createdAt) ??
+                          l10n.activityTimeUnknown,
                       style: resolveAppTextStyle(
                         context,
                         size: AppTextSize.s12,

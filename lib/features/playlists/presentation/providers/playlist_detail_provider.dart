@@ -3,6 +3,7 @@ import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 part 'playlist_detail_provider.g.dart';
 
@@ -46,10 +47,13 @@ class PlaylistDetail extends _$PlaylistDetail
 
 /// 把详情加载错误翻译成用户可读文案。保留原 [PlaylistDetailController] 的特化：
 /// `404` / `playlist_not_found` → 「未找到该播放列表」；其余通用文案。
-String playlistDetailErrorMessage(Object error) {
+String playlistDetailErrorMessage(
+  Object error, {
+  required AppLocalizations l10n,
+}) {
   if (error is ApiException &&
       (error.statusCode == 404 || error.error?.code == 'playlist_not_found')) {
-    return '未找到该播放列表';
+    return l10n.playlistNotFound;
   }
-  return '播放列表详情暂时无法加载，请稍后重试';
+  return l10n.playlistDetailLoadFailed;
 }

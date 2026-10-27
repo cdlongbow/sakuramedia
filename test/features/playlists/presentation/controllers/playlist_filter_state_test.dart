@@ -1,7 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/playlists/presentation/controllers/playlist_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 void main() {
+  final l10n = AppLocalizationsZh();
+
   group('PlaylistFilterState', () {
     test('initial is default and keeps null sort/resolution', () {
       const state = PlaylistFilterState.initial;
@@ -11,7 +14,7 @@ void main() {
       expect(state.sortDirection, SortDirection.desc);
       expect(state.resolution, isNull);
       expect(state.sortExpression, isNull);
-      expect(state.triggerLabel, '全部');
+      expect(state.triggerLabel(l10n), '全部');
     });
 
     test('sortExpression renders field:direction only when sortField set', () {
@@ -52,13 +55,13 @@ void main() {
       expect(
         PlaylistFilterState.initial
             .copyWith(resolution: PlaylistResolutionFilter.k4k)
-            .triggerLabel,
+            .triggerLabel(l10n),
         '4K',
       );
       expect(
         PlaylistFilterState.initial
             .copyWith(sortField: PlaylistSortField.addedAt)
-            .triggerLabel,
+            .triggerLabel(l10n),
         '全部',
       );
       expect(
@@ -67,7 +70,7 @@ void main() {
               resolution: PlaylistResolutionFilter.k4k,
               sortField: PlaylistSortField.bitrate,
             )
-            .triggerLabel,
+            .triggerLabel(l10n),
         '4K',
       );
     });

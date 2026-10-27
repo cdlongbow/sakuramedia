@@ -5,6 +5,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlist_detail_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
 
@@ -119,7 +120,10 @@ void main() {
       await container.read(playlistDetailProvider(999).future);
       fail('expected an error');
     } catch (error) {
-      expect(playlistDetailErrorMessage(error), '未找到该播放列表');
+      expect(
+        playlistDetailErrorMessage(error, l10n: AppLocalizationsZh()),
+        '未找到该播放列表',
+      );
     }
   });
 }

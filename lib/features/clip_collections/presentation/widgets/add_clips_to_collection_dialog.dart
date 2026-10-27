@@ -11,6 +11,7 @@ import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
@@ -124,7 +125,12 @@ class _AddClipsToCollectionDialogState
         return;
       }
       setState(() {
-        _errorMessage = apiErrorMessage(error, fallback: '切片加载失败');
+        _errorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(
+            context,
+          ).clipCollectionClipsLoadFailed,
+        );
         _isLoading = false;
       });
     }
@@ -162,7 +168,12 @@ class _AddClipsToCollectionDialogState
     } catch (error) {
       if (mounted && seq == _requestSeq) {
         setState(() {
-          final message = apiErrorMessage(error, fallback: '切片加载失败');
+          final message = apiErrorMessage(
+            error,
+            fallback: AppLocalizations.of(
+              context,
+            ).clipCollectionClipsLoadFailed,
+          );
           if (_clips.isEmpty) {
             _errorMessage = message;
           } else {
@@ -216,28 +227,32 @@ class _AddClipsToCollectionDialogState
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final body = _buildBody(context);
     return Column(
       mainAxisSize: _isDrawer ? MainAxisSize.max : MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppPickerHeader(
-          title: '添加切片',
+          title: l10n.clipCollectionAddClips,
           countLabel: _isLoading && _clips.isEmpty
               ? null
               : _onlyUnadded
-              ? '已加入 ${_memberIds.length} · 可添加 $_total'
-              : '已加入 ${_memberIds.length} · 共 $_total',
+              ? l10n.clipCollectionAddedAvailableCount(
+                  _memberIds.length,
+                  _total,
+                )
+              : l10n.clipCollectionAddedTotalCount(_memberIds.length, _total),
           countKey: const Key('add-clips-count'),
           searchController: _searchController,
           searchFieldKey: const Key('add-clips-search-field'),
-          searchHintText: '搜番号 / 标题',
+          searchHintText: l10n.clipCollectionSearchClipsHint,
           clearSearchKey: const Key('add-clips-search-clear'),
           onSearchChanged: _onSearchChanged,
           chips: <Widget>[
             AppTextButton(
               key: const Key('add-clips-only-unadded-chip'),
-              label: '仅看未加入',
+              label: l10n.clipCollectionOnlyUnadded,
               size: AppTextButtonSize.xSmall,
               isSelected: _onlyUnadded,
               onPressed: () => _setOnlyUnadded(!_onlyUnadded),
@@ -316,30 +331,31 @@ class _AddClipsToCollectionDialogState
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (_keyword.isNotEmpty) {
-      return const AppEmptyState(
-        key: Key('add-clips-empty-search'),
+      return AppEmptyState(
+        key: const Key('add-clips-empty-search'),
         icon: Icons.search_off_rounded,
-        title: '没有匹配的切片',
-        message: '换个番号或关键词试试',
+        title: l10n.clipCollectionNoMatchingClips,
+        message: l10n.clipCollectionTryAnotherKeyword,
       );
     }
     if (_onlyUnadded) {
       return AppEmptyState(
         key: const Key('add-clips-empty-all-added'),
         icon: Icons.playlist_add_check_rounded,
-        title: '可添加的都已加入',
-        message: '这个合集已经收齐了，切到「全部」可以管理已加入的切片',
-        retryLabel: '查看全部',
+        title: l10n.clipCollectionAllAdded,
+        message: l10n.clipCollectionAllAddedHint,
+        retryLabel: l10n.clipCollectionViewAll,
         retryKey: const Key('add-clips-show-all-button'),
         onRetry: () => _setOnlyUnadded(false),
       );
     }
-    return const AppEmptyState(
-      key: Key('add-clips-empty-library'),
+    return AppEmptyState(
+      key: const Key('add-clips-empty-library'),
       icon: Icons.movie_creation_outlined,
-      title: '还没有切片',
-      message: '去播放器圈选生成吧',
+      title: l10n.clipCollectionNoClipsTitle,
+      message: l10n.clipCollectionNoClipsHint,
     );
   }
 
@@ -368,11 +384,12 @@ class _AddClipsToCollectionDialogState
     final isAnyUpdating = _updatingIds.isNotEmpty;
     final coverUrl = clip.coverImage?.origin;
     final title = clip.title.trim();
+    final l10n = AppLocalizations.of(context);
     final metaParts = <String>[
       if (clip.movieNumber != null && clip.movieNumber!.isNotEmpty)
         clip.movieNumber!
       else
-        '无番号',
+        l10n.clipCollectionNoMovieNumber,
       formatMediaTimecode(clip.durationSeconds),
     ];
 
@@ -380,7 +397,7 @@ class _AddClipsToCollectionDialogState
       selected: selected,
       enabled: !isAnyUpdating,
       onTap: () => _toggle(clip),
-      title: title.isEmpty ? '未命名切片' : title,
+      title: title.isEmpty ? l10n.clipCollectionUntitledClip : title,
       subtitle: metaParts.join(' · '),
       coverUrl: coverUrl,
       optionKey: Key('add-clips-option-${clip.clipId}'),
@@ -411,7 +428,7 @@ class _AddClipsToCollectionDialogState
         if (!mounted) {
           return;
         }
-        showToast('已移出');
+        showToast(AppLocalizations.of(context).clipCollectionMovedOutToast);
       } else {
         await api.addClipToCollection(
           collectionId: widget.collectionId,
@@ -429,7 +446,7 @@ class _AddClipsToCollectionDialogState
             _nextOffset = math.max(0, _nextOffset - 1);
           }
         });
-        showToast('已加入');
+        showToast(AppLocalizations.of(context).clipCollectionAddedToast);
       }
     } catch (error) {
       if (!mounted) {
@@ -443,7 +460,12 @@ class _AddClipsToCollectionDialogState
         }
       });
       showToast(
-        apiErrorMessage(error, fallback: isMember ? '移出合集失败' : '加入合集失败'),
+        apiErrorMessage(
+          error,
+          fallback: isMember
+              ? AppLocalizations.of(context).clipCollectionRemoveFailed
+              : AppLocalizations.of(context).clipCollectionAddFailed,
+        ),
       );
     } finally {
       if (mounted) {

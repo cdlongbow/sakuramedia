@@ -2197,5 +2197,224 @@
   "momentCollectionEmptyDetailMobile": "This collection has no moments yet. Tap “Add” in the top right to add some.",
   "momentCollectionEmptyDetailDesktop": "This collection has no moments yet. Add them from the Moments page.",
   "momentAddMomentsAction": "Add moments",
-  "momentNewAction": "New"
+  "momentNewAction": "New",
+  "clipCollectionPageTitle": "Clip collections",
+  "clipCollectionCreate": "New collection",
+  "clipCollectionEdit": "Edit collection",
+  "clipCollectionSearchHint": "Search collections",
+  "clipCollectionLoadFailed": "Collections could not be loaded. Please try again later.",
+  "clipCollectionDetailLoadFailed": "Collection details could not be loaded. Please try again later.",
+  "clipCollectionEmptyDesktop": "No collections yet. Tap \"New collection\" in the top right to get started.",
+  "clipCollectionEmptyMobile": "No collections yet. Tap \"New collection\" below to get started.",
+  "clipCollectionNoMatch": "No matching collections",
+  "clipCollectionCreatedToast": "Collection created",
+  "clipCollectionDeletedToast": "Collection deleted",
+  "clipCollectionDeleteTitle": "Delete collection",
+  "clipCollectionDeleteMessage": "Delete {name}? Only the collection itself is deleted; the clips inside it are kept.",
+  "@clipCollectionDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "clipCollectionDeleteFailed": "Failed to delete. Please try again.",
+  "clipCollectionUnnamed": "this collection",
+  "clipCollectionNameHint": "e.g. Annual picks",
+  "clipCollectionNameRequired": "Enter a collection name",
+  "clipCollectionDescriptionHint": "Description (optional)",
+  "clipCollectionCreateAction": "Create",
+  "clipCollectionSaveFailed": "Failed to save",
+  "clipCollectionCreateFailed": "Failed to create the collection",
+  "clipCollectionPlayAll": "Play all",
+  "clipCollectionPlay": "Play",
+  "clipCollectionClipCount": "{count} clips",
+  "@clipCollectionClipCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clipCollectionAdd": "Add",
+  "clipCollectionAddClips": "Add clips",
+  "clipCollectionSelectedCount": "{count} selected",
+  "@clipCollectionSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clipCollectionSelectAll": "Select all",
+  "clipCollectionDeselectAll": "Clear selection",
+  "clipCollectionRemoveFromCollection": "Remove from collection",
+  "clipCollectionRemove": "Remove",
+  "clipCollectionDeleteClips": "Delete clips",
+  "clipCollectionAddToCollection": "Add to collection",
+  "clipCollectionNoClipsMobile": "This collection has no clips yet. Tap \"Add\" in the top right to add some.",
+  "clipCollectionNoClipsDesktop": "This collection has no clips yet. Add some from \"All clips\".",
+  "clipCollectionNoMovieNumber": "No movie number",
+  "clipCollectionMovieSource": "Movie",
+  "clipCollectionRemovedToast": "Removed from collection",
+  "clipCollectionMovedOutToast": "Removed",
+  "clipCollectionAddedToast": "Added",
+  "clipCollectionAddedToToast": "Added to \"{name}\"",
+  "@clipCollectionAddedToToast": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "clipCollectionUnnamedClip": "this clip",
+  "clipCollectionDeleteClipMessage": "Delete {name}? The clip file will be deleted as well. This cannot be undone.",
+  "@clipCollectionDeleteClipMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "clipCollectionClipDeletedToast": "Clip deleted",
+  "clipCollectionAddFailed": "Failed to add to the collection",
+  "clipCollectionAddFailedRetry": "Failed to add to the collection. Please try again.",
+  "clipCollectionRemoveFailed": "Failed to remove from the collection",
+  "clipCollectionBatchRemoveMessage": "Remove the {count} selected clips from this collection? The clips themselves are not deleted.",
+  "@clipCollectionBatchRemoveMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clipCollectionBatchDeleteMessage": "Delete the {count} selected clips? The clip files will be deleted as well. This cannot be undone.",
+  "@clipCollectionBatchDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clipCollectionConfirm": "Confirm",
+  "clipCollectionNoPlayableClips": "There are no playable clips in this collection",
+  "clipCollectionPlayLoadFailed": "The collection could not be loaded. Please try again later.",
+  "clipCollectionContinuousPlay": "Continuous playback",
+  "clipCollectionEpisodePanelTitle": "Episodes · {count}",
+  "@clipCollectionEpisodePanelTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clipCollectionClipsLoadFailed": "Failed to load clips",
+  "clipCollectionAddedAvailableCount": "{added} added · {total} available",
+  "@clipCollectionAddedAvailableCount": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "clipCollectionAddedTotalCount": "{added} added · {total} total",
+  "@clipCollectionAddedTotalCount": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "clipCollectionSearchClipsHint": "Search movie number / title",
+  "clipCollectionOnlyUnadded": "Unadded only",
+  "clipCollectionNoMatchingClips": "No matching clips",
+  "clipCollectionTryAnotherKeyword": "Try another movie number or keyword",
+  "clipCollectionAllAdded": "Everything available has been added",
+  "clipCollectionAllAddedHint": "This collection is complete. Switch to \"All\" to manage the clips that are already in it.",
+  "clipCollectionViewAll": "View all",
+  "clipCollectionNoClipsTitle": "No clips yet",
+  "clipCollectionNoClipsHint": "Create some by clipping in the player",
+  "clipCollectionUntitledClip": "Untitled clip",
+  "clipCollectionCollectionsLoadFailed": "Failed to load collections",
+  "clipCollectionEmptyCreateHint": "No collections yet. Tap \"+\" in the top right to create one",
+  "playlistLoadFailed": "Playlists could not be loaded. Please try again later.",
+  "playlistCreateTooltip": "New playlist",
+  "playlistCreateTitle": "New playlist",
+  "playlistEmpty": "No playlists yet",
+  "playlistSectionSystem": "System lists",
+  "playlistSectionMine": "My playlists",
+  "playlistCountBadge": "{count}",
+  "@playlistCountBadge": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playlistCreatedToast": "Playlist created",
+  "playlistFavoritesNotReady": "The favorites list has not been initialized yet",
+  "playlistNoWatchHistory": "No watch history yet",
+  "playlistNoMovies": "No movies",
+  "playlistNoMatchingMovies": "No movies match the current filters",
+  "playlistRefreshFailed": "Failed to refresh",
+  "playlistDeleteTitle": "Delete playlist",
+  "playlistDeleteMessage": "Delete playlist \"{name}\"? This cannot be undone.",
+  "@playlistDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "playlistDeleteFailed": "Failed to delete the playlist",
+  "playlistDeletedToast": "Playlist deleted",
+  "playlistMovieCount": "{count} movies",
+  "@playlistMovieCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playlistMovieCountShort": "{count}",
+  "@playlistMovieCountShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playlistActionsTooltip": "Playlist actions",
+  "playlistNotFound": "Playlist not found",
+  "playlistDetailLoadFailed": "Playlist details could not be loaded. Please try again later.",
+  "playlistNameHint": "e.g. Watch later",
+  "playlistNameRequired": "Enter a playlist name",
+  "playlistDescriptionHint": "Description (optional)",
+  "playlistCreateAction": "Create",
+  "playlistCreateFailed": "Failed to create the playlist",
+  "playlistEditTitle": "Edit playlist",
+  "playlistEditDescription": "Update the name and description of this playlist. Changes take effect immediately.",
+  "playlistUpdateFailed": "Failed to update the playlist",
+  "playlistUpdatedToast": "Playlist updated",
+  "playlistPickerLoadFailed": "Failed to load playlists",
+  "playlistNoMatch": "No matching playlists",
+  "playlistAddToPlaylist": "Add to playlist",
+  "playlistCloseTooltip": "Close",
+  "playlistSearchHint": "Search playlists",
+  "playlistRemoveFailed": "Failed to remove from the playlist",
+  "playlistAddFailed": "Failed to add to the playlist",
+  "playlistFilterResolution": "Resolution",
+  "playlistFilterAll": "All",
+  "playlistSortHeat": "Popularity",
+  "playlistSortBitrate": "Bitrate",
+  "playlistSortAddedAt": "Recently added",
+  "playlistSortReleaseDate": "Release date",
+  "playlistSortDefault": "Recently active",
+  "playlistEditInfo": "Edit details"
 }

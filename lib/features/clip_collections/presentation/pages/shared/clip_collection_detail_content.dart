@@ -17,6 +17,7 @@ import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/batch_operation_submission_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/collection_playback_handoff_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
@@ -168,7 +169,9 @@ class _ClipCollectionDetailContentState
           return AppEmptyState(
             message: apiErrorMessage(
               async.error!,
-              fallback: '合集详情暂时无法加载，请稍后重试',
+              fallback: AppLocalizations.of(
+                context,
+              ).clipCollectionDetailLoadFailed,
             ),
           );
         }
@@ -223,6 +226,7 @@ class _ClipCollectionDetailContentState
   ) {
     final collection = state.collection;
     final playAllBuilder = widget.playAllBuilder;
+    final l10n = AppLocalizations.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -250,7 +254,7 @@ class _ClipCollectionDetailContentState
                 SizedBox(width: context.appSpacing.xs),
                 AppIconButton(
                   key: Key('${widget.keyPrefix}-rename-button'),
-                  tooltip: '编辑合集',
+                  tooltip: l10n.clipCollectionEdit,
                   onPressed: () => _editCollection(context),
                   icon: Icon(
                     Icons.edit_outlined,
@@ -302,11 +306,12 @@ class _ClipCollectionDetailContentState
     final count = state.collection.clipCount;
     final hasClips = state.clips.isNotEmpty;
     final playAllBuilder = widget.playAllBuilder;
+    final l10n = AppLocalizations.of(context);
     return AppListHeader(
       informationSlots: [
         AppListHeaderInfo(
           key: Key('${widget.keyPrefix}-total'),
-          label: '$count 个切片',
+          label: l10n.clipCollectionClipCount(count),
         ),
       ],
       actionSlots: [
@@ -321,14 +326,14 @@ class _ClipCollectionDetailContentState
         if (_isMobile)
           AppTextButton(
             key: Key('${widget.keyPrefix}-add-clips-button'),
-            label: '添加',
+            label: l10n.clipCollectionAdd,
             size: AppTextButtonSize.xSmall,
             onPressed: () => _addClips(context),
           )
         else
           AppTextButton(
             key: Key('${widget.keyPrefix}-add-clips-button'),
-            label: '添加切片',
+            label: l10n.clipCollectionAddClips,
             size: AppTextButtonSize.small,
             onPressed: () => _addClips(context),
           ),
@@ -340,7 +345,7 @@ class _ClipCollectionDetailContentState
         if (_isMobile)
           AppIconButton(
             key: Key('${widget.keyPrefix}-rename-button'),
-            tooltip: '编辑合集',
+            tooltip: l10n.clipCollectionEdit,
             onPressed: () => _editCollection(context),
             icon: Icon(
               Icons.edit_outlined,
@@ -365,9 +370,10 @@ class _ClipCollectionDetailContentState
       BatchOperationType.clipCollectionRemove,
       BatchOperationType.clipDelete,
     ]);
+    final l10n = AppLocalizations.of(context);
     if (_isMobile) {
       return AppListHeader.selection(
-        selectionLabel: '已选 $selectedCount 个',
+        selectionLabel: l10n.clipCollectionSelectedCount(selectedCount),
         selectionExitButtonKey: Key(
           '${widget.keyPrefix}-exit-selection-button',
         ),
@@ -375,7 +381,9 @@ class _ClipCollectionDetailContentState
         actionSlots: [
           AppButton(
             key: Key('${widget.keyPrefix}-select-all-button'),
-            label: allSelected ? '取消全选' : '全选',
+            label: allSelected
+                ? l10n.clipCollectionDeselectAll
+                : l10n.clipCollectionSelectAll,
             variant: AppButtonVariant.ghost,
             size: AppButtonSize.xSmall,
             isSelected: allSelected,
@@ -385,14 +393,16 @@ class _ClipCollectionDetailContentState
       );
     }
     return AppSelectionHeaderToolbar(
-      countLabel: '已选 $selectedCount 个',
-      selectAllLabel: allSelected ? '取消全选' : '全选',
+      countLabel: l10n.clipCollectionSelectedCount(selectedCount),
+      selectAllLabel: allSelected
+          ? l10n.clipCollectionDeselectAll
+          : l10n.clipCollectionSelectAll,
       selectAllKey: Key('${widget.keyPrefix}-select-all-button'),
       onToggleAll: () => toggleSelectAll(clipIds),
       actions: [
         AppButton(
           key: Key('${widget.keyPrefix}-batch-remove-button'),
-          label: '从合集移除',
+          label: l10n.clipCollectionRemoveFromCollection,
           variant: AppButtonVariant.secondary,
           size: AppButtonSize.small,
           onPressed: hasSelection && !submitting
@@ -401,7 +411,7 @@ class _ClipCollectionDetailContentState
         ),
         AppButton(
           key: Key('${widget.keyPrefix}-batch-delete-button'),
-          label: '删除切片',
+          label: l10n.clipCollectionDeleteClips,
           variant: AppButtonVariant.danger,
           size: AppButtonSize.small,
           onPressed: hasSelection && !submitting
@@ -421,12 +431,13 @@ class _ClipCollectionDetailContentState
       BatchOperationType.clipCollectionRemove,
       BatchOperationType.clipDelete,
     ]);
+    final l10n = AppLocalizations.of(context);
     return AppSelectionBottomBar(
       key: Key('${widget.keyPrefix}-batch-bottom-bar'),
       actions: [
         AppButton(
           key: Key('${widget.keyPrefix}-batch-add-collection-button'),
-          label: '加入合集',
+          label: l10n.clipCollectionAddToCollection,
           variant: AppButtonVariant.secondary,
           onPressed: hasSelection && !submitting
               ? () => _batchAddToOtherCollection(state)
@@ -434,7 +445,7 @@ class _ClipCollectionDetailContentState
         ),
         AppButton(
           key: Key('${widget.keyPrefix}-batch-remove-button'),
-          label: '移除',
+          label: l10n.clipCollectionRemove,
           variant: AppButtonVariant.secondary,
           onPressed: hasSelection && !submitting
               ? () => _batchRemove(state)
@@ -442,7 +453,7 @@ class _ClipCollectionDetailContentState
         ),
         AppButton(
           key: Key('${widget.keyPrefix}-batch-delete-button'),
-          label: '删除',
+          label: l10n.commonDelete,
           variant: AppButtonVariant.danger,
           onPressed: hasSelection && !submitting
               ? () => _batchDelete(state)
@@ -456,8 +467,11 @@ class _ClipCollectionDetailContentState
 
   Widget _buildClips(BuildContext context, ClipCollectionDetailState state) {
     if (state.clips.isEmpty) {
+      final l10n = AppLocalizations.of(context);
       return AppEmptyState(
-        message: _isMobile ? '合集还没有切片，点右上角「添加」加入吧' : '合集还没有切片，去「全部切片」里加入吧',
+        message: _isMobile
+            ? l10n.clipCollectionNoClipsMobile
+            : l10n.clipCollectionNoClipsDesktop,
       );
     }
     return _buildGrid(context, state);
@@ -466,6 +480,7 @@ class _ClipCollectionDetailContentState
   Widget _buildGrid(BuildContext context, ClipCollectionDetailState state) {
     final clips = state.clips;
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = resolveAppCardGridColumnCount(
@@ -510,7 +525,7 @@ class _ClipCollectionDetailContentState
             }
             final number = clip.movieNumber?.isNotEmpty == true
                 ? clip.movieNumber!
-                : '无番号';
+                : l10n.clipCollectionNoMovieNumber;
             final duration = formatMediaTimecode(clip.durationSeconds);
             final playSingle = widget.playSingle;
             final openMovie = _openMovieCallback(clip);
@@ -531,7 +546,7 @@ class _ClipCollectionDetailContentState
                   : () => _openMemberActions(context, clip),
               menuKey: Key('${widget.keyPrefix}-grid-menu-${clip.clipId}'),
               onOpenSource: openMovie,
-              openSourceLabel: '影片',
+              openSourceLabel: l10n.clipCollectionMovieSource,
               openSourceButtonKey: Key(
                 '${widget.keyPrefix}-grid-movie-${clip.clipId}',
               ),
@@ -547,7 +562,7 @@ class _ClipCollectionDetailContentState
               deleteButtonKey: Key(
                 '${widget.keyPrefix}-grid-delete-${clip.clipId}',
               ),
-              deleteLabel: '删除切片',
+              deleteLabel: l10n.clipCollectionDeleteClips,
               selectionMode: selectionMode,
               isSelected: isSelected(clip.clipId),
             );
@@ -610,6 +625,7 @@ class _ClipCollectionDetailContentState
   }
 
   Future<void> _removeClip(MediaClipDto clip) async {
+    final l10n = AppLocalizations.of(context);
     final error = await ref.read(_providerRef.notifier).removeClip(clip.clipId);
     if (!mounted) {
       return;
@@ -621,19 +637,22 @@ class _ClipCollectionDetailContentState
         collectionId: widget.collectionId,
       );
     }
-    showToast(error ?? '已从合集移除');
+    showToast(error ?? l10n.clipCollectionRemovedToast);
   }
 
   /// 彻底删除切片本体（含文件，不可恢复，后端从所有合集级联移除）：先确认，再走
   /// notifier 乐观删除并广播 [ClipMutationEvents.reportDeleted]。与「移出合集」不同。
   Future<void> _deleteClip(MediaClipDto clip) async {
+    final l10n = AppLocalizations.of(context);
     final title = clip.displayTitle.trim();
-    final label = title.isEmpty ? '该切片' : '“$title”';
+    final label = title.isEmpty
+        ? l10n.clipCollectionUnnamedClip
+        : '“$title”';
     final notifier = ref.read(_providerRef.notifier);
     final confirmed = await _confirm(
-      title: '删除切片',
-      message: '确认删除$label？切片文件会被一并删除，该操作不可恢复。',
-      confirmLabel: '删除',
+      title: l10n.clipCollectionDeleteClips,
+      message: l10n.clipCollectionDeleteClipMessage(label),
+      confirmLabel: l10n.commonDelete,
       confirmKey: Key('${widget.keyPrefix}-delete-confirm-button'),
       drawerKey: _isMobile ? Key('${widget.keyPrefix}-delete-drawer') : null,
       onConfirm: () => notifier.deleteClip(clip.clipId),
@@ -642,7 +661,7 @@ class _ClipCollectionDetailContentState
       return;
     }
     _mutationBroadcaster.reportDeleted(clip.clipId);
-    showToast('已删除切片');
+    showToast(l10n.clipCollectionClipDeletedToast);
   }
 
   Future<bool> _confirm({
@@ -671,6 +690,7 @@ class _ClipCollectionDetailContentState
   /// 单卡「加入合集」：把该切片加入其它合集（排除当前合集），成功后广播刷新
   /// 目标合集的封面 / 计数。
   Future<void> _addToOtherCollection(MediaClipDto clip) async {
+    final l10n = AppLocalizations.of(context);
     final target = await showPickClipCollectionDialog(
       context,
       presentation: _isMobile
@@ -692,16 +712,19 @@ class _ClipCollectionDetailContentState
         clipId: clip.clipId,
         collectionId: target.id,
       );
-      showToast('已加入「${target.name}」');
+      showToast(l10n.clipCollectionAddedToToast(target.name));
     } catch (error) {
       if (!mounted) {
         return;
       }
-      showToast(apiErrorMessage(error, fallback: '加入合集失败，请重试'));
+      showToast(
+        apiErrorMessage(error, fallback: l10n.clipCollectionAddFailedRetry),
+      );
     }
   }
 
   Future<void> _editCollection(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     final collection = ref.read(_providerRef).value?.collection;
     if (collection == null) {
       return;
@@ -719,7 +742,7 @@ class _ClipCollectionDetailContentState
     _mutationBroadcaster.reportCollectionMembershipChanged(
       collectionId: widget.collectionId,
     );
-    showToast('已保存');
+    showToast(l10n.commonSaved);
   }
 
   Future<void> _addClips(BuildContext context) async {
@@ -784,10 +807,13 @@ class _ClipCollectionDetailContentState
     if (selected.isEmpty) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     final confirmed = await _confirm(
-      title: '从合集移除',
-      message: '确认从合集移除选中的 ${selected.length} 个切片？切片本身不会被删除。',
-      confirmLabel: _isMobile ? '移除' : '确认',
+      title: l10n.clipCollectionRemoveFromCollection,
+      message: l10n.clipCollectionBatchRemoveMessage(selected.length),
+      confirmLabel: _isMobile
+          ? l10n.clipCollectionRemove
+          : l10n.clipCollectionConfirm,
       confirmKey: _batchConfirmKey('remove'),
       drawerKey: _isMobile
           ? Key('${widget.keyPrefix}-batch-remove-drawer')
@@ -814,10 +840,11 @@ class _ClipCollectionDetailContentState
     if (selected.isEmpty) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     final confirmed = await _confirm(
-      title: '删除切片',
-      message: '确认删除选中的 ${selected.length} 个切片？切片文件会被一并删除，该操作不可恢复。',
-      confirmLabel: _isMobile ? '删除' : '确认',
+      title: l10n.clipCollectionDeleteClips,
+      message: l10n.clipCollectionBatchDeleteMessage(selected.length),
+      confirmLabel: _isMobile ? l10n.commonDelete : l10n.clipCollectionConfirm,
       confirmKey: _batchConfirmKey('delete'),
       drawerKey: _isMobile
           ? Key('${widget.keyPrefix}-batch-delete-drawer')

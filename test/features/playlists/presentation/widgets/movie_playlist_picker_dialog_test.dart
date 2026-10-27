@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/movie_playlist_picker_dialog.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import '../../../../support/test_api_bundle.dart';
 
@@ -50,6 +51,12 @@ void main() {
           child: OKToast(
             child: MaterialApp(
               theme: sakuraThemeData,
+              locale: const Locale('zh'),
+              localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+                AppLocalizations.delegate,
+                ...GlobalMaterialLocalizations.delegates,
+              ],
+              supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
               home: Scaffold(
                 body: Builder(
                   builder: (context) => TextButton(
@@ -165,6 +172,12 @@ void main() {
         child: OKToast(
           child: MaterialApp(
             theme: sakuraThemeData,
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             home: Scaffold(
               body: Builder(
                 builder: (context) => TextButton(
@@ -246,6 +259,12 @@ void main() {
         child: OKToast(
           child: MaterialApp(
             theme: sakuraThemeData,
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             home: Scaffold(
               body: Builder(
                 builder: (context) => TextButton(

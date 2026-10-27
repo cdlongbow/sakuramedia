@@ -14,6 +14,7 @@ import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_loading_indicator.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/collection_episode_queue_item.dart';
@@ -116,7 +117,9 @@ class _ClipCollectionPlayContentState
       if (medias.isEmpty) {
         setState(() {
           _isLoading = false;
-          _errorMessage = '合集内没有可播放的切片';
+          _errorMessage = AppLocalizations.of(
+            context,
+          ).clipCollectionNoPlayableClips;
         });
         return;
       }
@@ -172,7 +175,10 @@ class _ClipCollectionPlayContentState
       }
       setState(() {
         _isLoading = false;
-        _errorMessage = apiErrorMessage(error, fallback: '合集加载失败，请稍后重试');
+        _errorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(context).clipCollectionPlayLoadFailed,
+        );
       });
     }
   }
@@ -197,7 +203,7 @@ class _ClipCollectionPlayContentState
 
   String _currentClipTitle() {
     if (currentIndex < 0 || currentIndex >= _clips.length) {
-      return '连播';
+      return AppLocalizations.of(context).clipCollectionContinuousPlay;
     }
     return _clips[currentIndex].displayTitle;
   }
@@ -243,7 +249,9 @@ class _ClipCollectionPlayContentState
             isOpen: isEpisodePanelOpen,
             itemCount: _clips.length,
             currentIndex: currentIndex,
-            title: '选集 · ${_clips.length}',
+            title: AppLocalizations.of(
+              context,
+            ).clipCollectionEpisodePanelTitle(_clips.length),
             onClose: closeEpisodePanel,
             itemBuilder: (context, index) {
               final clip = _clips[index];

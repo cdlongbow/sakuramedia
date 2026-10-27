@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/clips/presentation/providers/clips_api_prov
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -120,7 +121,12 @@ class _AddToClipCollectionDialogState
         return;
       }
       setState(() {
-        _errorMessage = apiErrorMessage(error, fallback: '合集加载失败');
+        _errorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(
+            context,
+          ).clipCollectionCollectionsLoadFailed,
+        );
         _isLoading = false;
       });
     }
@@ -145,6 +151,7 @@ class _AddToClipCollectionDialogState
   Widget _buildContent(BuildContext context, {required double maxListHeight}) {
     final spacing = context.appSpacing;
     final isAnyUpdating = _updatingIds.isNotEmpty;
+    final l10n = AppLocalizations.of(context);
 
     return Stack(
       alignment: Alignment.center,
@@ -159,7 +166,7 @@ class _AddToClipCollectionDialogState
                 children: [
                   Expanded(
                     child: Text(
-                      '加入合集',
+                      l10n.clipCollectionAddToCollection,
                       style: resolveAppTextStyle(
                         context,
                         size: AppTextSize.s16,
@@ -170,7 +177,7 @@ class _AddToClipCollectionDialogState
                   ),
                   AppIconButton(
                     key: const Key('add-to-clip-collection-create-button'),
-                    tooltip: '新建合集',
+                    tooltip: l10n.clipCollectionCreate,
                     onPressed: _createCollection,
                     icon: const Icon(Icons.add_rounded),
                   ),
@@ -180,7 +187,7 @@ class _AddToClipCollectionDialogState
               AppSearchField(
                 fieldKey: const Key('add-to-clip-collection-search-field'),
                 controller: _searchController,
-                hintText: '搜索合集',
+                hintText: l10n.clipCollectionSearchHint,
                 onChanged: (value) =>
                     setState(() => _keyword = value.trim().toLowerCase()),
                 clearKey: const Key('add-to-clip-collection-search-clear'),
@@ -215,16 +222,22 @@ class _AddToClipCollectionDialogState
       );
     }
     if (_collections.isEmpty) {
-      return const SizedBox(
+      return SizedBox(
         height: 160,
-        child: Center(child: Text('还没有合集，点右上角「+」新建')),
+        child: Center(
+          child: Text(
+            AppLocalizations.of(context).clipCollectionEmptyCreateHint,
+          ),
+        ),
       );
     }
     final visibleCollections = _visibleCollections;
     if (visibleCollections.isEmpty) {
-      return const SizedBox(
+      return SizedBox(
         height: 160,
-        child: Center(child: Text('没有匹配的合集')),
+        child: Center(
+          child: Text(AppLocalizations.of(context).clipCollectionNoMatch),
+        ),
       );
     }
 
@@ -259,6 +272,7 @@ class _AddToClipCollectionDialogState
 
   Future<void> _toggle(ClipCollectionDto collection) async {
     final api = ref.read(clipCollectionsApiProvider);
+    final l10n = AppLocalizations.of(context);
     final isSelected = _selectedIds.contains(collection.id);
     setState(() {
       _updatingIds.add(collection.id);
@@ -290,7 +304,12 @@ class _AddToClipCollectionDialogState
         }
       });
       showToast(
-        apiErrorMessage(error, fallback: isSelected ? '移出合集失败' : '加入合集失败'),
+        apiErrorMessage(
+          error,
+          fallback: isSelected
+              ? l10n.clipCollectionRemoveFailed
+              : l10n.clipCollectionAddFailed,
+        ),
       );
     } finally {
       if (mounted) {

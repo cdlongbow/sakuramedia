@@ -3,6 +3,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -78,6 +79,7 @@ class _CreatePlaylistDialogState extends ConsumerState<CreatePlaylistDialog> {
 
   Widget _buildFormContent(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Form(
       key: _formKey,
       child: Column(
@@ -85,7 +87,7 @@ class _CreatePlaylistDialogState extends ConsumerState<CreatePlaylistDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '新建播放列表',
+            l10n.playlistCreateTitle,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s14,
@@ -97,22 +99,25 @@ class _CreatePlaylistDialogState extends ConsumerState<CreatePlaylistDialog> {
           AppTextField(
             fieldKey: const Key('create-playlist-name-field'),
             controller: _nameController,
-            hintText: '例如：稍后再看',
-            validator: (value) =>
-                value == null || value.trim().isEmpty ? '请输入播放列表名称' : null,
+            hintText: l10n.playlistNameHint,
+            validator:
+                (value) =>
+                    value == null || value.trim().isEmpty
+                        ? l10n.playlistNameRequired
+                        : null,
           ),
           SizedBox(height: spacing.sm),
           AppTextField(
             fieldKey: const Key('create-playlist-description-field'),
             controller: _descriptionController,
-            hintText: '描述可选',
+            hintText: l10n.playlistDescriptionHint,
           ),
           SizedBox(height: spacing.md),
           Row(
             children: [
               Expanded(
                 child: AppButton(
-                  label: '取消',
+                  label: l10n.commonCancel,
                   onPressed: _isSubmitting
                       ? null
                       : () => Navigator.of(context).pop(),
@@ -122,7 +127,7 @@ class _CreatePlaylistDialogState extends ConsumerState<CreatePlaylistDialog> {
               Expanded(
                 child: AppButton(
                   key: const Key('create-playlist-submit-button'),
-                  label: '创建',
+                  label: l10n.playlistCreateAction,
                   variant: AppButtonVariant.primary,
                   isLoading: _isSubmitting,
                   onPressed: _submit,
@@ -154,7 +159,12 @@ class _CreatePlaylistDialogState extends ConsumerState<CreatePlaylistDialog> {
       }
       Navigator.of(context).pop(playlist);
     } catch (error) {
-      showToast(apiErrorMessage(error, fallback: '创建播放列表失败'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(context).playlistCreateFailed,
+        ),
+      );
       if (mounted) {
         setState(() {
           _isSubmitting = false;

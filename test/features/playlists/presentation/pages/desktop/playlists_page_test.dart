@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/playlists/presentation/pages/desktop/playli
 import 'package:sakuramedia/features/playlists/presentation/providers/playlist_order_store_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_scope.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../../../../support/logged_in_session_store.dart';
@@ -58,6 +59,12 @@ void main() {
         ],
         child: MaterialApp(
           theme: sakuraDesktopThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           home: const Scaffold(body: DesktopPlaylistsPage()),
         ),
       ),

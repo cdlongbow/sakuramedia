@@ -1,5 +1,6 @@
 import 'package:sakuramedia/features/playlists/data/playlist_resolution_filter.dart';
 import 'package:sakuramedia/features/shared/data/sort_direction.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 export 'package:sakuramedia/features/playlists/data/playlist_resolution_filter.dart'
     show PlaylistResolutionFilter, PlaylistResolutionFilterX;
@@ -17,11 +18,11 @@ extension PlaylistSortFieldX on PlaylistSortField {
     PlaylistSortField.releaseDate => 'release_date',
   };
 
-  String get label => switch (this) {
-    PlaylistSortField.heat => '热度',
-    PlaylistSortField.bitrate => '码率',
-    PlaylistSortField.addedAt => '最近入库',
-    PlaylistSortField.releaseDate => '发布时间',
+  String label(AppLocalizations l10n) => switch (this) {
+    PlaylistSortField.heat => l10n.playlistSortHeat,
+    PlaylistSortField.bitrate => l10n.playlistSortBitrate,
+    PlaylistSortField.addedAt => l10n.playlistSortAddedAt,
+    PlaylistSortField.releaseDate => l10n.playlistSortReleaseDate,
   };
 }
 
@@ -53,7 +54,8 @@ class PlaylistFilterState {
       : '${sortField!.apiValue}:${sortDirection.apiValue}';
 
   /// 筛选入口只反映分辨率，不再混入排序。
-  String get triggerLabel => resolution?.label ?? '全部';
+  String triggerLabel(AppLocalizations l10n) =>
+        resolution?.label ?? l10n.playlistFilterAll;
 
   /// 重置筛选条件但保留当前排序。
   PlaylistFilterState resetFilters() => PlaylistFilterState.initial.copyWith(

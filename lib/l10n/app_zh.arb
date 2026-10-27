@@ -2197,5 +2197,224 @@
   "momentCollectionEmptyDetailMobile": "合集还没有时刻，点右上角「添加」加入吧",
   "momentCollectionEmptyDetailDesktop": "合集还没有时刻，去「时刻」里加入吧",
   "momentAddMomentsAction": "添加时刻",
-  "momentNewAction": "新建"
+  "momentNewAction": "新建",
+  "clipCollectionPageTitle": "切片合集",
+  "clipCollectionCreate": "新建合集",
+  "clipCollectionEdit": "编辑合集",
+  "clipCollectionSearchHint": "搜索合集",
+  "clipCollectionLoadFailed": "合集暂时无法加载，请稍后重试",
+  "clipCollectionDetailLoadFailed": "合集详情暂时无法加载，请稍后重试",
+  "clipCollectionEmptyDesktop": "还没有合集，点右上角「新建合集」开始吧",
+  "clipCollectionEmptyMobile": "还没有合集，点下方「新建合集」开始吧",
+  "clipCollectionNoMatch": "没有匹配的合集",
+  "clipCollectionCreatedToast": "已创建合集",
+  "clipCollectionDeletedToast": "已删除合集",
+  "clipCollectionDeleteTitle": "删除合集",
+  "clipCollectionDeleteMessage": "确认删除{name}？只会删除合集本身，合集内的切片不会被删除。",
+  "@clipCollectionDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "clipCollectionDeleteFailed": "删除失败，请重试",
+  "clipCollectionUnnamed": "该合集",
+  "clipCollectionNameHint": "例如：年度精选",
+  "clipCollectionNameRequired": "请输入合集名称",
+  "clipCollectionDescriptionHint": "描述可选",
+  "clipCollectionCreateAction": "创建",
+  "clipCollectionSaveFailed": "保存失败",
+  "clipCollectionCreateFailed": "创建合集失败",
+  "clipCollectionPlayAll": "播放全部",
+  "clipCollectionPlay": "播放",
+  "clipCollectionClipCount": "{count} 个切片",
+  "@clipCollectionClipCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clipCollectionAdd": "添加",
+  "clipCollectionAddClips": "添加切片",
+  "clipCollectionSelectedCount": "已选 {count} 个",
+  "@clipCollectionSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clipCollectionSelectAll": "全选",
+  "clipCollectionDeselectAll": "取消全选",
+  "clipCollectionRemoveFromCollection": "从合集移除",
+  "clipCollectionRemove": "移除",
+  "clipCollectionDeleteClips": "删除切片",
+  "clipCollectionAddToCollection": "加入合集",
+  "clipCollectionNoClipsMobile": "合集还没有切片，点右上角「添加」加入吧",
+  "clipCollectionNoClipsDesktop": "合集还没有切片，去「全部切片」里加入吧",
+  "clipCollectionNoMovieNumber": "无番号",
+  "clipCollectionMovieSource": "影片",
+  "clipCollectionRemovedToast": "已从合集移除",
+  "clipCollectionMovedOutToast": "已移出",
+  "clipCollectionAddedToast": "已加入",
+  "clipCollectionAddedToToast": "已加入「{name}」",
+  "@clipCollectionAddedToToast": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "clipCollectionUnnamedClip": "该切片",
+  "clipCollectionDeleteClipMessage": "确认删除{name}？切片文件会被一并删除，该操作不可恢复。",
+  "@clipCollectionDeleteClipMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "clipCollectionClipDeletedToast": "已删除切片",
+  "clipCollectionAddFailed": "加入合集失败",
+  "clipCollectionAddFailedRetry": "加入合集失败，请重试",
+  "clipCollectionRemoveFailed": "移出合集失败",
+  "clipCollectionBatchRemoveMessage": "确认从合集移除选中的 {count} 个切片？切片本身不会被删除。",
+  "@clipCollectionBatchRemoveMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clipCollectionBatchDeleteMessage": "确认删除选中的 {count} 个切片？切片文件会被一并删除，该操作不可恢复。",
+  "@clipCollectionBatchDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clipCollectionConfirm": "确认",
+  "clipCollectionNoPlayableClips": "合集内没有可播放的切片",
+  "clipCollectionPlayLoadFailed": "合集加载失败，请稍后重试",
+  "clipCollectionContinuousPlay": "连播",
+  "clipCollectionEpisodePanelTitle": "选集 · {count}",
+  "@clipCollectionEpisodePanelTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clipCollectionClipsLoadFailed": "切片加载失败",
+  "clipCollectionAddedAvailableCount": "已加入 {added} · 可添加 {total}",
+  "@clipCollectionAddedAvailableCount": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "clipCollectionAddedTotalCount": "已加入 {added} · 共 {total}",
+  "@clipCollectionAddedTotalCount": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "clipCollectionSearchClipsHint": "搜番号 / 标题",
+  "clipCollectionOnlyUnadded": "仅看未加入",
+  "clipCollectionNoMatchingClips": "没有匹配的切片",
+  "clipCollectionTryAnotherKeyword": "换个番号或关键词试试",
+  "clipCollectionAllAdded": "可添加的都已加入",
+  "clipCollectionAllAddedHint": "这个合集已经收齐了，切到「全部」可以管理已加入的切片",
+  "clipCollectionViewAll": "查看全部",
+  "clipCollectionNoClipsTitle": "还没有切片",
+  "clipCollectionNoClipsHint": "去播放器圈选生成吧",
+  "clipCollectionUntitledClip": "未命名切片",
+  "clipCollectionCollectionsLoadFailed": "合集加载失败",
+  "clipCollectionEmptyCreateHint": "还没有合集，点右上角「+」新建",
+  "playlistLoadFailed": "播放列表暂时无法加载，请稍后重试",
+  "playlistCreateTooltip": "新建播放列表",
+  "playlistCreateTitle": "新建播放列表",
+  "playlistEmpty": "暂无播放列表",
+  "playlistSectionSystem": "系统列表",
+  "playlistSectionMine": "我的播放列表",
+  "playlistCountBadge": "{count} 个",
+  "@playlistCountBadge": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playlistCreatedToast": "已创建播放列表",
+  "playlistFavoritesNotReady": "收藏列表尚未初始化",
+  "playlistNoWatchHistory": "还没有观看记录",
+  "playlistNoMovies": "暂无影片数据",
+  "playlistNoMatchingMovies": "当前筛选条件下暂无匹配影片",
+  "playlistRefreshFailed": "刷新失败",
+  "playlistDeleteTitle": "删除播放列表",
+  "playlistDeleteMessage": "确认删除播放列表“{name}”？该操作不可恢复。",
+  "@playlistDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "playlistDeleteFailed": "删除播放列表失败",
+  "playlistDeletedToast": "播放列表已删除",
+  "playlistMovieCount": "{count} 部影片",
+  "@playlistMovieCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playlistMovieCountShort": "{count} 部",
+  "@playlistMovieCountShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playlistActionsTooltip": "播放列表操作",
+  "playlistNotFound": "未找到该播放列表",
+  "playlistDetailLoadFailed": "播放列表详情暂时无法加载，请稍后重试",
+  "playlistNameHint": "例如：稍后再看",
+  "playlistNameRequired": "请输入播放列表名称",
+  "playlistDescriptionHint": "描述可选",
+  "playlistCreateAction": "创建",
+  "playlistCreateFailed": "创建播放列表失败",
+  "playlistEditTitle": "编辑播放列表",
+  "playlistEditDescription": "更新当前播放列表的名称和描述，保存后会立即生效。",
+  "playlistUpdateFailed": "更新播放列表失败",
+  "playlistUpdatedToast": "播放列表已更新",
+  "playlistPickerLoadFailed": "播放列表加载失败",
+  "playlistNoMatch": "没有匹配的播放列表",
+  "playlistAddToPlaylist": "加入播放列表",
+  "playlistCloseTooltip": "关闭",
+  "playlistSearchHint": "搜索播放列表",
+  "playlistRemoveFailed": "移出播放列表失败",
+  "playlistAddFailed": "加入播放列表失败",
+  "playlistFilterResolution": "分辨率",
+  "playlistFilterAll": "全部",
+  "playlistSortHeat": "热度",
+  "playlistSortBitrate": "码率",
+  "playlistSortAddedAt": "最近入库",
+  "playlistSortReleaseDate": "发布时间",
+  "playlistSortDefault": "最近触达",
+  "playlistEditInfo": "编辑信息"
 }

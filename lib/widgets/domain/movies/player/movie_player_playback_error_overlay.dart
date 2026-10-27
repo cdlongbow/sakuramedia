@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_media_source.dart';
 
@@ -9,6 +10,7 @@ class MoviePlayerPlaybackErrorOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return ColoredBox(
       key: const Key('movie-player-playback-error-overlay'),
       color: context.appColors.movieDetailHeroBackgroundStart,
@@ -25,7 +27,7 @@ class MoviePlayerPlaybackErrorOverlay extends StatelessWidget {
               ),
               SizedBox(height: context.appSpacing.md),
               Text(
-                '播放失败',
+                l10n.widgetMoviePlayerPlaybackFailed,
                 key: const Key('movie-player-playback-error-title'),
                 textAlign: TextAlign.center,
                 style: resolveAppTextStyle(
@@ -37,7 +39,7 @@ class MoviePlayerPlaybackErrorOverlay extends StatelessWidget {
               ),
               SizedBox(height: context.appSpacing.sm),
               Text(
-                moviePlayerPlaybackErrorMessage(sourceKind),
+                moviePlayerPlaybackErrorMessage(sourceKind, l10n: l10n),
                 key: const Key('movie-player-playback-error-message'),
                 textAlign: TextAlign.center,
                 style: resolveAppTextStyle(

@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/core/platform/haptic_feedback.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_cover_hover_info.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
@@ -288,6 +289,7 @@ class MovieSummaryCard extends StatelessWidget {
   /// 与全站封面卡片共用同一套底部披露层。
   Widget _buildHoverInfo(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final showBadges = showStatusBadges && !selectionMode;
     final actions = <Widget>[
       // 播放是这一层的主操作，用白底实心；选择模式与不可播放时不出。
@@ -296,7 +298,7 @@ class MovieSummaryCard extends StatelessWidget {
           key: Key('movie-summary-card-play-${movie.movieNumber}'),
           icon: Icons.play_arrow_rounded,
           primary: true,
-          tooltip: '播放',
+          tooltip: l10n.widgetMoviePlay,
           onTap: () => _handlePlay(context),
         ),
       if (onSubscriptionTap != null)
@@ -307,14 +309,17 @@ class MovieSummaryCard extends StatelessWidget {
           icon: movie.isSubscribed
               ? Icons.favorite_rounded
               : Icons.favorite_border_rounded,
-          tooltip: movie.isSubscribed ? '取消订阅' : '订阅影片',
+          tooltip:
+              movie.isSubscribed
+                  ? l10n.widgetMovieUnsubscribe
+                  : l10n.widgetMovieSubscribeMovie,
           onTap: isSubscriptionUpdating ? null : onSubscriptionTap,
         ),
       if (onToggleCollectionType != null)
         AppCoverHoverActionButton(
           key: Key('movie-summary-card-collection-type-${movie.movieNumber}'),
           icon: Icons.category_outlined,
-          tooltip: '标记为合集/单体',
+          tooltip: l10n.widgetMovieToggleCollectionType,
           onTap: onToggleCollectionType,
         ),
       // 已订阅影片不可屏蔽，与右键菜单的显隐规则一致。
@@ -322,7 +327,7 @@ class MovieSummaryCard extends StatelessWidget {
         AppCoverHoverActionButton(
           key: Key('movie-summary-card-blacklist-${movie.movieNumber}'),
           icon: Icons.block_rounded,
-          tooltip: '屏蔽影片',
+          tooltip: l10n.widgetMovieBlacklistMovie,
           onTap: onBlacklist,
         ),
     ];
@@ -348,7 +353,7 @@ class MovieSummaryCard extends StatelessWidget {
             // 永不把 Row 撑爆（见 thin-cover 回归测试）。
             Expanded(
               child: Text(
-                _metaLine(movie),
+                _metaLine(movie, l10n),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: resolveCoverOverlayTextStyle(
@@ -560,16 +565,17 @@ TextStyle _onMediaStyle(
   };
 }
 
-String _metaLine(MovieListItemDto movie) {
+String _metaLine(MovieListItemDto movie, AppLocalizations l10n) {
   final date = movie.releaseDate;
   final datePart = date == null
       ? ''
       : '${date.year}.${date.month.toString().padLeft(2, '0')}.'
             '${date.day.toString().padLeft(2, '0')}';
+  final duration = l10n.durationMinutes(movie.durationMinutes);
   if (datePart.isEmpty) {
-    return '${movie.durationMinutes} 分钟';
+    return duration;
   }
-  return '${movie.durationMinutes} 分钟 · $datePart';
+  return l10n.widgetMovieDurationWithDate(duration, datePart);
 }
 
 String _formatMovieHeat(int heat) {

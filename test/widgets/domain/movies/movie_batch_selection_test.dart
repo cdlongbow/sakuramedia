@@ -1,12 +1,20 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
 
 void main() {
   Widget wrap(Widget child) {
-    return MaterialApp(theme: sakuraThemeData, home: Scaffold(body: child));
+    return MaterialApp(
+      locale: const Locale('zh'),
+      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+      theme: sakuraThemeData, home: Scaffold(body: child));
   }
 
   testWidgets('移动多选顶栏只承载计数与全选，不放批量动作', (tester) async {

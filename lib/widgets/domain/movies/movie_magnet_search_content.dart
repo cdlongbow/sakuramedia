@@ -6,6 +6,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/platform/clipboard_copy.dart';
 import 'package:sakuramedia/features/downloads/data/download_candidate_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_magnet_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
@@ -94,12 +95,15 @@ class MovieMagnetSearchContent extends ConsumerWidget {
     MovieDetailMagnet controller, {
     Alignment alignment = Alignment.centerLeft,
   }) {
+    final l10n = AppLocalizations.of(context);
     return Align(
       alignment: alignment,
       child: AppButton(
         size: AppButtonSize.xSmall,
         key: const Key('movie-detail-magnet-search-button'),
-        label: state.isLoading ? '搜索中' : '搜索资源',
+        label: state.isLoading
+            ? l10n.widgetMovieMagnetSearching
+            : l10n.widgetMovieMagnetSearchResources,
         isLoading: state.isLoading,
         variant: AppButtonVariant.primary,
         onPressed: state.isLoading ? null : controller.search,
@@ -113,10 +117,11 @@ class MovieMagnetSearchContent extends ConsumerWidget {
     MovieDetailMagnet controller, {
     bool compact = false,
   }) {
+    final l10n = AppLocalizations.of(context);
     final nextDirectionLabel =
         state.selectedSortDirection == MovieDetailMagnetSortDirection.desc
-        ? '当前降序，点击切换为升序'
-        : '当前升序，点击切换为降序';
+        ? l10n.widgetMovieMagnetSortDescHint
+        : l10n.widgetMovieMagnetSortAscHint;
     final selectWidth = compact
         ? context.appLayoutTokens.filterFieldWidthSm - context.appSpacing.xl
         : context.appLayoutTokens.filterFieldWidthSm;
@@ -173,6 +178,7 @@ class MovieMagnetSearchContent extends ConsumerWidget {
     MovieDetailMagnetState state,
     MovieDetailMagnet controller,
   ) {
+    final l10n = AppLocalizations.of(context);
     final items = state.sortedItems;
 
     if (state.isLoading && items.isEmpty) {
@@ -200,7 +206,7 @@ class MovieMagnetSearchContent extends ConsumerWidget {
             SizedBox(height: context.appSpacing.md),
             AppButton(
               key: const Key('movie-detail-magnet-retry-button'),
-              label: '重试',
+              label: l10n.commonRetry,
               variant: AppButtonVariant.secondary,
               onPressed: controller.search,
             ),
@@ -210,11 +216,13 @@ class MovieMagnetSearchContent extends ConsumerWidget {
     }
 
     if (!state.hasSearched) {
-      return const Center(child: AppEmptyState(message: '搜索依赖系统设置中的下载器与索引器。'));
+      return Center(
+        child: AppEmptyState(message: l10n.widgetMovieMagnetEmptyHint),
+      );
     }
 
     if (items.isEmpty) {
-      return const Center(child: AppEmptyState(message: '没有找到可用资源'));
+      return Center(child: AppEmptyState(message: l10n.widgetMovieMagnetEmpty));
     }
 
     return AppSelectableTextScrollConfiguration(
@@ -249,14 +257,22 @@ class MovieMagnetSearchContent extends ConsumerWidget {
                       }
                       showToast(
                         response.created
-                            ? '已提交到 $selectedClientName'
-                            : '下载任务已存在',
+                            ? l10n.widgetMovieMagnetSubmittedTo(
+                                selectedClientName,
+                              )
+                            : l10n.widgetMovieMagnetDownloadExists,
                       );
                     } catch (error) {
                       if (!context.mounted) {
                         return;
                       }
-                      showToast(apiErrorMessage(error, fallback: '提交下载失败'));
+                      showToast(
+                        apiErrorMessage(
+                          error,
+                          fallback: l10n.widgetMovieMagnetSubmitFailed,
+                          l10n: l10n,
+                        ),
+                      );
                     }
                   }
                 : null,
@@ -319,6 +335,7 @@ class _MovieMagnetCandidateCardState extends State<_MovieMagnetCandidateCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final sourceUri = candidate.sourceUri.trim();
 
     return Container(
@@ -346,14 +363,20 @@ class _MovieMagnetCandidateCardState extends State<_MovieMagnetCandidateCard> {
             spacing: context.appSpacing.md,
             runSpacing: context.appSpacing.xs,
             children: [
-              _MagnetMetaText(label: '索引器', value: candidate.indexerName),
               _MagnetMetaText(
-                label: '类型',
+                label: l10n.widgetMovieMagnetIndexerLabel,
+                value: candidate.indexerName,
+              ),
+              _MagnetMetaText(
+                label: l10n.widgetMovieMagnetTypeLabel,
                 value: candidate.indexerKind.toUpperCase(),
               ),
-              _MagnetMetaText(label: '做种', value: '${candidate.seeders}'),
               _MagnetMetaText(
-                label: '体积',
+                label: l10n.widgetMovieMagnetSeedersLabel,
+                value: '${candidate.seeders}',
+              ),
+              _MagnetMetaText(
+                label: l10n.widgetMovieMagnetSizeLabel,
                 value: formatFileSize(candidate.sizeBytes),
               ),
             ],
@@ -376,7 +399,7 @@ class _MovieMagnetCandidateCardState extends State<_MovieMagnetCandidateCard> {
                     children: [
                       Expanded(
                         child: Text(
-                          '资源地址',
+                          l10n.widgetMovieMagnetSourceUriLabel,
                           style: resolveAppTextStyle(
                             context,
                             size: AppTextSize.s12,
@@ -388,13 +411,17 @@ class _MovieMagnetCandidateCardState extends State<_MovieMagnetCandidateCard> {
                       AppButton(
                         key: widget.copyButtonKey,
                         size: AppButtonSize.xxSmall,
-                        label: '复制',
+                        label: l10n.commonCopy,
                         icon: const Icon(Icons.copy_rounded),
                         variant: AppButtonVariant.secondary,
                         onPressed: () async {
                           final copied = await copyTextToClipboard(sourceUri);
                           if (context.mounted) {
-                            showToast(copied ? '资源地址已复制' : '复制失败，请手动选择地址');
+                            showToast(
+                              copied
+                                  ? l10n.widgetMovieMagnetUriCopied
+                                  : l10n.widgetMovieMagnetCopyFailed,
+                            );
                           }
                         },
                       ),
@@ -445,7 +472,10 @@ class _MovieMagnetCandidateCardState extends State<_MovieMagnetCandidateCard> {
               AppButton(
                 key: widget.submitButtonKey,
                 size: AppButtonSize.xSmall,
-                label: candidate.hasDownloadSource ? '提交下载' : '资源地址缺失',
+                label:
+                    candidate.hasDownloadSource
+                        ? l10n.widgetMovieMagnetSubmitDownload
+                        : l10n.widgetMovieMagnetUriMissing,
                 variant: AppButtonVariant.primary,
                 isLoading: widget.isSubmitting,
                 onPressed: widget.onSubmit == null

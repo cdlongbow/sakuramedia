@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 import 'test_api_bundle.dart';
 
@@ -37,7 +38,18 @@ Future<void> pumpWithProviders(
       if (bundle != null) ...bundle.riverpodOverrides(),
       ...overrides,
     ],
-    child: MaterialApp(home: child, theme: theme),
+    child: MaterialApp(
+      // 固定中文并挂上 ARB delegate：页面文案走 AppLocalizations.of(context)，
+      // 没有 delegate 时会直接抛空断言。
+      locale: const Locale('zh'),
+      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+      home: child,
+      theme: theme,
+    ),
   );
   if (wrapInOkToast) {
     app = OKToast(child: app);

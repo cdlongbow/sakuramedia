@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_scroll_rail.dart';
@@ -27,7 +28,7 @@ class MovieSummaryRail extends ConsumerWidget {
     this.isMovieSubscriptionUpdating,
     this.useDefaultSubscriptionActions = false,
     this.secondaryLabelForMovie,
-    this.emptyMessage = '当前没有可展示的影片数据。',
+    this.emptyMessage,
     this.scrollViewKey = const Key('movie-summary-rail'),
   });
 
@@ -51,7 +52,9 @@ class MovieSummaryRail extends ConsumerWidget {
   /// 未传自定义订阅回调时，接入跨列表复用的默认订阅动作。
   final bool useDefaultSubscriptionActions;
   final String? Function(MovieListItemDto movie)? secondaryLabelForMovie;
-  final String emptyMessage;
+
+  /// 空态文案；为 `null` 时使用当前语言的默认文案。
+  final String? emptyMessage;
   final Key scrollViewKey;
 
   /// 桌面 rail 卡宽相对 [AppComponentTokens.movieCardTargetWidth] 的系数；
@@ -75,7 +78,10 @@ class MovieSummaryRail extends ConsumerWidget {
       return AppEmptyState(message: errorMessage!, onRetry: onErrorRetry);
     }
     if (items.isEmpty) {
-      return AppEmptyState(message: emptyMessage);
+      return AppEmptyState(
+        message:
+            emptyMessage ?? AppLocalizations.of(context).widgetMovieEmptyList,
+      );
     }
 
     final tokens = context.appComponentTokens;

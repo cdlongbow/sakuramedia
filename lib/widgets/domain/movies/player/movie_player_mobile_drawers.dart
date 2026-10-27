@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_subtitle_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/glass/app_glass_surface.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_menu_widgets.dart';
@@ -34,7 +35,6 @@ class MoviePlayerMobileSpeedDisplayState {
 const Duration _moviePlayerMobileDrawerAnimationDuration = Duration(
   milliseconds: 220,
 );
-const String _moviePlayerMobileNoSubtitleLabel = '无可用字幕';
 
 List<Widget> buildMoviePlayerMobileDrawerToggleButtons({
   required MoviePlayerMobileDrawerType? activeDrawer,
@@ -50,9 +50,8 @@ List<Widget> buildMoviePlayerMobileDrawerToggleButtons({
       active: activeDrawer == MoviePlayerMobileDrawerType.speed,
       onTap: onSpeedButtonPressed,
     ),
-    _MoviePlayerMobileDrawerToggleButton(
+    _MoviePlayerMobileSubtitleDrawerToggleButton(
       key: const Key('movie-player-mobile-subtitle-button'),
-      label: '字幕',
       active: activeDrawer == MoviePlayerMobileDrawerType.subtitle,
       onTap: onSubtitleButtonPressed,
     ),
@@ -220,6 +219,26 @@ class _MoviePlayerMobileDrawerToggleButton extends StatelessWidget {
   }
 }
 
+class _MoviePlayerMobileSubtitleDrawerToggleButton extends StatelessWidget {
+  const _MoviePlayerMobileSubtitleDrawerToggleButton({
+    super.key,
+    required this.active,
+    required this.onTap,
+  });
+
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return _MoviePlayerMobileDrawerToggleButton(
+      label: AppLocalizations.of(context).widgetMoviePlayerSubtitle,
+      active: active,
+      onTap: onTap,
+    );
+  }
+}
+
 class _MoviePlayerMobileSpeedDrawerToggleButton extends StatelessWidget {
   const _MoviePlayerMobileSpeedDrawerToggleButton({
     required this.buttonKey,
@@ -245,7 +264,7 @@ class _MoviePlayerMobileSpeedDrawerToggleButton extends StatelessWidget {
         final label =
             showsRateLabel
                 ? formatMoviePlayerPlaybackRateLabel(speedDisplay.rate)
-                : '倍速';
+                : AppLocalizations.of(context).widgetMoviePlayerSpeed;
         return _MoviePlayerMobileDrawerToggleButton(
           key: buttonKey,
           label: label,
@@ -403,7 +422,9 @@ class _MoviePlayerMobileSubtitleDrawer extends StatelessWidget {
                           height: overlayTokens.menuItemHeight,
                           child: Center(
                             child: Text(
-                              _moviePlayerMobileNoSubtitleLabel,
+                              AppLocalizations.of(
+                                context,
+                              ).widgetMoviePlayerNoSubtitle,
                               style: resolveAppTextStyle(
                                 context,
                                 size: AppTextSize.s14,

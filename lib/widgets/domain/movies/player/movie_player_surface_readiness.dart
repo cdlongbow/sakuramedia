@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_loading_indicator.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
@@ -44,6 +45,7 @@ class MoviePlayerSurfaceFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final backgroundColor = context.appColors.movieDetailHeroBackgroundStart;
     final onBackPressed = this.onBackPressed;
 
@@ -58,8 +60,10 @@ class MoviePlayerSurfaceFrame extends StatelessWidget {
               child: ColoredBox(
                 key: const Key('movie-player-surface-ready-mask'),
                 color: backgroundColor,
-                child: const Center(
-                  child: VideoLoadingIndicator(label: '正在加载影片…'),
+                child: Center(
+                  child: VideoLoadingIndicator(
+                    label: l10n.widgetMoviePlayerLoading,
+                  ),
                 ),
               ),
             ),

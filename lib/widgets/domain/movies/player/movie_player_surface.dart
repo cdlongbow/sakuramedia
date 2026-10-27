@@ -11,6 +11,7 @@ import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_subtitle_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/video/initial_seek_guard.dart';
 import 'package:sakuramedia/widgets/base/media/video/throttling_player.dart';
@@ -203,6 +204,14 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 播放信息里的文案跟随界面语言；initState 阶段拿不到 Localizations，
+    // 这里补一次注入（同一语言下是同一个实例，不会重复重建快照）。
+    _statsSampler.l10n = AppLocalizations.of(context);
+  }
+
+  @override
   void didUpdateWidget(covariant MoviePlayerSurface oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!identical(oldWidget.subtitleState, widget.subtitleState)) {
@@ -340,7 +349,8 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
     required int requestId,
     required String playbackAttemptId,
   }) async {
-    String modeLabel = '未确认';
+    final l10n = AppLocalizations.of(context);
+    String modeLabel = l10n.widgetMoviePlayerModeUnconfirmed;
     try {
       final response = await ref
           .read(apiClientProvider)
@@ -349,9 +359,9 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
             receiveTimeout: const Duration(seconds: 5),
           );
       modeLabel = switch (response['mode']) {
-        'direct' => '直连',
-        'proxy' => '后端代理',
-        _ => '未确认',
+        'direct' => l10n.widgetMoviePlayerModeDirect,
+        'proxy' => l10n.widgetMoviePlayerModeProxy,
+        _ => l10n.widgetMoviePlayerModeUnconfirmed,
       };
     } catch (_) {
       // 播放已成功，模式查询失败不能影响播放器；如实显示未确认。
@@ -466,7 +476,11 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
         loadSubtitleText: _loadSubtitleText,
         onError: () {
           if (mounted) {
-            showToast('加载字幕失败，请稍后重试');
+            showToast(
+              AppLocalizations.of(
+                context,
+              ).widgetMoviePlayerSubtitleLoadFailed,
+            );
           }
         },
       );

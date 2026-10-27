@@ -1265,5 +1265,273 @@
       }
     }
   },
-  "pluginMarketInstallablePlugins": "可安装插件"
+  "pluginMarketInstallablePlugins": "可安装插件",
+  "widgetMovieSelectionCount": "已选 {count} 部",
+  "@widgetMovieSelectionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetMovieDeselectAll": "取消全选",
+  "widgetMovieSelectAllWithCount": "全选({count})",
+  "@widgetMovieSelectAllWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetMovieSubscribe": "订阅",
+  "widgetMovieUnsubscribe": "取消订阅",
+  "widgetMovieBlacklist": "屏蔽",
+  "widgetMovieBatchSubscribeTitle": "批量订阅",
+  "widgetMovieBatchUnsubscribeTitle": "批量取消订阅",
+  "widgetMovieBatchSubscribeMessage": "将订阅选中的 {count} 部影片。",
+  "@widgetMovieBatchSubscribeMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetMovieBatchUnsubscribeMessage": "将取消选中的 {count} 部影片的订阅，存在本地媒体的影片会自动跳过。",
+  "@widgetMovieBatchUnsubscribeMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetMovieBatchSubscribeFailed": "批量订阅失败",
+  "widgetMovieBatchUnsubscribeFailed": "批量取消订阅失败",
+  "widgetMovieBatchBlacklistTitle": "批量屏蔽",
+  "widgetMovieBatchBlacklistMessage": "已订阅影片无法屏蔽，请先取消订阅。屏蔽后将从正常列表和推荐中隐藏。",
+  "widgetMovieBatchBlacklistFailed": "批量屏蔽影片失败",
+  "widgetMovieFilterStatusTitle": "状态筛选",
+  "widgetMovieFilterResolutionTitle": "分辨率",
+  "widgetMovieFilterAll": "全部",
+  "widgetMovieFilterCollectionTypeTitle": "合集类型",
+  "widgetMovieFilterNumberSourceTitle": "番号来源",
+  "widgetMovieFilterInteractionTitle": "互动数",
+  "widgetMovieFilterClear": "清空",
+  "widgetMovieFilterInteractionLoadFailed": "互动数范围加载失败",
+  "widgetMovieFilterInteractionEmpty": "暂无可用的互动数范围",
+  "widgetMovieFilterActorAgeTitle": "出演年龄",
+  "widgetMovieFilterYearTitle": "发行年份",
+  "widgetMovieFilterAllYears": "全部年份",
+  "widgetMovieFilterCollapseYears": "收起年份",
+  "widgetMovieFilterExpandAllYears": "展开全部年份",
+  "widgetMovieMagnetSearching": "搜索中",
+  "widgetMovieMagnetSearchResources": "搜索资源",
+  "widgetMovieMagnetSortDescHint": "当前降序，点击切换为升序",
+  "widgetMovieMagnetSortAscHint": "当前升序，点击切换为降序",
+  "widgetMovieMagnetEmptyHint": "搜索依赖系统设置中的下载器与索引器。",
+  "widgetMovieMagnetEmpty": "没有找到可用资源",
+  "widgetMovieMagnetSubmittedTo": "已提交到 {client}",
+  "@widgetMovieMagnetSubmittedTo": {
+    "placeholders": {
+      "client": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetMovieMagnetDownloadExists": "下载任务已存在",
+  "widgetMovieMagnetSubmitFailed": "提交下载失败",
+  "widgetMovieMagnetIndexerLabel": "索引器",
+  "widgetMovieMagnetTypeLabel": "类型",
+  "widgetMovieMagnetSeedersLabel": "做种",
+  "widgetMovieMagnetSizeLabel": "体积",
+  "widgetMovieMagnetSourceUriLabel": "资源地址",
+  "widgetMovieMagnetUriCopied": "资源地址已复制",
+  "widgetMovieMagnetCopyFailed": "复制失败，请手动选择地址",
+  "widgetMovieMagnetSubmitDownload": "提交下载",
+  "widgetMovieMagnetUriMissing": "资源地址缺失",
+  "widgetMoviePlay": "播放",
+  "widgetMovieSubscribeMovie": "订阅影片",
+  "widgetMovieToggleCollectionType": "标记为合集/单体",
+  "widgetMovieBlacklistMovie": "屏蔽影片",
+  "widgetMovieEmptyList": "当前没有可展示的影片数据。",
+  "widgetMovieDurationWithDate": "{duration} · {date}",
+  "@widgetMovieDurationWithDate": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetActorFilterSubscriptionTitle": "订阅筛选",
+  "widgetActorFilterGenderTitle": "性别筛选",
+  "widgetActorFilterPlayableTitle": "播放筛选",
+  "widgetActorFilterHasPlayable": "有可播放影片",
+  "widgetActorFilterAll": "全部",
+  "widgetActorFilterOptionsLoadFailed": "资料筛选选项加载失败",
+  "widgetActorFilterUnlimited": "不限",
+  "widgetActorFilterNoProfileData": "{title}暂无可用资料",
+  "@widgetActorFilterNoProfileData": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetActorFilterNoData": "暂无可用资料",
+  "widgetActorAgeLabel": "年龄",
+  "widgetActorAgeUnit": "岁",
+  "widgetActorHeightLabel": "身高",
+  "widgetActorCupLabel": "罩杯",
+  "widgetActorSearchHint": "搜索女优",
+  "widgetActorClearSearch": "清空搜索",
+  "widgetActorSortRelevance": "相关度",
+  "widgetActorSortRelevanceTooltip": "搜索时按相关度排序",
+  "widgetActorSortDisabledWhileSearching": "搜索中暂不可调整排序",
+  "widgetActorSort": "排序",
+  "widgetActorSubscribe": "订阅演员",
+  "widgetActorUnsubscribe": "取消订阅",
+  "widgetActorEmptyList": "当前没有可展示的女优数据。",
+  "widgetActorMovieCountLabel": "影片数",
+  "widgetActorBirthdayLabel": "出生年月",
+  "widgetActorBustLabel": "胸围",
+  "widgetActorWaistLabel": "腰围",
+  "widgetActorHipsLabel": "臀围",
+  "widgetActorAgeValue": "{age}岁",
+  "@widgetActorAgeValue": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetActorBirthdayValue": "{year}年{month}月",
+  "@widgetActorBirthdayValue": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      },
+      "month": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetTagFilterTitle": "标签",
+  "widgetTagSelectorTitle": "选择标签",
+  "widgetTagSearchHint": "搜索标签",
+  "widgetTagClearAll": "清空",
+  "widgetTagMatchLabel": "匹配",
+  "widgetTagSearchResultCount": "搜索结果 · {count}",
+  "@widgetTagSearchResultCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetTagAllCount": "全部标签 · {count}",
+  "@widgetTagAllCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetTagSearchResult": "搜索结果",
+  "widgetTagPopular": "热门标签",
+  "widgetTagCollapse": "收起",
+  "widgetTagExpandAll": "展开全部",
+  "widgetTagNoMatch": "未找到匹配的标签",
+  "widgetTagEmpty": "暂无标签",
+  "widgetMoviePlayerInfoTooltip": "播放信息",
+  "widgetMoviePlayerPlaybackUnavailable": "暂时无法播放此媒体。",
+  "widgetMoviePlayerPlaybackFailed": "播放失败",
+  "widgetMoviePlayerNoSubtitle": "无可用字幕",
+  "widgetMoviePlayerSubtitle": "字幕",
+  "widgetMoviePlayerSpeed": "倍速",
+  "widgetMoviePlayerModePending": "确认中",
+  "widgetMoviePlayerModeUnconfirmed": "未确认",
+  "widgetMoviePlayerModeDirect": "直连",
+  "widgetMoviePlayerModeProxy": "后端代理",
+  "widgetMoviePlayerHttpStream": "HTTP 文件流",
+  "widgetMoviePlayerHardwareDecode": "硬件解码",
+  "widgetMoviePlayerHardwareDecodeWith": "硬件解码 ({value})",
+  "@widgetMoviePlayerHardwareDecodeWith": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetMoviePlayerSoftwareDecode": "软件解码",
+  "widgetMoviePlayerAudioChannels": "{count} 声道",
+  "@widgetMoviePlayerAudioChannels": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetMoviePlayerCounterTotal": "累计 {value}",
+  "@widgetMoviePlayerCounterTotal": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetMoviePlayerCounterPerSecond": "近1s {value}",
+  "@widgetMoviePlayerCounterPerSecond": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetMoviePlayerPeak": "峰值 {value}",
+  "@widgetMoviePlayerPeak": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetMoviePlayerSubtitleLoadFailed": "加载字幕失败，请稍后重试",
+  "widgetMoviePlayerLoading": "正在加载影片…",
+  "widgetMoviePlayerSectionMedia": "媒体",
+  "widgetMoviePlayerStorageSource": "存储来源",
+  "widgetMoviePlayerMediaLibrary": "媒体库",
+  "widgetMoviePlayerFileSize": "文件大小",
+  "widgetMoviePlayerDuration": "时长",
+  "widgetMoviePlayerRecordedResolution": "记录分辨率",
+  "widgetMoviePlayerSectionDecode": "解码与动态范围",
+  "widgetMoviePlayerDecodeMode": "解码模式",
+  "widgetMoviePlayerDynamicRange": "动态范围",
+  "widgetMoviePlayerDynamicRangeDetail": "动态范围详情",
+  "widgetMoviePlayerSectionVideo": "视频",
+  "widgetMoviePlayerCodec": "编码",
+  "widgetMoviePlayerDecoder": "解码器",
+  "widgetMoviePlayerResolution": "分辨率",
+  "widgetMoviePlayerMediaFrameRate": "媒体帧率",
+  "widgetMoviePlayerFilterChainFrameRate": "滤镜链帧率",
+  "widgetMoviePlayerActualOutputFrameRate": "实际输出帧率(估算)",
+  "widgetMoviePlayerBitrate": "码率",
+  "widgetMoviePlayerRenderDropped": "渲染丢帧",
+  "widgetMoviePlayerDecodeDropped": "解码丢帧",
+  "widgetMoviePlayerDelayedFrames": "延迟帧",
+  "widgetMoviePlayerMistimedFrames": "时间失配帧",
+  "widgetMoviePlayerPixelFormat": "像素格式",
+  "widgetMoviePlayerSectionAudio": "音频",
+  "widgetMoviePlayerChannels": "声道",
+  "widgetMoviePlayerSampleRate": "采样率",
+  "widgetMoviePlayerCopied": "已复制",
+  "widgetMoviePlayerGatewayHost": "网关主机",
+  "widgetMoviePlayerGatewayPath": "网关路径",
+  "widgetMoviePlayerPlaybackMode": "播放模式",
+  "widgetMoviePlayerStreamType": "流类型",
+  "widgetMoviePlayerDemuxerFormat": "解复用格式",
+  "widgetMoviePlayerBuffer": "缓冲",
+  "widgetMoviePlayerDownloadRate": "下载速率",
+  "widgetMoviePlayerSectionPlaybackChain": "播放链路"
 }

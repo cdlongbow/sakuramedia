@@ -25,6 +25,7 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_
 import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_thumbnail_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_panel.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
@@ -172,7 +173,14 @@ void main() {
         await tester.pumpWidget(
           UncontrolledProviderScope(
             container: container,
-            child: const MaterialApp(home: SizedBox.shrink()),
+            child: const MaterialApp(
+              locale: Locale('zh'),
+              localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+                AppLocalizations.delegate,
+                ...GlobalMaterialLocalizations.delegates,
+              ],
+              supportedLocales: <Locale>[Locale('zh'), Locale('en')],
+              home: SizedBox.shrink()),
           ),
         );
         // autoDispose 的实际释放挂在 `Timer(Duration.zero)`，要推进时钟才结算。
@@ -981,7 +989,11 @@ Future<ProviderContainer> _pumpInspectorPanel(
       container: container,
       child: OKToast(
         child: MaterialApp(
-          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
           supportedLocales: const <Locale>[Locale('zh', 'CN')],
           theme: platform == null
               ? sakuraThemeData

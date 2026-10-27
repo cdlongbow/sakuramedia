@@ -8,6 +8,7 @@ import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
 import '../../../support/test_api_bundle.dart';
@@ -50,6 +51,12 @@ void main() {
               platform: mobile ? AppPlatform.mobile : AppPlatform.desktop,
               child: OKToast(
                 child: MaterialApp(
+                  locale: const Locale('zh'),
+                  localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+                    AppLocalizations.delegate,
+                    ...GlobalMaterialLocalizations.delegates,
+                  ],
+                  supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
                   theme: sakuraThemeData,
                   home: Scaffold(
                     body: Builder(
@@ -199,6 +206,12 @@ void main() {
     await tester.pumpWidget(
       OKToast(
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           home: Scaffold(
             body: Builder(

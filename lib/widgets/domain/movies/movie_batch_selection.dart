@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
@@ -89,18 +90,21 @@ class MovieBatchSelectionToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     // 顶栏高度对齐、原地改写筛选行的规则都在 AppSelectionHeaderToolbar 里，
     // 这里只负责塞影片特有的两个批量动作。
     return AppSelectionHeaderToolbar(
-      countLabel: '已选 $selectedCount 部',
+      countLabel: l10n.widgetMovieSelectionCount(selectedCount),
       countKey: Key('$keyPrefix-selection-count-text'),
-      selectAllLabel: allSelected ? '取消全选' : '全选($visibleTotal)',
+      selectAllLabel: allSelected
+          ? l10n.widgetMovieDeselectAll
+          : l10n.widgetMovieSelectAllWithCount(visibleTotal),
       selectAllKey: Key('$keyPrefix-select-all-button'),
       onToggleAll: onToggleAll,
       actions: [
         AppButton(
           key: Key('$keyPrefix-batch-subscribe-button'),
-          label: '订阅',
+          label: l10n.widgetMovieSubscribe,
           variant: AppButtonVariant.primary,
           size: AppButtonSize.small,
           isLoading: operatingAction == MovieBatchAction.subscribe,
@@ -108,7 +112,7 @@ class MovieBatchSelectionToolbar extends StatelessWidget {
         ),
         AppButton(
           key: Key('$keyPrefix-batch-unsubscribe-button'),
-          label: '取消订阅',
+          label: l10n.widgetMovieUnsubscribe,
           variant: AppButtonVariant.danger,
           size: AppButtonSize.small,
           isLoading: operatingAction == MovieBatchAction.unsubscribe,
@@ -117,7 +121,7 @@ class MovieBatchSelectionToolbar extends StatelessWidget {
         if (onBlacklist != null)
           AppButton(
             key: Key('$keyPrefix-batch-blacklist-button'),
-            label: '屏蔽',
+            label: l10n.widgetMovieBlacklist,
             variant: AppButtonVariant.danger,
             size: AppButtonSize.small,
             isLoading: operatingAction == MovieBatchAction.blacklist,
@@ -155,14 +159,17 @@ class MovieBatchMobileSelectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppListHeader.selection(
-      selectionLabel: '已选 $selectedCount 部',
+      selectionLabel: l10n.widgetMovieSelectionCount(selectedCount),
       selectionExitButtonKey: Key('$keyPrefix-exit-selection-button'),
       onExitSelection: onExit,
       actionSlots: [
         AppButton(
           key: Key('$keyPrefix-select-all-button'),
-          label: allSelected ? '取消全选' : '全选($visibleTotal)',
+          label: allSelected
+              ? l10n.widgetMovieDeselectAll
+              : l10n.widgetMovieSelectAllWithCount(visibleTotal),
           variant: AppButtonVariant.ghost,
           size: AppButtonSize.xSmall,
           isSelected: allSelected,
@@ -192,19 +199,20 @@ class MovieBatchMobileSelectionBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppSelectionBottomBar(
       key: Key('$keyPrefix-batch-bottom-bar'),
       actions: [
         AppButton(
           key: Key('$keyPrefix-batch-subscribe-button'),
-          label: '订阅',
+          label: l10n.widgetMovieSubscribe,
           variant: AppButtonVariant.primary,
           isLoading: operatingAction == MovieBatchAction.subscribe,
           onPressed: onSubscribe,
         ),
         AppButton(
           key: Key('$keyPrefix-batch-unsubscribe-button'),
-          label: '取消订阅',
+          label: l10n.widgetMovieUnsubscribe,
           variant: AppButtonVariant.danger,
           isLoading: operatingAction == MovieBatchAction.unsubscribe,
           onPressed: onUnsubscribe,
@@ -212,7 +220,7 @@ class MovieBatchMobileSelectionBottomBar extends StatelessWidget {
         if (onBlacklist != null)
           AppButton(
             key: Key('$keyPrefix-batch-blacklist-button'),
-            label: '屏蔽',
+            label: l10n.widgetMovieBlacklist,
             variant: AppButtonVariant.danger,
             isLoading: operatingAction == MovieBatchAction.blacklist,
             onPressed: onBlacklist,
@@ -240,20 +248,27 @@ Future<MovieSubscriptionBatchToggleResult?> runMovieSubscriptionBatch({
   if (numbers.isEmpty) {
     return null;
   }
-  final actionVerb = subscribe ? '订阅' : '取消订阅';
+  final l10n = AppLocalizations.of(context);
+  final actionVerb = subscribe
+      ? l10n.widgetMovieSubscribe
+      : l10n.widgetMovieUnsubscribe;
   final message = subscribe
-      ? '将订阅选中的 ${numbers.length} 部影片。'
-      : '将取消选中的 ${numbers.length} 部影片的订阅，存在本地媒体的影片会自动跳过。';
+      ? l10n.widgetMovieBatchSubscribeMessage(numbers.length)
+      : l10n.widgetMovieBatchUnsubscribeMessage(numbers.length);
   final action = subscribe ? 'subscribe' : 'unsubscribe';
   MovieSubscriptionBatchToggleResult? result;
   final confirmed = await showAppConfirmDialog(
     context,
-    title: '批量$actionVerb',
+    title: subscribe
+        ? l10n.widgetMovieBatchSubscribeTitle
+        : l10n.widgetMovieBatchUnsubscribeTitle,
     message: message,
     confirmLabel: actionVerb,
     dialogKey: Key('$keyPrefix-batch-$action-dialog'),
     confirmKey: Key('$keyPrefix-batch-$action-confirm'),
-    failureFallback: '批量$actionVerb失败',
+    failureFallback: subscribe
+        ? l10n.widgetMovieBatchSubscribeFailed
+        : l10n.widgetMovieBatchUnsubscribeFailed,
     onConfirm: () async {
       result = await execute(movieNumbers: numbers, subscribe: subscribe);
     },
@@ -354,15 +369,16 @@ mixin MovieBatchSelectionMixin<W extends StatefulWidget>
       return;
     }
     setState(() => _operatingAction = MovieBatchAction.blacklist);
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '批量屏蔽',
-      message: '已订阅影片无法屏蔽，请先取消订阅。屏蔽后将从正常列表和推荐中隐藏。',
-      confirmLabel: '屏蔽',
+      title: l10n.widgetMovieBatchBlacklistTitle,
+      message: l10n.widgetMovieBatchBlacklistMessage,
+      confirmLabel: l10n.widgetMovieBlacklist,
       danger: true,
       dialogKey: Key('$batchKeyPrefix-batch-blacklist-dialog'),
       confirmKey: Key('$batchKeyPrefix-batch-blacklist-confirm'),
-      failureFallback: '批量屏蔽影片失败',
+      failureFallback: l10n.widgetMovieBatchBlacklistFailed,
       onConfirm: () => execute(movieNumbers: selectedIds),
     );
     if (!mounted) {

@@ -318,12 +318,6 @@ Future<void> _pumpDetail(
             ],
             supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: mobile ? sakuraMobileThemeData : sakuraThemeData,
-            locale: const Locale('zh'),
-            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-              AppLocalizations.delegate,
-              ...GlobalMaterialLocalizations.delegates,
-            ],
-            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             routerConfig: router,
           ),
         ),

@@ -56,12 +56,6 @@ void main() {
           ],
           supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
-          locale: const Locale('zh'),
-          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-            AppLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           home: Scaffold(body: child),
         ),
       ),

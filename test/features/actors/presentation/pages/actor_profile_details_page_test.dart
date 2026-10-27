@@ -76,12 +76,6 @@ void main() {
             ],
             supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: mobile ? sakuraMobileThemeData : sakuraDesktopThemeData,
-            locale: const Locale('zh'),
-            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-              AppLocalizations.delegate,
-              ...GlobalMaterialLocalizations.delegates,
-            ],
-            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             home: Scaffold(
               body: mobile
                   ? const MobileActorDetailPage(actorId: 1)

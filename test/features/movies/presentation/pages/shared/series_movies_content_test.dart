@@ -79,12 +79,6 @@ void main() {
             ],
             supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraThemeData,
-            locale: const Locale('zh'),
-            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-              AppLocalizations.delegate,
-              ...GlobalMaterialLocalizations.delegates,
-            ],
-            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             home: const Scaffold(
               body: DesktopSeriesMoviesPage(seriesId: 7, seriesName: '某个系列'),
             ),

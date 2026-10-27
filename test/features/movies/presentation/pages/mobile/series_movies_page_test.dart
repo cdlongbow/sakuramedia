@@ -78,12 +78,6 @@ void main() {
             ],
             supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraThemeData,
-            locale: const Locale('zh'),
-            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-              AppLocalizations.delegate,
-              ...GlobalMaterialLocalizations.delegates,
-            ],
-            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             // 真实路由把页面套在这个壳里（见 _MobileSubpageRouteData.buildPage）。
             home: const AppMobileSubpageShell(
               title: '系列影片',

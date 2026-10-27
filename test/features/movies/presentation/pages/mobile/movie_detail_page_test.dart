@@ -68,12 +68,6 @@ void main() {
               theme: platform == null
                   ? sakuraMobileThemeData
                   : sakuraMobileThemeData.copyWith(platform: platform),
-              locale: const Locale('zh'),
-              localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-                AppLocalizations.delegate,
-                ...GlobalMaterialLocalizations.delegates,
-              ],
-              supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
               home: const Scaffold(
                 body: MobileMovieDetailPage(movieNumber: 'ABC-001'),
               ),

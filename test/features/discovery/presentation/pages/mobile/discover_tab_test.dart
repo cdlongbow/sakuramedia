@@ -266,12 +266,6 @@ Future<void> _pumpDiscoveryWidget(
           ],
           supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraMobileThemeData,
-          locale: const Locale('zh'),
-          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-            AppLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           onGenerateRoute: (settings) => MaterialPageRoute<void>(
             settings: settings,
             builder: (_) => child,
@@ -308,12 +302,6 @@ Future<void> _pumpDiscoveryRouterApp(
             ],
             supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraMobileThemeData,
-            locale: const Locale('zh'),
-            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-              AppLocalizations.delegate,
-              ...GlobalMaterialLocalizations.delegates,
-            ],
-            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             routerConfig: router,
           ),
         ),

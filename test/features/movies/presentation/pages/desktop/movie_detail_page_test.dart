@@ -65,12 +65,6 @@ void main() {
             theme: platform == null
                 ? sakuraThemeData
                 : sakuraThemeData.copyWith(platform: platform),
-            locale: const Locale('zh'),
-            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-              AppLocalizations.delegate,
-              ...GlobalMaterialLocalizations.delegates,
-            ],
-            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             home: Scaffold(
               body: refreshRegistrar == null
                   ? page

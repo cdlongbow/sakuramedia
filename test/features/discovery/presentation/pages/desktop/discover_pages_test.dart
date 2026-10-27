@@ -663,12 +663,6 @@ Future<void> _pumpDiscoveryWidget(
           ],
           supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
-          locale: const Locale('zh'),
-          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-            AppLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           onGenerateRoute: (settings) => MaterialPageRoute<void>(
             settings: settings,
             builder: (_) => child,

@@ -5,6 +5,7 @@ import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/image_search/presentation/pages/desktop/image_search_page.dart';
 import 'package:sakuramedia/features/image_search/presentation/pages/mobile/image_search_page.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../../../support/test_api_bundle.dart';
@@ -48,6 +49,12 @@ void main() {
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraDesktopThemeData,
           home: const Scaffold(body: DesktopImageSearchPage()),
         ),
@@ -66,6 +73,12 @@ void main() {
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraMobileThemeData,
           home: const Scaffold(body: MobileImageSearchPage()),
         ),
@@ -86,6 +99,12 @@ void main() {
         child: AppPlatformScope(
           platform: AppPlatform.mobile,
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraMobileThemeData,
             home: const Scaffold(body: MobileImageSearchPage()),
           ),
@@ -102,6 +121,12 @@ void main() {
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraDesktopThemeData,
           home: const Scaffold(body: DesktopImageSearchPage()),
         ),

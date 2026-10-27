@@ -24,6 +24,7 @@ import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.
 import 'package:sakuramedia/features/shared/presentation/providers/batch_operation_submission_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
@@ -118,11 +119,13 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
         color: context.appColors.surfaceElevated,
         child: Builder(
           builder: (context) {
+            final l10n = AppLocalizations.of(context);
             if (clipsAsync.hasError && clips.isEmpty) {
               return AppEmptyState(
                 message: apiErrorMessage(
                   clipsAsync.error!,
-                  fallback: '切片暂时无法加载，请稍后重试',
+                  fallback: l10n.errorClipLoadFailed,
+                  l10n: l10n,
                 ),
               );
             }
@@ -189,6 +192,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
     BuildContext context,
     AsyncValue<List<ClipCollectionDto>> collectionsAsync,
   ) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
     final collections = collectionsAsync.value ?? const <ClipCollectionDto>[];
     return Column(
@@ -197,7 +201,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
         Row(
           children: [
             Text(
-              '切片合集',
+              l10n.clipCollectionsTitle,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s14,
@@ -208,7 +212,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
             const Spacer(),
             AppTextButton(
               key: const Key('clips-create-collection-button'),
-              label: '新建',
+              label: l10n.clipCollectionCreate,
               size: AppTextButtonSize.small,
               onPressed: _createCollection,
             ),
@@ -216,7 +220,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
               SizedBox(width: spacing.xs),
               AppTextButton(
                 key: const Key('clips-view-all-collections-button'),
-                label: '查看全部',
+                label: l10n.clipCollectionViewAll,
                 size: AppTextButtonSize.small,
                 onPressed: _viewAllCollections,
               ),
@@ -235,11 +239,13 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
     AsyncValue<List<ClipCollectionDto>> collectionsAsync,
     List<ClipCollectionDto> collections,
   ) {
+    final l10n = AppLocalizations.of(context);
     if (collectionsAsync.hasError && collections.isEmpty) {
       return CollectionHintBox(
         message: apiErrorMessage(
           collectionsAsync.error!,
-          fallback: '合集暂时无法加载，请稍后重试',
+          fallback: l10n.clipCollectionsLoadFailedFallback,
+          l10n: l10n,
         ),
       );
     }
@@ -248,7 +254,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
         ? clipCollectionPlaceholders(count: 4)
         : collections;
     if (display.isEmpty) {
-      return const CollectionHintBox(message: '还没有合集，点「新建」把喜欢的切片攒成一个连播合集吧');
+      return CollectionHintBox(message: l10n.clipCollectionsEmptyHint);
     }
     final spacing = context.appSpacing;
     return AppSkeletonizer(
@@ -285,6 +291,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
   // ----------------------------------------------------------- 切片区
 
   Widget _buildClipsHeader(BuildContext context, List<MediaClipDto> clips) {
+    final l10n = AppLocalizations.of(context);
     final hasClips = clips.isNotEmpty;
     // 顶栏只订阅排序与筛选更新态：翻页 loading/失败不重建顶栏。
     final headerView = ref.watch(
@@ -315,14 +322,14 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
               _buildSortAction(
                 context,
                 actionKey: const Key('clips-sort-latest'),
-                label: '最新',
+                label: l10n.clipSortLatest,
                 sort: 'created_at:desc',
                 currentSort: currentSort,
               ),
               _buildSortAction(
                 context,
                 actionKey: const Key('clips-sort-earliest'),
-                label: '最早',
+                label: l10n.clipSortEarliest,
                 sort: 'created_at:asc',
                 currentSort: currentSort,
               ),
@@ -366,6 +373,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
   /// 选择模式下的批量操作栏：已选数 / 全选 / 加入合集 / 删除 / 取消。
   /// 原地替换常规操作行（[AppSelectionHeaderToolbar] 与 [AppListHeader] 等高）。
   Widget _buildSelectionHeader(BuildContext context, List<MediaClipDto> clips) {
+    final l10n = AppLocalizations.of(context);
     final clipIds = clips.map((c) => c.clipId);
     final allSelected = isAllSelected(clipIds);
     final hasSelection = selectedCount > 0;
@@ -374,21 +382,21 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
       BatchOperationType.clipDelete,
     ]);
     return AppSelectionHeaderToolbar(
-      countLabel: '已选 $selectedCount 个',
-      selectAllLabel: allSelected ? '取消全选' : '全选',
+      countLabel: l10n.clipSelectionCount(selectedCount),
+      selectAllLabel: allSelected ? l10n.clipDeselectAll : l10n.clipSelectAll,
       selectAllKey: const Key('clips-select-all-button'),
       onToggleAll: () => toggleSelectAll(clipIds),
       actions: [
         AppButton(
           key: const Key('clips-batch-add-collection-button'),
-          label: '加入合集',
+          label: l10n.clipAddToCollection,
           variant: AppButtonVariant.secondary,
           size: AppButtonSize.small,
           onPressed: hasSelection && !submitting ? _batchAddToCollection : null,
         ),
         AppButton(
           key: const Key('clips-batch-delete-button'),
-          label: '删除',
+          label: l10n.commonDelete,
           variant: AppButtonVariant.danger,
           size: AppButtonSize.small,
           onPressed: hasSelection && !submitting ? _batchDelete : null,
@@ -415,10 +423,10 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
     if (!isInitialLoading && clips.isEmpty) {
-      return const SliverToBoxAdapter(
+      return SliverToBoxAdapter(
         child: SizedBox(
           height: 200,
-          child: AppEmptyState(message: '还没有切片，去播放器圈选生成吧'),
+          child: AppEmptyState(message: AppLocalizations.of(context).clipEmpty),
         ),
       );
     }
@@ -486,6 +494,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
   }
 
   Future<void> _renameClip(MediaClipDto clip) async {
+    final l10n = AppLocalizations.of(context);
     final newTitle = await showRenameClipDialog(
       context,
       initialTitle: clip.title,
@@ -499,32 +508,37 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
           .updateClipTitle(clipId: clip.clipId, title: newTitle);
       ref.read(clipsOverviewProvider.notifier).replaceClip(updated);
       if (mounted) {
-        showToast('已重命名');
+        showToast(l10n.clipRenamed);
       }
     } catch (error) {
-      showToast(apiErrorMessage(error, fallback: '重命名失败，请重试'));
+      showToast(
+        apiErrorMessage(error, fallback: l10n.clipRenameFailed, l10n: l10n),
+      );
     }
   }
 
   Future<void> _deleteClip(MediaClipDto clip) async {
-    final title = clip.title.trim().isEmpty ? '该切片' : '“${clip.title.trim()}”';
+    final l10n = AppLocalizations.of(context);
+    final trimmedTitle = clip.title.trim();
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除切片',
-      message: '确认删除$title？切片文件会被一并删除，该操作不可恢复。',
+      title: l10n.clipDeleteTitle,
+      message: trimmedTitle.isEmpty
+          ? l10n.clipDeleteUnnamedMessage
+          : l10n.clipDeleteMessage(trimmedTitle),
       danger: true,
-      confirmLabel: '删除',
+      confirmLabel: l10n.commonDelete,
       confirmKey: const Key('clip-delete-confirm-button'),
       onConfirm: () =>
           ref.read(clipsApiProvider).deleteClip(clipId: clip.clipId),
-      failureFallback: '删除失败，请重试',
+      failureFallback: l10n.clipDeleteFailed,
     );
     if (!mounted || !confirmed) {
       return;
     }
     // 广播删除信号：本页监听后从网格精准移除，并刷新合集横滑区（封面 / 计数可能变化）。
     ref.read(clipMutationEventsProvider.notifier).reportDeleted(clip.clipId);
-    showToast('已删除切片');
+    showToast(AppLocalizations.of(context).clipDeleted);
   }
 
   Future<void> _addToCollection(MediaClipDto clip) async {
@@ -546,7 +560,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
     ref
         .read(clipCollectionsOverviewProvider.notifier)
         .insertCollection(created);
-    showToast('已创建合集');
+    showToast(AppLocalizations.of(context).clipCollectionCreated);
   }
 
   Future<void> _viewAllCollections() async {
@@ -596,10 +610,12 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
     }
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除切片',
-      message: '确认删除选中的 ${selected.length} 个切片？切片文件会被一并删除，该操作不可恢复。',
+      title: AppLocalizations.of(context).clipDeleteTitle,
+      message: AppLocalizations.of(
+        context,
+      ).clipBatchDeleteMessage(selected.length),
       danger: true,
-      confirmLabel: '删除',
+      confirmLabel: AppLocalizations.of(context).commonDelete,
       confirmKey: const Key('clips-batch-delete-confirm-button'),
     );
     if (!mounted || !confirmed) {

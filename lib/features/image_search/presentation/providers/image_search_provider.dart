@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
@@ -13,6 +14,7 @@ import 'package:sakuramedia/features/image_search/presentation/image_search_filt
 import 'package:sakuramedia/features/image_search/presentation/providers/image_search_api_provider.dart';
 import 'package:sakuramedia/features/image_search/presentation/providers/image_search_scope.dart';
 import 'package:sakuramedia/features/image_search/presentation/providers/image_search_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 part 'image_search_provider.g.dart';
 
@@ -71,6 +73,7 @@ class ImageSearch extends _$ImageSearch {
       isSearching: false,
       isLoadingMore: false,
       isResolvingActorMovieIds: false,
+      isLoadMoreFailed: false,
       errorMessage: null,
       bootstrappedSourceSignature: null,
     );
@@ -100,6 +103,7 @@ class ImageSearch extends _$ImageSearch {
       isSearching: false,
       isLoadingMore: false,
       isResolvingActorMovieIds: false,
+      isLoadMoreFailed: false,
       errorMessage: null,
       bootstrappedSourceSignature: bootstrappedSourceSignature,
     );
@@ -120,6 +124,7 @@ class ImageSearch extends _$ImageSearch {
       isSearching: false,
       isLoadingMore: false,
       isResolvingActorMovieIds: false,
+      isLoadMoreFailed: false,
       errorMessage: null,
       bootstrappedSourceSignature: null,
     );
@@ -164,7 +169,11 @@ class ImageSearch extends _$ImageSearch {
       state = state.copyWith(subscribedActors: actors);
     } catch (_) {
       if (_isCurrentActorsRequest(requestVersion)) {
-        state = state.copyWith(subscribedActorsErrorMessage: '加载已订阅女优失败');
+        state = state.copyWith(
+          subscribedActorsErrorMessage: ref
+              .read(appLocalizationsProvider)
+              .imageSearchSubscribedActorsLoadFailed,
+        );
       }
     } finally {
       if (_isCurrentActorsRequest(requestVersion)) {
@@ -189,6 +198,7 @@ class ImageSearch extends _$ImageSearch {
       ),
       isSearching: true,
       isLoadingMore: false,
+      isLoadMoreFailed: false,
       errorMessage: null,
     );
 
@@ -199,7 +209,9 @@ class ImageSearch extends _$ImageSearch {
       }
       if (resolved == null) {
         state = state.copyWith(
-          errorMessage: '所选女优下没有可用于筛选的影片',
+          errorMessage: ref
+              .read(appLocalizationsProvider)
+              .imageSearchNoMoviesForActors,
           items: const <ImageSearchResultItemDto>[],
           sessionId: null,
           nextCursor: null,
@@ -233,12 +245,13 @@ class ImageSearch extends _$ImageSearch {
       _applySession(session, replaceItems: true);
     } catch (error) {
       if (_isCurrentSearch(requestVersion)) {
+        final l10n = ref.read(appLocalizationsProvider);
         state = state.copyWith(
           errorMessage:
-              _imageSearchRebuildRequiredMessage(error) ??
+              _imageSearchRebuildRequiredMessage(error, l10n) ??
               (state.inputKind == ImageSearchInputKind.image
-                  ? '以图搜图失败，请稍后重试'
-                  : '文字搜索失败，请稍后重试'),
+                  ? l10n.imageSearchImageSearchFailed
+                  : l10n.imageSearchTextSearchFailed),
           items: const <ImageSearchResultItemDto>[],
           sessionId: null,
           nextCursor: null,
@@ -267,7 +280,11 @@ class ImageSearch extends _$ImageSearch {
     final requestVersion = _searchVersion;
     final requestedSessionId = current.sessionId!;
     final requestedCursor = current.nextCursor!;
-    state = state.copyWith(isLoadingMore: true, errorMessage: null);
+    state = state.copyWith(
+      isLoadingMore: true,
+      isLoadMoreFailed: false,
+      errorMessage: null,
+    );
 
     try {
       final session = await ref
@@ -289,11 +306,15 @@ class ImageSearch extends _$ImageSearch {
     } catch (error) {
       if (_isCurrentSearch(requestVersion) &&
           state.sessionId == requestedSessionId) {
+        final l10n = ref.read(appLocalizationsProvider);
         final rebuildRequiredMessage = _imageSearchRebuildRequiredMessage(
           error,
+          l10n,
         );
         state = state.copyWith(
-          errorMessage: rebuildRequiredMessage ?? '加载更多失败，请稍后重试',
+          errorMessage:
+              rebuildRequiredMessage ?? l10n.imageSearchLoadMoreFailed,
+          isLoadMoreFailed: rebuildRequiredMessage == null,
           nextCursor: rebuildRequiredMessage == null ? state.nextCursor : null,
         );
       }
@@ -327,10 +348,13 @@ class ImageSearch extends _$ImageSearch {
     );
   }
 
-  String? _imageSearchRebuildRequiredMessage(Object error) {
+  String? _imageSearchRebuildRequiredMessage(
+    Object error,
+    AppLocalizations l10n,
+  ) {
     if (error is ApiException &&
         error.error?.code == 'image_search_index_rebuild_required') {
-      return '嵌入空间已变更，请先重建图搜索索引';
+      return l10n.imageSearchIndexRebuildRequired;
     }
     return null;
   }

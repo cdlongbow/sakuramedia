@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/clips/presentation/pages/mobile/overview_cl
 import 'package:sakuramedia/features/clips/presentation/providers/clips_overview_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_overview_state.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_cover_card.dart';
@@ -35,6 +36,12 @@ void main() {
           ),
         ],
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraMobileThemeData,
           home: const Scaffold(body: MobileOverviewClipsTab()),
         ),
@@ -71,6 +78,12 @@ void main() {
           ),
         ],
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraMobileThemeData,
           home: const Scaffold(body: MobileOverviewClipsTab()),
         ),

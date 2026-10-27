@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_system_io.dart'
     as file_system;
 import 'package:sakuramedia/features/shared/presentation/file_picker_with_bytes.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 export 'package:sakuramedia/core/format/image_file_extension.dart'
     show guessImageFileExtension;
@@ -19,6 +20,8 @@ class ImageSearchPickedFile {
 }
 
 typedef ImageSearchFilePicker = Future<ImageSearchPickedFile?> Function();
+typedef LocalizedImageSearchFilePicker =
+    Future<ImageSearchPickedFile?> Function(AppLocalizations l10n);
 typedef ImageSearchDirectoryProvider = Future<String?> Function();
 typedef ImageSearchDocumentsDirectoryProvider = Future<String?> Function();
 typedef ImageSearchEnvironmentLookup = String? Function(String name);
@@ -44,7 +47,9 @@ class ImageSearchFilePickerException implements Exception {
   final String message;
 }
 
-Future<ImageSearchPickedFile?> pickImageSearchFile() async {
+Future<ImageSearchPickedFile?> pickImageSearchFile({
+  AppLocalizations? l10n,
+}) async {
   final override = debugImageSearchFilePicker;
   if (override != null) {
     return override();
@@ -63,9 +68,11 @@ Future<ImageSearchPickedFile?> pickImageSearchFile() async {
         'heif',
       ],
       initialDirectory: initialDirectory,
-      unreadableMessage: '无法读取所选图片，请换一张再试',
-      pickerUnavailableMessage: '图片选择器尚未加载，请完整重启应用后再试',
-      openFailureMessage: '打开图片选择器失败，请稍后再试',
+      unreadableMessage: l10n?.imageSearchPickUnreadable ?? '无法读取所选图片，请换一张再试',
+      pickerUnavailableMessage:
+          l10n?.imageSearchPickerUnavailable ?? '图片选择器尚未加载，请完整重启应用后再试',
+      openFailureMessage:
+          l10n?.imageSearchPickerOpenFailed ?? '打开图片选择器失败，请稍后再试',
     );
     if (picked == null) {
       return null;
@@ -80,22 +87,26 @@ Future<ImageSearchPickedFile?> pickImageSearchFile() async {
   }
 }
 
-Future<ImageSearchPickedFile?> pickMobileImageSearchFile() async {
+Future<ImageSearchPickedFile?> pickMobileImageSearchFile({
+  AppLocalizations? l10n,
+}) async {
   final override = debugMobileImageSearchFilePicker;
   if (override != null) {
     return override();
   }
   if (defaultTargetPlatform != TargetPlatform.android &&
       defaultTargetPlatform != TargetPlatform.iOS) {
-    return pickImageSearchFile();
+    return pickImageSearchFile(l10n: l10n);
   }
 
   try {
     final picked = await pickFileWithBytes(
       type: FileType.image,
-      unreadableMessage: '无法读取所选图片，请换一张再试',
-      pickerUnavailableMessage: '图片选择器尚未加载，请完整重启应用后再试',
-      openFailureMessage: '打开图片选择器失败，请稍后再试',
+      unreadableMessage: l10n?.imageSearchPickUnreadable ?? '无法读取所选图片，请换一张再试',
+      pickerUnavailableMessage:
+          l10n?.imageSearchPickerUnavailable ?? '图片选择器尚未加载，请完整重启应用后再试',
+      openFailureMessage:
+          l10n?.imageSearchPickerOpenFailed ?? '打开图片选择器失败，请稍后再试',
     );
     if (picked == null) {
       return null;

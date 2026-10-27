@@ -48,8 +48,15 @@ import 'package:sakuramedia/features/status/presentation/providers/server_capabi
 
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 enum ImageSearchResultPreviewPresentation { dialog, bottomDrawer }
+
+Future<ImageSearchPickedFile?> _defaultImageSearchFilePicker(
+  AppLocalizations l10n,
+) {
+  return pickImageSearchFile(l10n: l10n);
+}
 
 class ImageSearchContent extends ConsumerStatefulWidget {
   const ImageSearchContent({
@@ -62,7 +69,7 @@ class ImageSearchContent extends ConsumerStatefulWidget {
     this.currentMovieNumber,
     this.initialCurrentMovieScope = ImageSearchCurrentMovieScope.all,
     this.initialInputKind = ImageSearchInputKind.image,
-    this.imagePicker = pickImageSearchFile,
+    this.imagePicker = _defaultImageSearchFilePicker,
     this.onSearchSimilar,
     this.onOpenPlayer,
     this.onOpenMovieDetail,
@@ -79,7 +86,7 @@ class ImageSearchContent extends ConsumerStatefulWidget {
   final String? currentMovieNumber;
   final ImageSearchCurrentMovieScope initialCurrentMovieScope;
   final ImageSearchInputKind initialInputKind;
-  final ImageSearchFilePicker imagePicker;
+  final LocalizedImageSearchFilePicker imagePicker;
   final Future<bool> Function(
     BuildContext context,
     ImageSearchResultItemDto item,
@@ -218,6 +225,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isMobile = AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
     final capabilities = ref.watch(serverCapabilitiesProvider);
     if (capabilities.isLoading)
@@ -230,25 +238,25 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
     if (capabilities.hasError) {
       return isMobile
           ? AppMobileSectionError(
-              title: '功能状态加载失败',
-              message: '请检查服务器连接后重试',
+              title: l10n.imageSearchCapabilitiesLoadFailed,
+              message: l10n.imageSearchCapabilitiesLoadFailedMessage,
               onRetry: retryCapabilities,
             )
           : AppSectionError(
-              title: '功能状态加载失败',
-              message: '请检查服务器连接后重试',
+              title: l10n.imageSearchCapabilitiesLoadFailed,
+              message: l10n.imageSearchCapabilitiesLoadFailedMessage,
               onRetry: retryCapabilities,
             );
     }
     if (capabilities.value?.imageSearch == false) {
       return AppEmptyState(
         icon: Icons.image_search_outlined,
-        title: '图片与文字搜图未启用',
+        title: l10n.imageSearchDisabledTitle,
         message: isMobile
-            ? '需要管理员在服务器端开启并重启后端容器。'
-            : '可在「系统设置 → 高级设置 → 图搜 / 相似度」中开启，保存后重启后端容器。',
+            ? l10n.imageSearchDisabledMessageMobile
+            : l10n.imageSearchDisabledMessageDesktop,
         onRetry: () => ref.invalidate(serverCapabilitiesProvider),
-        retryLabel: '重新检测',
+        retryLabel: l10n.imageSearchRecheck,
       );
     }
     final spacing = context.appSpacing;
@@ -294,6 +302,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
   }
 
   Widget _buildSearchComposer(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
     final searchState = _searchState;
     final modeSwitch = Container(
@@ -308,7 +317,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
         children: [
           AppButton(
             key: const Key('image-search-mode-image'),
-            label: '图片',
+            label: l10n.imageSearchModeImage,
             icon: const Icon(Icons.image_search_outlined),
             size: AppButtonSize.xSmall,
             variant: AppButtonVariant.secondary,
@@ -317,7 +326,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
           ),
           AppButton(
             key: const Key('image-search-mode-text'),
-            label: '文字',
+            label: l10n.imageSearchModeText,
             icon: const Icon(Icons.text_fields_rounded),
             size: AppButtonSize.xSmall,
             variant: AppButtonVariant.secondary,
@@ -366,6 +375,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
     BuildContext context,
     ImageSearchState searchState,
   ) {
+    final l10n = AppLocalizations.of(context);
     final isBusy =
         searchState.isSearching || searchState.isResolvingActorMovieIds;
     final isEnabled = searchState.hasSource && !isBusy;
@@ -381,8 +391,10 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
     if (usesMobileFilter) {
       return AppIconButton(
         key: const Key('desktop-image-search-toggle-filter'),
-        tooltip: isEnabled ? '高级筛选' : '搜索完成后可筛选',
-        semanticLabel: '高级筛选',
+        tooltip: isEnabled
+            ? l10n.imageSearchAdvancedFilter
+            : l10n.imageSearchFilterDisabledHint,
+        semanticLabel: l10n.imageSearchAdvancedFilter,
         icon: icon,
         isSelected: hasActiveFilter,
         onPressed: isEnabled
@@ -395,7 +407,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
     return AppFilterPopover(
       key: const Key('desktop-image-search-filter-control'),
       controller: _filterPopoverController,
-      triggerLabel: '高级筛选',
+      triggerLabel: l10n.imageSearchAdvancedFilter,
       panelKey: const Key('desktop-image-search-filter-panel'),
       scrollViewKey: const Key('desktop-image-search-filter-scroll-view'),
       enabled: isEnabled,
@@ -420,8 +432,10 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
       ),
       triggerBuilder: (context, isOpen, toggle) => AppIconButton(
         key: const Key('desktop-image-search-toggle-filter'),
-        tooltip: isEnabled ? '高级筛选' : '搜索完成后可筛选',
-        semanticLabel: '高级筛选',
+        tooltip: isEnabled
+            ? l10n.imageSearchAdvancedFilter
+            : l10n.imageSearchFilterDisabledHint,
+        semanticLabel: l10n.imageSearchAdvancedFilter,
         icon: icon,
         isSelected: hasActiveFilter || isOpen,
         onPressed: isEnabled ? toggle : null,
@@ -442,6 +456,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
   }
 
   Widget _buildImageSearchInput(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
     final searchState = _searchState;
     if (!searchState.hasSource) {
@@ -466,7 +481,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
                 ),
                 SizedBox(width: spacing.sm),
                 Text(
-                  '选择图片',
+                  l10n.imageSearchPickImage,
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s14,
@@ -513,7 +528,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
         SizedBox(width: spacing.sm),
         AppButton(
           key: const Key('desktop-image-search-change-image'),
-          label: '更换',
+          label: l10n.imageSearchChangeImage,
           icon: const Icon(Icons.image_search_outlined),
           size: AppButtonSize.xSmall,
           onPressed: _pickAndSearchImage,
@@ -521,8 +536,12 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
         SizedBox(width: spacing.xs),
         AppIconButton(
           key: const Key('desktop-image-search-toggle-preview'),
-          tooltip: searchState.isPreviewExpanded ? '收起大图' : '展示大图',
-          semanticLabel: searchState.isPreviewExpanded ? '收起大图' : '展示大图',
+          tooltip: searchState.isPreviewExpanded
+              ? l10n.imageSearchCollapsePreview
+              : l10n.imageSearchExpandPreview,
+          semanticLabel: searchState.isPreviewExpanded
+              ? l10n.imageSearchCollapsePreview
+              : l10n.imageSearchExpandPreview,
           size: AppIconButtonSize.mini,
           icon: Icon(
             searchState.isPreviewExpanded
@@ -538,7 +557,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
   Widget _buildPreviewPanel(BuildContext context) {
     return AppContentCard(
       key: const Key('desktop-image-search-preview-panel'),
-      title: '图片预览',
+      title: AppLocalizations.of(context).imageSearchPreviewTitle,
       child: Center(
         child: MoviePlotThumbnail(
           imageProvider: MemoryImage(_searchState.fileBytes!),
@@ -561,8 +580,8 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
       fieldKey: const Key('image-search-text-source-field'),
       searchButtonKey: const Key('image-search-text-source-search-button'),
       controller: _textController,
-      hintText: '例如：长发、白色连衣裙、海边',
-      searchButtonTooltip: '搜图',
+      hintText: AppLocalizations.of(context).imageSearchTextHint,
+      searchButtonTooltip: AppLocalizations.of(context).imageSearchSearchAction,
       isSearching: _searchState.isSearching,
       onSearchTap: _searchText,
       onSubmitted: (_) => _searchText(),
@@ -596,7 +615,11 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
     }
 
     if (searchState.items.isEmpty) {
-      return const SliverToBoxAdapter(child: AppEmptyState(message: '暂无匹配结果'));
+      return SliverToBoxAdapter(
+        child: AppEmptyState(
+          message: AppLocalizations.of(context).imageSearchEmpty,
+        ),
+      );
     }
 
     return ImageSearchResultSliver(
@@ -611,6 +634,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
   }
 
   Widget? _buildLoadMoreFooter(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final searchState = _searchState;
     if (searchState.items.isEmpty) {
       return null;
@@ -656,7 +680,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '已暂停自动加载',
+                  l10n.imageSearchAutoLoadPaused,
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s12,
@@ -676,7 +700,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  child: const Text('继续加载'),
+                  child: Text(l10n.imageSearchContinueLoading),
                 ),
               ],
             ),
@@ -726,7 +750,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: const Text('重试'),
+                child: Text(l10n.commonRetry),
               ),
             ],
           ),
@@ -749,8 +773,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
   }
 
   bool get _hasLoadMoreError =>
-      _searchState.errorMessage == '加载更多失败，请稍后重试' &&
-      _searchState.items.isNotEmpty;
+      _searchState.isLoadMoreFailed && _searchState.items.isNotEmpty;
 
   String _resolveStateKey() {
     final routeLocation = _currentRouteLocation();
@@ -893,7 +916,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
 
   Future<void> _pickAndSearchImage() async {
     try {
-      final pickedFile = await widget.imagePicker();
+      final pickedFile = await widget.imagePicker(AppLocalizations.of(context));
       if (pickedFile == null || !mounted) {
         return;
       }
@@ -909,7 +932,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
       }
     } catch (_) {
       if (mounted) {
-        showToast('选择图片失败');
+        showToast(AppLocalizations.of(context).imageSearchPickImageFailed);
       }
     }
   }
@@ -921,7 +944,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
   Future<void> _searchText() async {
     final text = _textController.text.trim();
     if (text.isEmpty) {
-      showToast('请输入文字描述');
+      showToast(AppLocalizations.of(context).imageSearchTextRequired);
       return;
     }
     _notifier.setTextSource(text);
@@ -992,7 +1015,9 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
       return true;
     } catch (_) {
       if (mounted) {
-        showToast('读取结果图片失败，请稍后重试');
+        showToast(
+          AppLocalizations.of(context).imageSearchReadResultImageFailed,
+        );
       }
       return false;
     }
@@ -1061,21 +1086,24 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
     ImageSearchResultItemDto item,
     MediaPointDto? point,
   ) {
+    final l10n = AppLocalizations.of(context);
     final hasMedia = item.mediaId > 0;
     return <AppImageActionDescriptor>[
-      const AppImageActionDescriptor(
+      AppImageActionDescriptor(
         type: AppImageActionType.searchSimilar,
-        label: '相似图片',
+        label: l10n.imageSearchSimilarAction,
         icon: Icons.image_search_outlined,
       ),
-      const AppImageActionDescriptor(
+      AppImageActionDescriptor(
         type: AppImageActionType.saveToLocal,
-        label: '保存到本地',
+        label: l10n.imageSearchSaveToLocal,
         icon: Icons.download_outlined,
       ),
       AppImageActionDescriptor(
         type: AppImageActionType.toggleMark,
-        label: point == null ? '添加标记' : '删除标记',
+        label: point == null
+            ? l10n.imageSearchAddMark
+            : l10n.imageSearchRemoveMark,
         icon: point == null
             ? Icons.bookmark_add_outlined
             : Icons.bookmark_remove_outlined,
@@ -1083,19 +1111,19 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
       ),
       AppImageActionDescriptor(
         type: AppImageActionType.addToCollection,
-        label: '加入合集',
+        label: l10n.imageSearchAddToCollection,
         icon: Icons.collections_bookmark_outlined,
         enabled: hasMedia && item.thumbnailId > 0,
       ),
       AppImageActionDescriptor(
         type: AppImageActionType.play,
-        label: '播放',
+        label: l10n.imageSearchPlay,
         icon: Icons.play_circle_outline_rounded,
         enabled: hasMedia,
       ),
-      const AppImageActionDescriptor(
+      AppImageActionDescriptor(
         type: AppImageActionType.movieDetail,
-        label: '影片详情',
+        label: l10n.imageSearchMovieDetail,
         icon: Icons.info_outline_rounded,
       ),
     ];
@@ -1148,22 +1176,23 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
   }
 
   Future<void> _saveResultImageToLocal(ImageSearchResultItemDto item) async {
+    final l10n = AppLocalizations.of(context);
     final result =
         await ImageSaveService(
           fetchBytes: ref.read(apiClientProvider).getBytes,
         ).saveImageFromUrl(
           imageUrl: _resultImageUrl(item),
           fileName: _resultImageFileName(item),
-          dialogTitle: '保存到本地',
+          dialogTitle: l10n.imageSearchSaveToLocal,
         );
     if (!mounted) {
       return;
     }
     if (result.status == ImageSaveStatus.success) {
-      showToast(result.message ?? '图片已保存');
+      showToast(result.message ?? l10n.imageSearchImageSaved);
     }
     if (result.status == ImageSaveStatus.failed) {
-      showToast(result.message ?? '保存失败，请稍后重试');
+      showToast(result.message ?? l10n.imageSearchSaveFailed);
     }
   }
 
@@ -1183,17 +1212,17 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
               thumbnailId: item.thumbnailId,
             );
         if (mounted) {
-          showToast('已添加标记');
+          showToast(AppLocalizations.of(context).imageSearchMarkAdded);
         }
         return;
       }
       await ref.read(mediaApiProvider).deleteMediaPoint(pointId: point.pointId);
       if (mounted) {
-        showToast('已删除标记');
+        showToast(AppLocalizations.of(context).imageSearchMarkRemoved);
       }
     } catch (_) {
       if (mounted) {
-        showToast('更新标记失败');
+        showToast(AppLocalizations.of(context).imageSearchMarkUpdateFailed);
       }
     }
   }

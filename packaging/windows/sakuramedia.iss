@@ -16,7 +16,7 @@
   #define OutputDir "..\..\dist"
 #endif
 
-#define MyAppName "樱视"
+#define MyAppName "SakuraMedia"
 #define MyAppExeName "sakuramedia.exe"
 
 [Setup]

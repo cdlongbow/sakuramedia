@@ -4746,7 +4746,7 @@
   "@rankingSortFieldCommentCount": {},
   "externalPlayerInAppTitle": "应用内播放器",
   "@externalPlayerInAppTitle": {},
-  "externalPlayerInAppSubtitle": "使用樱视内置播放器",
+  "externalPlayerInAppSubtitle": "使用 SakuraMedia 内置播放器",
   "@externalPlayerInAppSubtitle": {},
   "externalPlayerDetecting": "正在检测已安装的播放器…",
   "@externalPlayerDetecting": {},

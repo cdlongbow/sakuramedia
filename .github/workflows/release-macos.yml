@@ -74,7 +74,7 @@ jobs:
 
           # hdiutil 在 CI 上偶发 Resource busy（create-dmg / electron-builder 均做重试），这里做有界重试。
           attempt=1
-          until hdiutil create -volname "樱视" -srcfolder "${staging}" -ov -format UDZO "dist/${DMG_NAME}"; do
+          until hdiutil create -volname "SakuraMedia" -srcfolder "${staging}" -ov -format UDZO "dist/${DMG_NAME}"; do
             if [ "${attempt}" -ge 3 ]; then
               echo "::error::hdiutil create failed after ${attempt} attempts"
               rm -rf "${staging}"
